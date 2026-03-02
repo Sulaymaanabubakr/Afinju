@@ -1,0 +1,65 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  darkMode: ["class"],
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
+  prefix: "",
+  theme: {
+    container: { center: true, padding: "2rem", screens: { "2xl": "1400px" } },
+    extend: {
+      colors: {
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: { DEFAULT: "hsl(var(--primary))", foreground: "hsl(var(--primary-foreground))" },
+        secondary: { DEFAULT: "hsl(var(--secondary))", foreground: "hsl(var(--secondary-foreground))" },
+        destructive: { DEFAULT: "hsl(var(--destructive))", foreground: "hsl(var(--destructive-foreground))" },
+        muted: { DEFAULT: "hsl(var(--muted))", foreground: "hsl(var(--muted-foreground))" },
+        accent: { DEFAULT: "hsl(var(--accent))", foreground: "hsl(var(--accent-foreground))" },
+        gold: {
+          DEFAULT: "#C9A84C",
+          light: "#E8C97A",
+          dark: "#A67C2E",
+          400: "#D4B060",
+          500: "#C9A84C",
+        },
+        obsidian: "#0A0A0A",
+        ivory: "#F5F0E8",
+        afinju: {
+          black: "#0A0A0A",
+          charcoal: "#1A1A1A",
+          ash: "#2A2A2A",
+          cream: "#F5F0E8",
+          offwhite: "#FAFAF8",
+        },
+      },
+      fontFamily: {
+        display: ["'Cinzel'", "serif"],
+        heading: ["'Playfair Display'", "serif"],
+        body: ["'Poppins'", "sans-serif"],
+        sans: ["'Outfit'", "sans-serif"],
+      },
+      keyframes: {
+        "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
+        "accordion-up": { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
+        shimmer: { "0%": { backgroundPosition: "-1000px 0" }, "100%": { backgroundPosition: "1000px 0" } },
+        "fade-up": { from: { opacity: "0", transform: "translateY(24px)" }, to: { opacity: "1", transform: "translateY(0)" } },
+        marquee: { "0%": { transform: "translateX(0%)" }, "100%": { transform: "translateX(-50%)" } },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+        shimmer: "shimmer 2s infinite linear",
+        "fade-up": "fade-up 0.6s ease-out forwards",
+        marquee: "marquee 20s linear infinite",
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")],
+}

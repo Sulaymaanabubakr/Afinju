@@ -1,0 +1,184 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,700&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 20% 98%;
+    --foreground: 0 0% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 4%;
+    --primary: 0 0% 6%;
+    --primary-foreground: 30 20% 98%;
+    --secondary: 30 15% 94%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 30 10% 92%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 42 60% 54%;
+    --accent-foreground: 0 0% 6%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 30 10% 88%;
+    --input: 30 10% 88%;
+    --ring: 42 60% 54%;
+    --radius: 0.25rem;
+
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --black: #0A0A0A;
+    --cream: #F5F0E8;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-afinju-offwhite text-afinju-black font-body antialiased;
+    font-size: 18px;
+    line-height: 1.7;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading leading-tight;
+  }
+
+  .font-display {
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}
+
+@layer components {
+
+  /* ── LUXURY BUTTON ─────────────────────────── */
+  .btn-luxury {
+    @apply inline-flex items-center justify-center gap-2;
+    @apply font-sans font-medium tracking-widest uppercase;
+    @apply text-xs px-8 py-4;
+    @apply bg-afinju-black text-afinju-cream;
+    @apply border border-afinju-black;
+    @apply transition-all duration-300;
+    letter-spacing: 0.2em;
+  }
+
+  .btn-luxury:hover {
+    @apply bg-transparent text-afinju-black;
+  }
+
+  .btn-gold {
+    @apply btn-luxury bg-gold-dark text-white border-gold-dark;
+  }
+
+  .btn-gold:hover {
+    @apply bg-transparent text-gold-dark border-gold-dark;
+  }
+
+  .btn-outline {
+    @apply btn-luxury bg-transparent text-afinju-black;
+  }
+
+  .btn-outline:hover {
+    @apply bg-afinju-black text-afinju-cream;
+  }
+
+  /* ── SCARCITY PILL ─────────────────────────── */
+  .scarcity-pill {
+    @apply inline-flex items-center gap-2 text-xs font-sans font-medium tracking-widest uppercase;
+    @apply border border-gold/40 text-gold px-4 py-2;
+    letter-spacing: 0.18em;
+  }
+
+  /* ── SECTION LABEL ─────────────────────────── */
+  .section-label {
+    @apply font-display text-xs text-gold tracking-[0.3em] uppercase mb-3;
+  }
+
+  /* ── SHIMMER SKELETON ─────────────────────── */
+  .skeleton {
+    background: linear-gradient(90deg,
+        hsl(30 10% 90%) 25%,
+        hsl(30 10% 95%) 50%,
+        hsl(30 10% 90%) 75%);
+    background-size: 1000px 100%;
+    @apply animate-shimmer;
+  }
+
+  /* ── SCROLLBAR ─────────────────────────────── */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gold/40 rounded-full;
+  }
+
+  /* ── GOLD RULE ─────────────────────────────── */
+  .gold-rule {
+    @apply w-12 h-px bg-gold mx-auto;
+  }
+
+  .gold-rule-left {
+    @apply w-12 h-px bg-gold;
+  }
+
+  /* ── INPUT LUXURY ──────────────────────────── */
+  .input-luxury {
+    @apply w-full bg-transparent border-0 border-b border-afinju-black/20 pb-3 pt-2;
+    @apply font-sans text-sm text-afinju-black placeholder:text-afinju-black/30;
+    @apply focus:outline-none focus:border-gold transition-colors duration-200;
+  }
+
+  /* ── ANNOUNCEMENT BAR ──────────────────────── */
+  .marquee-track {
+    @apply flex whitespace-nowrap animate-marquee;
+  }
+
+  /* ── PRODUCT IMAGE HOVER ───────────────────── */
+  .product-img-wrap {
+    @apply overflow-hidden;
+  }
+
+  .product-img-wrap img {
+    @apply transition-transform duration-700 ease-out;
+  }
+
+  .product-img-wrap:hover img {
+    @apply scale-105;
+  }
+
+  /* ── GOLD SHIMMER TEXT ─────────────────────── */
+  .gold-shimmer {
+    background: linear-gradient(90deg,
+        #C9A84C 0%,
+        #E8C97A 25%,
+        #C9A84C 50%,
+        #A67C2E 75%,
+        #C9A84C 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s linear infinite;
+  }
+}

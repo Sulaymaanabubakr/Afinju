@@ -1,0 +1,77 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ────────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        request.auth.token.role == 'admin';
+    }
+
+    function isStaff() {
+      return isAuthenticated() &&
+        (request.auth.token.role == 'admin' ||
+         request.auth.token.role == 'staff');
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // ── Products ────────────────────────────────────────────────────────────
+    // Anyone can read active products; only admins can write
+    match /products/{productId} {
+      allow read: if resource.data.status == 'active' || isStaff();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ── Orders ──────────────────────────────────────────────────────────────
+    // Customers can create orders and read their own; staff can read/update all
+    match /orders/{orderId} {
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.paymentStatus == 'unpaid' &&
+        request.resource.data.status == 'pending_payment';
+
+      // Owner can read their own order
+      allow read: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid || isStaff());
+
+      // Only staff can update orders (status updates, etc.)
+      allow update: if isStaff();
+
+      // No one can delete orders
+      allow delete: if false;
+    }
+
+    // ── Users ────────────────────────────────────────────────────────────────
+    // Users can read and write their own profile; admins can read all
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isStaff();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) &&
+        // Prevent users from promoting themselves
+        !('role' in request.resource.data.diff(resource.data).affectedKeys());
+      allow delete: if isAdmin();
+    }
+
+    // ── Config (content + settings) ──────────────────────────────────────────
+    // Anyone can read site config; only admins can write
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Audit Logs ────────────────────────────────────────────────────────────
+    // Only Cloud Functions can write; only admins can read
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false; // Written by Cloud Functions only
+    }
+  }
+}

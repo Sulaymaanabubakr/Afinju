@@ -6,9 +6,9 @@ const FAQS = [
   {
     category: 'Ordering',
     items: [
-      { q: 'How do I order the AFINJU Authority Set?', a: 'Click "Secure Your Position" on the product page. Select your colour, shoe size, and head size — all three are required before you can add to cart. Complete checkout with Paystack (card, bank transfer, or USSD). You will receive an order confirmation immediately.' },
+      { q: 'How do I order the AFINJU Authority Set?', a: 'Click "Secure Your Position" on the product page. Select your colour, shoe size, and head size. All three are required before you can add to cart. Complete checkout with Paystack (card, bank transfer, or USSD). You will receive an order confirmation immediately.' },
       { q: 'Can I place an order via WhatsApp?', a: 'WhatsApp is available for size consultations and enquiries, but all purchases are processed through our secure checkout powered by Paystack. This ensures your payment is protected and your order is properly tracked.' },
-      { q: 'Is the ₦200,000 launch price permanent?', a: 'No. The ₦200,000 price is exclusive to this launch edition of 10 units. The standard price is ₦250,000. Once all 10 launch units are claimed, pricing returns to ₦250,000 on the next edition — if there is one.' },
+      { q: 'Is the launch price permanent?', a: 'No. The current launch price is exclusive to this first edition of 10 units. Once all 10 launch units are claimed, pricing will increase for any future editions, if there are any.' },
     ],
   },
   {
@@ -71,10 +71,10 @@ export default function FaqPage() {
   return (
     <div className="min-h-screen">
       <section className="bg-afinju-black text-afinju-cream py-24 px-6">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto text-center">
           <p className="section-label text-gold/70 mb-4">Got Questions?</p>
           <h1 className="font-display text-4xl md:text-5xl tracking-[0.1em] mb-6">FAQ</h1>
-          <div className="gold-rule-left" />
+          <div className="gold-rule mx-auto" />
         </div>
       </section>
 
@@ -82,7 +82,7 @@ export default function FaqPage() {
         <div className="max-w-3xl mx-auto space-y-16">
           {FAQS.map((cat) => (
             <div key={cat.category}>
-              <p className="section-label mb-6">{cat.category}</p>
+              <p className="section-label mb-6 text-center">{cat.category}</p>
               <div>
                 {cat.items.map((item) => (
                   <FAQItem key={item.q} q={item.q} a={item.a} />

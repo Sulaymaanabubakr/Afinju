@@ -127,11 +127,10 @@ export default function ProductPage() {
                 <button
                   key={i}
                   onClick={() => setSelectedImage(i)}
-                  className={`flex-shrink-0 w-16 h-20 overflow-hidden transition-all duration-200 ${
-                    selectedImage === i
+                  className={`flex-shrink-0 w-16 h-20 overflow-hidden transition-all duration-200 ${selectedImage === i
                       ? 'ring-1 ring-offset-1 ring-gold'
                       : 'opacity-60 hover:opacity-100'
-                  }`}
+                    }`}
                 >
                   <img
                     src={cloudinaryUrl(img.url, { width: 128, height: 160, quality: 'auto' })}
@@ -149,7 +148,7 @@ export default function ProductPage() {
           {/* Header */}
           <div>
             <div className="scarcity-pill mb-4">
-              Launch Edition — {remaining > 0 ? `${remaining} Remaining` : 'Sold Out'}
+              Launch Edition - {remaining > 0 ? `${remaining} Remaining` : 'Sold Out'}
             </div>
             <h1 className="font-heading text-3xl md:text-4xl leading-tight mb-4">{product.name}</h1>
             <div className="flex items-center gap-4">
@@ -200,7 +199,7 @@ export default function ProductPage() {
           {/* ── PREFERENCE SELECTION (REQUIRED) ── */}
           <div className="space-y-8">
             <p className="font-display text-xs tracking-[0.25em] text-afinju-black/50">
-              CUSTOMISE YOUR SET — ALL FIELDS REQUIRED
+              CUSTOMISE YOUR SET - ALL FIELDS REQUIRED
             </p>
 
             {/* Color */}
@@ -228,16 +227,14 @@ export default function ProductPage() {
                       className={`group relative flex flex-col items-center gap-2 transition-all duration-150`}
                     >
                       <div
-                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
-                          preferredColor === color
+                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${preferredColor === color
                             ? 'border-gold scale-110'
                             : 'border-transparent hover:border-black/30'
-                        }`}
+                          }`}
                         style={{ backgroundColor: colorMap[color] }}
                       />
-                      <span className={`font-sans text-[10px] tracking-wider uppercase transition-colors ${
-                        preferredColor === color ? 'text-afinju-black' : 'text-afinju-black/40'
-                      }`}>
+                      <span className={`font-sans text-[10px] tracking-wider uppercase transition-colors ${preferredColor === color ? 'text-afinju-black' : 'text-afinju-black/40'
+                        }`}>
                         {color}
                       </span>
                     </button>
@@ -267,11 +264,10 @@ export default function ProductPage() {
                   <button
                     key={size}
                     onClick={() => { setShoeSize(size); setErrors(e => ({ ...e, shoeSize: '' })) }}
-                    className={`w-12 h-12 border font-sans text-sm transition-all duration-150 ${
-                      shoeSize === size
+                    className={`w-12 h-12 border font-sans text-sm transition-all duration-150 ${shoeSize === size
                         ? 'bg-afinju-black text-afinju-cream border-afinju-black'
                         : 'border-black/20 hover:border-afinju-black'
-                    }`}
+                      }`}
                   >
                     {size}
                   </button>
@@ -300,11 +296,10 @@ export default function ProductPage() {
                   <button
                     key={size}
                     onClick={() => { setHeadSize(size); setErrors(e => ({ ...e, headSize: '' })) }}
-                    className={`px-3 h-10 border font-sans text-xs tracking-wider transition-all duration-150 ${
-                      headSize === size
+                    className={`px-3 h-10 border font-sans text-xs tracking-wider transition-all duration-150 ${headSize === size
                         ? 'bg-afinju-black text-afinju-cream border-afinju-black'
                         : 'border-black/20 hover:border-afinju-black'
-                    }`}
+                      }`}
                   >
                     {size}
                   </button>
@@ -337,7 +332,7 @@ export default function ProductPage() {
           {remaining > 0 ? (
             <div className="space-y-3">
               <button onClick={handleBuyNow} className="btn-gold w-full text-sm py-4">
-                Secure Your Position — {formatPrice(product.price * qty)}
+                Secure Your Position - {formatPrice(product.price * qty)}
               </button>
               <button onClick={handleAddToCart} className="btn-outline w-full text-xs">
                 Add to Cart

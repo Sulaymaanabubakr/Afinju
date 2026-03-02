@@ -19,10 +19,10 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen">
       <section className="bg-afinju-black text-afinju-cream py-24 px-6">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto text-center">
           <p className="section-label text-gold/70 mb-4">Reach Us</p>
           <h1 className="font-heading text-5xl mb-6">Contact</h1>
-          <div className="gold-rule-left" />
+          <div className="gold-rule mx-auto" />
         </div>
       </section>
 
@@ -31,9 +31,9 @@ export default function ContactPage() {
           {/* Contact Info */}
           <div className="space-y-10">
             <div>
-              <p className="section-label mb-4">Get In Touch</p>
-              <p className="font-body text-lg text-afinju-black/65 leading-relaxed">
-                For sizing questions, order enquiries, or anything else — we are available and responsive.
+              <p className="section-label mb-4 text-center">Get In Touch</p>
+              <p className="font-body text-lg text-afinju-black/65 leading-relaxed text-center">
+                For sizing questions, order enquiries, or anything else, we are available and responsive.
                 WhatsApp is the fastest way to reach us.
               </p>
             </div>

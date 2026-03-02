@@ -28,10 +28,10 @@ export default function SizeGuidePage() {
   return (
     <div className="min-h-screen">
       <section className="bg-afinju-black text-afinju-cream py-24 px-6">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto text-center">
           <p className="section-label text-gold/70 mb-4">Precision Matters</p>
           <h1 className="font-heading text-5xl mb-6">Size Guide</h1>
-          <div className="gold-rule-left mb-6" />
+          <div className="gold-rule mx-auto mb-6" />
           <p className="font-body text-afinju-cream/55">
             AFINJU is crafted to your exact dimensions. Taking accurate measurements ensures your authority set fits perfectly.
           </p>
@@ -42,8 +42,8 @@ export default function SizeGuidePage() {
         <div className="max-w-5xl mx-auto space-y-20">
           {/* Shoe Size */}
           <div>
-            <p className="section-label mb-3">Shoe Size</p>
-            <h2 className="font-heading text-3xl mb-4">How to Measure Your Foot</h2>
+            <p className="section-label mb-3 text-center">Shoe Size</p>
+            <h2 className="font-heading text-3xl mb-4 text-center">How to Measure Your Foot</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-10">
               <div className="space-y-5 font-body text-afinju-black/65 leading-relaxed">
                 <p>For best results, measure in the evening when your feet are at their largest (feet swell slightly throughout the day).</p>
@@ -90,16 +90,16 @@ export default function SizeGuidePage() {
 
           {/* Head Size */}
           <div>
-            <p className="section-label mb-3">Head Size (Gobi Cap)</p>
-            <h2 className="font-heading text-3xl mb-4">How to Measure Your Head</h2>
+            <p className="section-label mb-3 text-center">Head Size (Gobi Cap)</p>
+            <h2 className="font-heading text-3xl mb-4 text-center">How to Measure Your Head</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
               <div className="space-y-5 font-body text-afinju-black/65 leading-relaxed">
-                <p>Use a soft measuring tape or a piece of string. Do not use a metal ruler — it cannot wrap around the head accurately.</p>
+                <p>Use a soft measuring tape or a piece of string. Do not use a metal ruler as it cannot wrap around the head accurately.</p>
                 <ol className="space-y-3">
                   {[
                     'Stand in front of a mirror so you can see the tape placement clearly.',
                     'Place the tape approximately 1cm above your ears.',
-                    'Bring it across your forehead at mid-height — not at the hairline.',
+                    'Bring it across your forehead at mid-height, not at the hairline.',
                     'The tape should sit where a hat would naturally rest.',
                     'Note the measurement in centimetres. If using string, mark it and measure against a ruler.',
                     'If your measurement falls between two sizes, choose the larger one.',

@@ -1,17 +1,15 @@
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useScroll, useTransform } from 'framer-motion'
-import { ArrowRight, Check, Star } from 'lucide-react'
+import { ArrowRight, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import ScarcityCounter from '@/components/shared/ScarcityCounter'
-import { useHomepageContent } from '@/lib/queries'
 import { formatPrice } from '@/lib/utils'
 
-// Placeholder product image (Cloudinary)
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=1200&q=90'
-const PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=90'
-const LEATHER_IMAGE = 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&q=90'
+// Product images — replace with actual Cloudinary product photos when available
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1605812860427-4024433a70fd?w=1200&q=90'
+const LEATHER_IMAGE = 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800&q=90'
 
 const PACKAGE_ITEMS = [
   { name: 'Pure Skin Leather Half Shoe', desc: 'Hand-crafted from premium Nigerian leather' },
@@ -31,7 +29,7 @@ const AUTHORITY_SECTIONS = [
   {
     number: '02',
     title: 'No Assumptions Here',
-    body: 'This is not for everyone. We are not trying to convince you. Either you understand what presence means — or you will remain comfortable.',
+    body: 'This is not for everyone. We are not trying to convince you. Either you understand what presence means or you will remain comfortable.',
   },
   {
     number: '03',
@@ -104,17 +102,17 @@ export default function HomePage() {
           style={{ opacity }}
           className="relative z-10 w-full max-w-screen-xl mx-auto px-6 lg:px-12"
         >
-          <div className="max-w-3xl lg:max-w-4xl lg:mx-auto lg:text-center">
+          <div className="max-w-3xl mx-auto text-center">
             {/* Eyebrow */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="flex items-center gap-3 mb-5 lg:justify-center"
+              className="flex items-center gap-3 mb-5 justify-center"
             >
               <div className="h-px w-12 bg-gold-500" />
               <span className="text-xs font-body font-semibold tracking-[0.3em] uppercase text-gold-400">
-                Launch Edition — 10 Men Only
+                Launch Edition - 10 Men Only
               </span>
             </motion.div>
 
@@ -135,7 +133,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
-              className="mt-5 text-lg md:text-xl font-body text-ivory/60 leading-relaxed max-w-xl lg:mx-auto"
+              className="mt-5 text-lg md:text-xl font-body text-ivory/60 leading-relaxed max-w-xl mx-auto"
             >
               The complete Nigerian authority set. Six precision-crafted pieces. One undeniable statement.
             </motion.p>
@@ -145,34 +143,21 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="mt-6 lg:flex lg:justify-center"
+              className="mt-6 flex justify-center"
             >
               <ScarcityCounter sold={soldCount} total={totalLimit} compact />
             </motion.div>
 
-            {/* Price + CTA */}
+            {/* CTA — no price reveal yet */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.7 }}
-              className="mt-6 flex flex-wrap items-center gap-6 lg:justify-center"
+              className="mt-6 flex flex-wrap items-center gap-6 justify-center"
             >
-              <div>
-                <div className="flex items-baseline gap-3">
-                  <span className="font-display text-3xl lg:text-4xl font-bold text-ivory">
-                    {formatPrice(200000)}
-                  </span>
-                  <span className="text-lg font-body text-ivory/40 line-through">
-                    {formatPrice(250000)}
-                  </span>
-                </div>
-                <p className="text-xs font-body text-gold-400 tracking-widest uppercase mt-1">
-                  Launch Price — Save ₦50,000
-                </p>
-              </div>
               <Link to="/product/afinju-authority-set-launch-edition">
                 <Button variant="gold" size="lg" className="group">
-                  Secure Your Position
+                  Discover the Authority Set
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
@@ -206,18 +191,18 @@ export default function HomePage() {
               viewport={{ once: true }}
               transition={{ duration: 0.8 }}
             >
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-6 justify-center">
                 <div className="h-px w-8 bg-gold-500" />
                 <span className="text-xs font-body font-semibold tracking-[0.3em] uppercase text-gold-400">
                   The Authority Set
                 </span>
               </div>
-              <h2 className="font-display text-4xl md:text-5xl font-bold text-ivory leading-tight">
+              <h2 className="font-display text-4xl md:text-5xl font-bold text-ivory leading-tight text-center">
                 Six pieces.
                 <br />
                 <span className="text-gold-400 italic">One identity.</span>
               </h2>
-              <p className="mt-6 font-body text-ivory/50 leading-relaxed">
+              <p className="mt-6 font-body text-ivory/50 leading-relaxed text-center">
                 Every item in the AFINJU Authority Set is carefully matched, sourced, and assembled to create a unified statement of premium Nigerian excellence.
               </p>
 
@@ -259,11 +244,7 @@ export default function HomePage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-obsidian/50 to-transparent" />
               </div>
-              {/* Floating price badge */}
-              <div className="absolute -bottom-6 -left-6 bg-gold-500 text-obsidian p-6">
-                <p className="text-xs font-body font-bold tracking-widest uppercase">Launch Price</p>
-                <p className="font-display text-3xl font-bold mt-1">₦200,000</p>
-              </div>
+
             </motion.div>
           </div>
         </div>
@@ -296,7 +277,7 @@ export default function HomePage() {
                 transition={{ delay: i * 0.1 }}
                 className="bg-[#050505] p-8 md:p-10 hover:bg-obsidian transition-colors group"
               >
-                <span className="font-display text-5xl font-bold text-white/5 group-hover:text-gold-500/10 transition-colors">
+                <span className="font-display text-5xl font-bold text-gold-500/20 group-hover:text-gold-500/30 transition-colors">
                   {section.number}
                 </span>
                 <h3 className="mt-4 font-display text-xl font-bold text-ivory group-hover:text-gold-400 transition-colors">
@@ -311,115 +292,31 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Welcome / CTA Block ─────────────────────────────── */}
-      <section className="py-24 md:py-40 bg-obsidian relative overflow-hidden">
-        {/* Background accent */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border border-gold-500/5" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-gold-500/8" />
-        </div>
 
-        <div className="relative max-w-screen-xl mx-auto px-6 lg:px-12 text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="h-px w-12 bg-gold-500/50" />
-              <span className="text-xs font-body tracking-[0.4em] uppercase text-gold-400">Welcome</span>
-              <div className="h-px w-12 bg-gold-500/50" />
-            </div>
-
-            <h2 className="font-display text-5xl md:text-7xl font-bold text-ivory leading-tight">
-              You are{' '}
-              <span className="gold-shimmer">AFINJU.</span>
-            </h2>
-
-            <p className="mt-8 max-w-2xl mx-auto font-body text-xl text-ivory/50 leading-relaxed">
-              If you have read this far, you already know. This is not about shoes, caps, or perfume. This is about who you are when you walk into a room. The Authority Set simply makes it visible.
-            </p>
-
-            <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
-              <p className="font-body text-sm text-ivory/40 italic">
-                "Once it is closed, it is closed."
-              </p>
-            </div>
-
-            <div className="mt-10">
-              <ScarcityCounter sold={soldCount} total={totalLimit} className="max-w-md mx-auto mb-10" />
-              <Link to="/product/afinju-authority-set-launch-edition">
-                <Button variant="gold" size="xl" className="group">
-                  Claim Your Launch Edition
-                  <ArrowRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </Link>
-              <p className="mt-4 text-xs font-body text-ivory/30 tracking-widest uppercase">
-                Only {totalLimit - soldCount} positions remaining
-              </p>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── Testimonials placeholder ─────────────────────────── */}
+      {/* ── Social Proof ─────────────────────────────── */}
       <section className="py-20 bg-[#050505]">
-        <div className="max-w-screen-xl mx-auto px-6 lg:px-12">
-          <div className="flex items-center gap-3 mb-12">
+        <div className="max-w-screen-xl mx-auto px-6 lg:px-12 text-center">
+          <div className="flex items-center gap-3 mb-8 justify-center">
             <div className="h-px w-8 bg-gold-500" />
             <span className="text-xs font-body font-semibold tracking-[0.3em] uppercase text-gold-400">
-              From Men Who Own Rooms
+              Join the Movement
             </span>
+            <div className="h-px w-8 bg-gold-500" />
           </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                quote: 'I walked into my board meeting wearing AFINJU. The room went quiet. The deal was already half-closed before I spoke.',
-                name: 'Emeka O.',
-                location: 'Lagos, NG',
-              },
-              {
-                quote: 'The craftsmanship is unlike anything I have seen from a Nigerian brand. International quality, Nigerian soul.',
-                name: 'Tunde A.',
-                location: 'Abuja, NG',
-              },
-              {
-                quote: 'My wife asked if I was wearing a new cologne before I even entered the room. The AFINJU oil perfume is exceptional.',
-                name: 'Chidi M.',
-                location: 'Port Harcourt, NG',
-              },
-            ].map((t, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
-                className="p-8 border border-white/5 hover:border-gold-500/20 transition-colors"
-              >
-                <div className="flex gap-1 mb-6">
-                  {Array(5).fill(0).map((_, j) => (
-                    <Star key={j} className="h-3 w-3 fill-gold-500 text-gold-500" />
-                  ))}
-                </div>
-                <p className="font-body text-sm text-ivory/70 leading-relaxed italic">
-                  "{t.quote}"
-                </p>
-                <div className="mt-6 flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-gold-500/20 flex items-center justify-center">
-                    <span className="font-display text-xs font-bold text-gold-400">
-                      {t.name.charAt(0)}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-body font-semibold text-ivory">{t.name}</p>
-                    <p className="text-xs font-body text-ivory/40">{t.location}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-ivory mb-6">
+            Built for the Men Who Lead
+          </h2>
+          <p className="font-body text-lg text-ivory/50 max-w-2xl mx-auto leading-relaxed">
+            Real testimonials from AFINJU owners will be featured here. The first 10 men to own this
+            launch edition will define the standard.
+          </p>
+          <div className="mt-10">
+            <Link to="/product/afinju-authority-set-launch-edition">
+              <Button variant="outline-gold" size="lg" className="group">
+                Be Among the First
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -427,8 +324,8 @@ export default function HomePage() {
       {/* ── FAQ ─────────────────────────────────────────────── */}
       <section className="py-20 bg-obsidian">
         <div className="max-w-screen-xl mx-auto px-6 lg:px-12">
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-3 mb-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="flex items-center gap-3 mb-8 justify-center">
               <div className="h-px w-8 bg-gold-500" />
               <span className="text-xs font-body font-semibold tracking-[0.3em] uppercase text-gold-400">
                 Questions
@@ -451,7 +348,7 @@ export default function HomePage() {
               ))}
             </Accordion>
 
-            <div className="mt-10">
+            <div className="mt-10 flex justify-center">
               <Link to="/faq">
                 <Button variant="outline-gold" size="sm">
                   Full FAQ
@@ -459,6 +356,57 @@ export default function HomePage() {
               </Link>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ── Price Reveal + Final CTA ───────────────────────────── */}
+      <section className="py-24 md:py-40 bg-obsidian">
+        <div className="max-w-screen-xl mx-auto px-6 lg:px-12 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="font-display text-5xl md:text-7xl font-bold text-ivory leading-tight">
+              You are{' '}
+              <span className="gold-shimmer">AFINJU.</span>
+            </h2>
+
+            <p className="mt-8 max-w-2xl mx-auto font-body text-xl text-ivory/50 leading-relaxed">
+              If you have read this far, you already know. This is not about shoes, caps, or perfume. This is about who you are when you walk into a room. The Authority Set simply makes it visible.
+            </p>
+
+            <p className="mt-8 font-body text-sm text-ivory/40 italic">
+              "Once it is closed, it is closed."
+            </p>
+
+            <div className="mt-14">
+              <p className="text-xs font-body tracking-[0.4em] uppercase text-gold-400 mb-4">Launch Price</p>
+              <div className="flex items-baseline gap-4 justify-center">
+                <span className="font-display text-5xl md:text-7xl font-bold text-ivory">
+                  {formatPrice(200000)}
+                </span>
+                <span className="text-2xl font-body text-ivory/30 line-through">
+                  {formatPrice(250000)}
+                </span>
+              </div>
+              <p className="text-sm font-body text-gold-400/80 mt-2">You save ₦50,000</p>
+            </div>
+
+            <div className="mt-12">
+              <ScarcityCounter sold={soldCount} total={totalLimit} className="max-w-md mx-auto mb-10" />
+              <Link to="/product/afinju-authority-set-launch-edition">
+                <Button variant="gold" size="xl" className="group">
+                  Claim Your Launch Edition
+                  <ArrowRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+              <p className="mt-4 text-xs font-body text-ivory/30 tracking-widest uppercase">
+                Only {totalLimit - soldCount} positions remaining
+              </p>
+            </div>
+          </motion.div>
         </div>
       </section>
     </div>

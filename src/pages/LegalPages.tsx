@@ -6,7 +6,7 @@ export function TermsPage() {
         By placing an order on AFINJU, you agree to be bound by these terms. If you do not agree, please do not use our website or services.
       </Section>
       <Section title="2. Products and Pricing">
-        All prices are displayed in Nigerian Naira (₦). Prices are subject to change without notice. The launch edition price of ₦200,000 applies only to the first 10 units of the AFINJU Authority Set. Subsequent editions are priced at ₦250,000.
+        All prices are displayed in Nigerian Naira (₦). Prices are subject to change without notice. The launch edition pricing applies only to the first 10 units of the AFINJU Authority Set. Subsequent editions will be priced at a higher standard rate.
       </Section>
       <Section title="3. Orders and Payment">
         Orders are confirmed only upon receipt of successful payment verification via Paystack. We reserve the right to cancel any order in the event of inventory errors or payment fraud. You will be notified and fully refunded in such cases.
@@ -18,7 +18,7 @@ export function TermsPage() {
         Delivery timelines are estimates and may be affected by logistics conditions outside our control. AFINJU is not liable for delays caused by third-party courier services, though we will always assist in resolution.
       </Section>
       <Section title="6. Intellectual Property">
-        All content on this website — including the AFINJU name, logo, photography, and copy — is the exclusive property of AFINJU and may not be reproduced, distributed, or used without written permission.
+        All content on this website, including the AFINJU name, logo, photography, and copy, is the exclusive property of AFINJU and may not be reproduced, distributed, or used without written permission.
       </Section>
       <Section title="7. Governing Law">
         These terms are governed by the laws of the Federal Republic of Nigeria. Any disputes shall be resolved under Nigerian jurisdiction.
@@ -84,9 +84,9 @@ function LegalPage({ title, children }: { title: string; children: React.ReactNo
   return (
     <div className="min-h-screen">
       <section className="bg-afinju-black text-afinju-cream py-20 px-6">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto text-center">
           <h1 className="font-heading text-4xl">{title}</h1>
-          <p className="font-sans text-sm text-afinju-cream/40 mt-3">AFINJU · Last updated January 2024</p>
+          <p className="font-sans text-sm text-afinju-cream/40 mt-3">AFINJU · Last updated March 2025</p>
         </div>
       </section>
       <section className="py-16 px-6">

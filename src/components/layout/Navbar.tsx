@@ -38,7 +38,7 @@ export function Navbar() {
         <div className="flex marquee-track">
           {Array.from({ length: 4 }).map((_, i) => (
             <span key={i} className="flex-shrink-0 px-12 font-sans text-xs tracking-[0.25em] uppercase">
-              Only Ten Men Will Own This Launch Edition &nbsp;·&nbsp; Once It Is Closed, It Is Closed &nbsp;·&nbsp; AFINJU — Authority Set &nbsp;·&nbsp;
+              Only Ten Men Will Own This Launch Edition &nbsp;·&nbsp; Once It Is Closed, It Is Closed &nbsp;·&nbsp; AFINJU - Authority Set &nbsp;·&nbsp;
             </span>
           ))}
         </div>

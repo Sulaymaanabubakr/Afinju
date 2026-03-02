@@ -3,12 +3,11 @@ import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Check, ArrowRight } from 'lucide-react'
 import { getProducts } from '@/lib/db'
-import { formatPrice } from '@/lib/utils'
 import ScarcityCounter from '@/components/shared/ScarcityCounter'
 
 const PACKAGE_ITEMS = [
   { name: 'Pure Skin Leather Half Shoe', desc: 'Hand-crafted from premium Nigerian leather, bevelled edges, mirror finish' },
-  { name: 'Matching Premium Purse', desc: 'Coordinated to the millimetre — same leather, same tone, same authority' },
+  { name: 'Matching Premium Purse', desc: 'Coordinated to the millimetre. Same leather, same tone, same authority' },
   { name: 'Matching Gobi Cap', desc: 'The finishing touch. The signature of a man who notices everything' },
   { name: 'Signature Oil Perfume', desc: 'A scent that announces your arrival before you speak' },
   { name: 'Matching Polish Kit', desc: 'Maintain your investment. Your standards should never dip' },
@@ -24,7 +23,7 @@ const AUTHORITY_COPY = [
   {
     number: '02',
     title: 'No Assumptions Here',
-    body: 'This is not for everyone. Either you understand what presence means — or you will remain comfortable. We are not trying to convince you.',
+    body: 'This is not for everyone. Either you understand what presence means or you will remain comfortable. We are not trying to convince you.',
   },
   {
     number: '03',
@@ -64,31 +63,28 @@ export default function LaunchEditionPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="max-w-3xl"
+            className="max-w-3xl mx-auto text-center"
           >
             <div className="scarcity-pill mb-8">
-              Launch Edition — 10 Units Only
+              Launch Edition - 10 Units Only
             </div>
             <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl leading-[1.05] mb-8">
               AFINJU is not for you if you cannot handle{' '}
               <span className="text-gold italic">attention.</span>
             </h1>
-            <div className="gold-rule-left mb-8" />
-            <p className="font-body text-afinju-cream/60 text-xl mb-12 max-w-xl">
+            <div className="gold-rule mx-auto mb-8" />
+            <p className="font-body text-afinju-cream/60 text-xl mb-12 max-w-xl mx-auto">
               The authority set for the man who has decided that his standard is non-negotiable.
               Once it is closed, it is closed.
             </p>
             {product && (
-              <div className="flex flex-wrap items-center gap-6">
+              <div className="flex flex-wrap items-center gap-6 justify-center">
                 <Link
                   to={`/product/${product.slug}`}
                   className="btn-gold text-sm py-4 px-10"
                 >
-                  Claim Your Position — {formatPrice(product.price)}
+                  Claim Your Position
                 </Link>
-                <div className="text-afinju-cream/40 text-sm font-sans line-through">
-                  {formatPrice(product.compareAtPrice)}
-                </div>
               </div>
             )}
           </motion.div>

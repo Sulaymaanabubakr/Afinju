@@ -26,13 +26,13 @@ export default function ShopPage() {
     <div className="min-h-screen">
       {/* Page Header */}
       <section className="bg-afinju-black text-afinju-cream py-24 px-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto text-center">
           <p className="section-label text-gold/70 mb-4">The Collection</p>
           <h1 className="font-display text-4xl md:text-5xl lg:text-6xl tracking-[0.15em] mb-6">
             SHOP
           </h1>
-          <div className="gold-rule-left mb-6" />
-          <p className="font-body text-afinju-cream/60 text-lg max-w-md">
+          <div className="gold-rule mx-auto mb-6" />
+          <p className="font-body text-afinju-cream/60 text-lg max-w-md mx-auto">
             Each piece is crafted for the man who understands that standards are not negotiable.
           </p>
         </div>

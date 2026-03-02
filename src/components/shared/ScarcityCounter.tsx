@@ -64,12 +64,12 @@ export default function ScarcityCounter({
           animate={{ opacity: 1 }}
           className="font-sans text-xs text-red-600 tracking-wider"
         >
-          ⚡ Only {remaining} unit{remaining !== 1 ? 's' : ''} left — act now
+          ⚡ Only {remaining} unit{remaining !== 1 ? 's' : ''} left. Act now
         </motion.p>
       )}
       {remaining === 0 && (
         <p className="font-sans text-xs text-red-600 uppercase tracking-widest font-medium">
-          Sold Out — Launch Edition Closed
+          Sold Out - Launch Edition Closed
         </p>
       )}
       {large && remaining > 0 && (

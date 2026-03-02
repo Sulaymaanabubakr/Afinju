@@ -158,7 +158,7 @@ export default function CheckoutPage() {
         }
       },
       onCancel: () => {
-        toast('Payment cancelled. Your order is saved — you can retry.', { icon: 'ℹ️' })
+        toast('Payment cancelled. Your order is saved, you can retry.', { icon: 'ℹ️' })
         setProcessing(false)
       },
     })

@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/features/auth/AuthProvider'
-import { RequireAuth, RequireAdmin, RequireStaff, RedirectIfAuth } from '@/features/auth/Guards'
+import { RequireAdmin, RequireCustomer, RequireStaff, RedirectIfAdminAuth, RedirectIfAuth } from '@/features/auth/Guards'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { CartDrawer } from '@/features/cart/CartDrawer'
@@ -23,6 +23,8 @@ import ShippingReturnsPage from '@/pages/ShippingReturnsPage'
 
 // Auth pages
 import LoginPage from '@/pages/LoginPage'
+import AdminLoginPage from '@/pages/AdminLoginPage'
+import AdminForgotPasswordPage from '@/pages/AdminForgotPasswordPage'
 import SignupPage from '@/pages/SignupPage'
 import ForgotPasswordPage from '@/pages/ForgotPasswordPage'
 
@@ -51,13 +53,13 @@ import NotFoundPage from '@/pages/NotFoundPage'
 
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <div className="public-site">
       <Navbar />
       <main>{children}</main>
       <Footer />
       <CartDrawer />
       <WhatsAppFAB />
-    </>
+    </div>
   )
 }
 
@@ -95,17 +97,19 @@ export default function App() {
 
         {/* Auth */}
         <Route path="/login" element={<RedirectIfAuth><LoginPage /></RedirectIfAuth>} />
+        <Route path="/admin/login" element={<RedirectIfAdminAuth><AdminLoginPage /></RedirectIfAdminAuth>} />
+        <Route path="/admin/forgot-password" element={<RedirectIfAdminAuth><AdminForgotPasswordPage /></RedirectIfAdminAuth>} />
         <Route path="/signup" element={<RedirectIfAuth><SignupPage /></RedirectIfAuth>} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
         {/* Account */}
-        <Route path="/account" element={<RequireAuth><PublicLayout><AccountPage /></PublicLayout></RequireAuth>} />
-        <Route path="/account/orders" element={<RequireAuth><PublicLayout><OrdersPage /></PublicLayout></RequireAuth>} />
-        <Route path="/account/orders/:id" element={<RequireAuth><PublicLayout><OrderDetailPage /></PublicLayout></RequireAuth>} />
+        <Route path="/account" element={<RequireCustomer><PublicLayout><AccountPage /></PublicLayout></RequireCustomer>} />
+        <Route path="/account/orders" element={<RequireCustomer><PublicLayout><OrdersPage /></PublicLayout></RequireCustomer>} />
+        <Route path="/account/orders/:id" element={<RequireCustomer><PublicLayout><OrderDetailPage /></PublicLayout></RequireCustomer>} />
 
         {/* Checkout */}
-        <Route path="/checkout" element={<RequireAuth><PublicLayout><CheckoutPage /></PublicLayout></RequireAuth>} />
-        <Route path="/order-confirmation/:id" element={<RequireAuth><PublicLayout><OrderConfirmationPage /></PublicLayout></RequireAuth>} />
+        <Route path="/checkout" element={<RequireCustomer><PublicLayout><CheckoutPage /></PublicLayout></RequireCustomer>} />
+        <Route path="/order-confirmation/:id" element={<RequireCustomer><PublicLayout><OrderConfirmationPage /></PublicLayout></RequireCustomer>} />
 
         {/* Admin */}
         <Route path="/admin" element={<RequireStaff><AdminLayout /></RequireStaff>}>

@@ -11,7 +11,6 @@ import ScarcityCounter from '@/components/shared/ScarcityCounter'
 import { SHOE_SIZES, HEAD_SIZES, PRODUCT_COLORS, type ProductColor } from '@/types'
 import { helpWhatsappLink } from '@/lib/utils'
 import toast from 'react-hot-toast'
-
 export default function ProductPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
@@ -45,14 +44,15 @@ export default function ProductPage() {
   }
 
   const handleAddToCart = () => {
-    if (!product || !validate()) return
+    if (!product || !validate()) return false
 
     if (remaining <= 0) {
       toast.error('This edition is sold out.')
-      return
+      return false
     }
 
     addItem({
+      lineId: [product.id, preferredColor, shoeSize, headSize].join(':'),
       productId: product.id,
       productName: product.name,
       productSlug: product.slug,
@@ -67,11 +67,13 @@ export default function ProductPage() {
     })
     openCart()
     toast.success('Added to your selection.')
+    return true
   }
 
   const handleBuyNow = () => {
-    if (!product || !validate()) return
-    handleAddToCart()
+    if (!product) return
+    const added = handleAddToCart()
+    if (!added) return
     navigate('/checkout')
   }
 
@@ -384,11 +386,11 @@ export default function ProductPage() {
         <section className="border-t border-black/8 py-20 px-6">
           <div className="max-w-7xl mx-auto">
             <p className="section-label text-center mb-12">Craftsmanship Details</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
               {product.features.map((feature, i) => (
                 <div key={i} className="flex gap-4">
                   <span className="font-display text-gold text-xs mt-1">0{i + 1}</span>
-                  <p className="font-body text-base text-afinju-black/70">{feature}</p>
+                  <p className="font-body text-sm md:text-base text-afinju-black/70">{feature}</p>
                 </div>
               ))}
             </div>

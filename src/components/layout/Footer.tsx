@@ -25,11 +25,15 @@ export function Footer() {
   return (
     <footer className="bg-afinju-black text-afinju-cream">
       <div className="max-w-7xl mx-auto px-6 lg:px-12 pt-20 pb-10">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-12 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-12 mb-16 items-start">
           {/* Brand */}
-          <div className="md:col-span-2">
-            <Link to="/" className="font-display text-2xl tracking-[0.25em] block mb-5">
-              AFINJU
+          <div className="md:col-span-2 flex flex-col items-center">
+            <Link to="/" className="inline-flex items-center gap-4 mb-5">
+              <img src="/logo.png" alt="Afínjú" className="h-14 w-14 rounded-2xl object-cover" />
+              <span className="flex flex-col leading-none">
+                <span className="font-display text-sm tracking-[0.22em] text-afinju-cream">Afínjú</span>
+                <span className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-afinju-cream/45">Authority Set</span>
+              </span>
             </Link>
             <p className="font-body text-afinju-cream/45 text-base leading-relaxed max-w-xs mb-6">
               The authority set for the man who has decided that his standard is non-negotiable.
@@ -49,7 +53,7 @@ export function Footer() {
 
           {/* Link columns */}
           {Object.entries(links).map(([title, items]) => (
-            <div key={title}>
+            <div key={title} className="flex flex-col items-center">
               <h4 className="font-sans text-[10px] tracking-[0.25em] uppercase text-gold/60 mb-5">
                 {title}
               </h4>
@@ -70,9 +74,9 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-white/8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="border-t border-white/8 pt-8 flex flex-col items-center gap-4">
           <p className="font-sans text-xs text-afinju-cream/25 tracking-wider">
-            © {year} AFINJU. All rights reserved. Made in Nigeria.
+            © {year} Afínjú. All rights reserved. Made in Nigeria.
           </p>
           <p className="font-body text-xs text-afinju-cream/20 italic">
             Authority is not given. It is worn.

@@ -31,12 +31,9 @@ service cloud.firestore {
     }
 
     // ── Orders ──────────────────────────────────────────────────────────────
-    // Customers can create orders and read their own; staff can read/update all
+    // Order creation is now handled exclusively by Cloud Functions.
     match /orders/{orderId} {
-      allow create: if isAuthenticated() &&
-        request.resource.data.userId == request.auth.uid &&
-        request.resource.data.paymentStatus == 'unpaid' &&
-        request.resource.data.status == 'pending_payment';
+      allow create: if false;
 
       // Owner can read their own order
       allow read: if isAuthenticated() &&

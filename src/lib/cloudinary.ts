@@ -50,6 +50,8 @@ export function cloudinaryUrl(
   return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${transformStr}/${publicIdOrUrl}`
 }
 
+import { getCloudinaryUploadSignature } from './db'
+
 /** Responsive srcset for Cloudinary images */
 export function cloudinarySrcSet(publicIdOrUrl: string, widths = [400, 800, 1200, 1600]) {
   return widths
@@ -58,22 +60,25 @@ export function cloudinarySrcSet(publicIdOrUrl: string, widths = [400, 800, 1200
 }
 
 /**
- * Upload an image to Cloudinary via signed upload (admin).
- * Requires unsigned upload preset for client-side or a signed endpoint.
+ * Upload an image to Cloudinary securely using a signed request from the backend.
  */
 export async function uploadToCloudinary(
   file: File,
   folder: string
 ): Promise<{ publicId: string; url: string }> {
-  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+  // 1. Get secure signature from Cloud Function
+  const { timestamp, signature, apiKey, cloudName } = await getCloudinaryUploadSignature()
 
+  // 2. Upload directly to Cloudinary using the signature
   const formData = new FormData()
   formData.append('file', file)
-  formData.append('upload_preset', uploadPreset)
+  formData.append('api_key', apiKey)
+  formData.append('timestamp', timestamp.toString())
+  formData.append('signature', signature)
   formData.append('folder', `afinju/${folder}`)
 
   const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+    `https://api.cloudinary.com/v1_1/${cloudName || CLOUD_NAME}/image/upload`,
     { method: 'POST', body: formData }
   )
 

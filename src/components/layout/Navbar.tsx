@@ -12,7 +12,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const { itemCount, openCart } = useCartStore()
-  const { user, isAdmin } = useAuthStore()
+  const { user, isAdmin, isStaff } = useAuthStore()
   const location = useLocation()
   const count = itemCount()
 
@@ -38,7 +38,7 @@ export function Navbar() {
         <div className="flex marquee-track">
           {Array.from({ length: 4 }).map((_, i) => (
             <span key={i} className="flex-shrink-0 px-12 font-sans text-xs tracking-[0.25em] uppercase">
-              Only Ten Men Will Own This Launch Edition &nbsp;·&nbsp; Once It Is Closed, It Is Closed &nbsp;·&nbsp; AFINJU - Authority Set &nbsp;·&nbsp;
+              Only Ten Men Will Own This Launch Edition &nbsp;·&nbsp; Once It Is Closed, It Is Closed &nbsp;·&nbsp; Afínjú - Authority Set &nbsp;·&nbsp;
             </span>
           ))}
         </div>
@@ -49,8 +49,14 @@ export function Navbar() {
         scrolled ? 'bg-afinju-offwhite/95 backdrop-blur-md shadow-sm' : 'bg-afinju-offwhite'
       )}>
         <div className="max-w-7xl mx-auto px-6 lg:px-12 h-20 flex items-center justify-between">
-          <Link to="/" className="font-display text-xl tracking-[0.3em] text-afinju-black hover:text-gold transition-colors duration-300">
-            AFINJU
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-300">
+            <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-black/8 bg-afinju-cream">
+              <img src="/logo.png" alt="Afínjú" className="h-10 w-10 object-contain" />
+            </span>
+            <span className="flex flex-col leading-none">
+              <span className="font-display text-sm tracking-[0.22em] text-afinju-black">Afínjú</span>
+              <span className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-afinju-black/45">Authority Set</span>
+            </span>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-10">
@@ -69,14 +75,16 @@ export function Navbar() {
           <div className="flex items-center gap-5">
             {user ? (
               <div className="hidden lg:flex items-center gap-4">
-                {isAdmin() && (
+                {isStaff() && (
                   <Link to="/admin" className="font-sans text-xs tracking-[0.18em] uppercase text-gold hover:text-gold-dark transition-colors">
-                    Admin
+                    Admin Portal
                   </Link>
                 )}
-                <Link to="/account" className="text-afinju-black/70 hover:text-afinju-black transition-colors">
-                  <User size={18} strokeWidth={1.5} />
-                </Link>
+                {!isStaff() && (
+                  <Link to="/account" className="text-afinju-black/70 hover:text-afinju-black transition-colors">
+                    <User size={18} strokeWidth={1.5} />
+                  </Link>
+                )}
                 <button onClick={() => signOut(auth)} className="text-afinju-black/40 hover:text-afinju-black/70 transition-colors">
                   <LogOut size={16} strokeWidth={1.5} />
                 </button>
@@ -125,8 +133,8 @@ export function Navbar() {
               ))}
               {user ? (
                 <>
-                  <Link to="/account" className="font-sans text-sm tracking-[0.2em] uppercase text-afinju-black/70">My Account</Link>
-                  {isAdmin() && <Link to="/admin" className="font-sans text-sm tracking-[0.2em] uppercase text-gold">Admin Dashboard</Link>}
+                  {!isStaff() && <Link to="/account" className="font-sans text-sm tracking-[0.2em] uppercase text-afinju-black/70">My Account</Link>}
+                  {isStaff() && <Link to="/admin" className="font-sans text-sm tracking-[0.2em] uppercase text-gold">Admin Portal</Link>}
                   <button onClick={() => signOut(auth)} className="font-sans text-sm tracking-[0.2em] uppercase text-left text-afinju-black/40">Sign Out</button>
                 </>
               ) : (

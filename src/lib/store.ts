@@ -9,13 +9,22 @@ interface CartStore {
   items: CartItem[]
   isOpen: boolean
   addItem: (item: CartItem) => void
-  removeItem: (productId: string) => void
-  updateQuantity: (productId: string, quantity: number) => void
+  removeItem: (lineId: string) => void
+  updateQuantity: (lineId: string, quantity: number) => void
   clearCart: () => void
   openCart: () => void
   closeCart: () => void
   total: () => number
   itemCount: () => number
+}
+
+function getCartLineId(item: CartItem): string {
+  return item.lineId || [
+    item.productId,
+    item.preferences?.preferredColor || '',
+    item.preferences?.shoeSize || '',
+    item.preferences?.headSize || '',
+  ].join(':')
 }
 
 export const useCartStore = create<CartStore>()(
@@ -25,31 +34,32 @@ export const useCartStore = create<CartStore>()(
       isOpen: false,
 
       addItem: (item) => {
-        const existing = get().items.find((i) => i.productId === item.productId)
+        const itemLineId = getCartLineId(item)
+        const existing = get().items.find((i) => getCartLineId(i) === itemLineId)
         if (existing) {
           set({
             items: get().items.map((i) =>
-              i.productId === item.productId
-                ? { ...i, quantity: i.quantity + item.quantity }
+              getCartLineId(i) === itemLineId
+                ? { ...i, lineId: itemLineId, quantity: i.quantity + item.quantity }
                 : i
             ),
           })
         } else {
-          set({ items: [...get().items, item] })
+          set({ items: [...get().items, { ...item, lineId: itemLineId }] })
         }
       },
 
-      removeItem: (productId) =>
-        set({ items: get().items.filter((i) => i.productId !== productId) }),
+      removeItem: (lineId) =>
+        set({ items: get().items.filter((i) => getCartLineId(i) !== lineId) }),
 
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: (lineId, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(productId)
+          get().removeItem(lineId)
           return
         }
         set({
           items: get().items.map((i) =>
-            i.productId === productId ? { ...i, quantity } : i
+            getCartLineId(i) === lineId ? { ...i, lineId, quantity } : i
           ),
         })
       },

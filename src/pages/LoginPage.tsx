@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { signInWithEmailAndPassword } from 'firebase/auth'
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 import { Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -29,7 +29,17 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     try {
-      await signInWithEmailAndPassword(auth, data.email, data.password)
+      const cred = await signInWithEmailAndPassword(auth, data.email, data.password)
+      const tokenResult = await cred.user.getIdTokenResult(true)
+      const role = tokenResult.claims.role as string | undefined
+
+      if (role === 'admin' || role === 'staff') {
+        await signOut(auth)
+        toast.error('Admin users must sign in through the admin portal.')
+        navigate('/admin/login')
+        return
+      }
+
       toast.success('Welcome back.')
       navigate(returnTo)
     } catch (err: any) {
@@ -46,7 +56,7 @@ export default function LoginPage() {
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
       {/* Left — Brand panel */}
       <div className="hidden lg:flex flex-col bg-afinju-black text-afinju-cream p-16 justify-between">
-        <Link to="/" className="font-display text-xl tracking-[0.3em]">AFINJU</Link>
+        <Link to="/" className="font-display text-xl tracking-[0.3em]">Afínjú</Link>
         <div className="max-w-sm">
           <p className="font-heading text-3xl italic text-gold/80 mb-6">
             "Not for you if you cannot handle attention."
@@ -57,7 +67,7 @@ export default function LoginPage() {
           </p>
         </div>
         <p className="font-sans text-xs text-afinju-cream/20 tracking-wider">
-          © 2024 AFINJU
+          © 2024 Afínjú
         </p>
       </div>
 
@@ -65,7 +75,7 @@ export default function LoginPage() {
       <div className="flex items-center justify-center px-8 py-16">
         <div className="w-full max-w-sm">
           <Link to="/" className="font-display text-lg tracking-[0.3em] block lg:hidden mb-12">
-            AFINJU
+            Afínjú
           </Link>
 
           <div className="mb-10">

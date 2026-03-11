@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -46,6 +46,8 @@ export default function CheckoutPage() {
   const subtotal = total()
   const shippingFee = 5000 // ₦5,000 flat
   const orderTotal = subtotal + shippingFee
+  const getLineId = (item: typeof items[number]) =>
+    item.lineId || [item.productId, item.preferences?.preferredColor || '', item.preferences?.shoeSize || '', item.preferences?.headSize || ''].join(':')
 
   const {
     register,
@@ -63,9 +65,9 @@ export default function CheckoutPage() {
   if (!items.length) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <p className="font-heading text-xl">Your cart is empty</p>
-          <a href="/shop" className="btn-luxury inline-block">Shop Now</a>
+          <div className="text-center space-y-4">
+            <p className="font-heading text-xl">Your cart is empty</p>
+          <Link to="/shop" className="btn-luxury inline-block">Shop Now</Link>
         </div>
       </div>
     )
@@ -87,11 +89,11 @@ export default function CheckoutPage() {
     setProcessing(true)
     const reference = generateReference()
 
-    // Create pending order first
+    // Create pending order securely
     let orderId: string
+    let serverTotal: number
     try {
-      orderId = await createOrder({
-        userId: user.uid,
+      const result = await createOrder({
         customerName: data.fullName,
         customerPhone: data.phone,
         customerAltPhone: data.altPhone,
@@ -104,28 +106,16 @@ export default function CheckoutPage() {
         },
         items: items.map((i) => ({
           productId: i.productId,
-          productName: i.productName,
-          productSlug: i.productSlug,
-          productImage: i.productImage,
-          price: i.price,
           quantity: i.quantity,
           preferences: i.preferences!,
         })),
-        subtotal,
-        shippingFee,
-        total: orderTotal,
-        currency: 'NGN',
-        paymentReference: reference,
-        paymentStatus: 'unpaid',
-        status: 'pending_payment',
-        statusTimeline: [
-          { status: 'pending_payment', timestamp: new Date(), note: 'Order created, awaiting payment.' },
-        ],
         notes: data.notes,
-        orderNumber: '',  // set by createOrder
       })
+      
+      orderId = result.orderId
+      serverTotal = result.total
     } catch (err) {
-      toast.error('Failed to create order. Please try again.')
+      toast.error('Failed to create order securely. Please try again.')
       setProcessing(false)
       return
     }
@@ -133,7 +123,7 @@ export default function CheckoutPage() {
     // Open Paystack
     openPaystackPopup({
       email: data.email || `${data.phone}@afinju.guest`,
-      amount: orderTotal,
+      amount: serverTotal,
       currency: 'NGN',
       reference,
       metadata: {
@@ -274,7 +264,7 @@ export default function CheckoutPage() {
                 <h2 className="font-display text-xs tracking-[0.25em]">ORDER SUMMARY</h2>
                 <div className="space-y-4">
                   {items.map((item) => (
-                    <div key={item.productId} className="flex gap-4">
+                    <div key={getLineId(item)} className="flex gap-4">
                       <div className="w-16 h-20 bg-white overflow-hidden flex-shrink-0">
                         <img
                           src={cloudinaryUrl(item.productImage, { width: 128, height: 160 })}

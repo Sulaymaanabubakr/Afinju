@@ -4,7 +4,7 @@ import { getWhatsAppUrl, BRAND_WHATSAPP } from '@/lib/utils'
 export function WhatsAppFAB() {
   return (
     <motion.a
-      href={getWhatsAppUrl(BRAND_WHATSAPP, 'Hello AFINJU, I\'m interested in the Launch Edition. Can you help me?')}
+      href={getWhatsAppUrl(BRAND_WHATSAPP, 'Hello Afínjú, I\'m interested in the Launch Edition. Can you help me?')}
       target="_blank"
       rel="noopener noreferrer"
       initial={{ scale: 0, opacity: 0 }}

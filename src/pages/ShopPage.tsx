@@ -8,10 +8,10 @@ import ScarcityCounter from '@/components/shared/ScarcityCounter'
 
 function ProductCardSkeleton() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="skeleton aspect-[3/4] w-full" />
-      <div className="skeleton h-5 w-3/4" />
-      <div className="skeleton h-4 w-1/3" />
+      <div className="skeleton h-4 w-3/4" />
+      <div className="skeleton h-3 w-1/3" />
     </div>
   )
 }
@@ -42,15 +42,15 @@ export default function ShopPage() {
       <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto">
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-              {[1, 2, 3].map((i) => <ProductCardSkeleton key={i} />)}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10 md:gap-x-8 md:gap-y-14">
+              {[1, 2, 3, 4].map((i) => <ProductCardSkeleton key={i} />)}
             </div>
           ) : !products?.length ? (
             <div className="text-center py-24">
               <p className="font-heading text-2xl text-afinju-black/40">Collection coming soon.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-16">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10 md:gap-x-8 md:gap-y-14 lg:gap-x-10 lg:gap-y-16">
               {products.map((product, i) => (
                 <motion.div
                   key={product.id}
@@ -60,7 +60,7 @@ export default function ShopPage() {
                 >
                   <Link to={`/product/${product.slug}`} className="group block">
                     {/* Image */}
-                    <div className="product-img-wrap aspect-[3/4] bg-afinju-cream mb-6 relative overflow-hidden">
+                    <div className="product-img-wrap aspect-[3/4] bg-afinju-cream mb-4 md:mb-6 relative overflow-hidden">
                       <img
                         src={product.images[0]?.url || '/placeholder-product.jpg'}
                         alt={product.images[0]?.alt || product.name}
@@ -69,8 +69,8 @@ export default function ShopPage() {
                       />
                       {/* Launch Edition Badge */}
                       {product.inventory.launchEditionLimit > 0 && (
-                        <div className="absolute top-4 left-4">
-                          <span className="bg-afinju-black text-afinju-cream font-sans text-[10px] tracking-[0.2em] uppercase px-3 py-1.5">
+                        <div className="absolute top-3 left-3 md:top-4 md:left-4">
+                          <span className="bg-afinju-black text-afinju-cream font-sans text-[9px] md:text-[10px] tracking-[0.18em] md:tracking-[0.2em] uppercase px-2.5 py-1.5 md:px-3">
                             Launch Edition
                           </span>
                         </div>
@@ -84,16 +84,16 @@ export default function ShopPage() {
                     </div>
 
                     {/* Info */}
-                    <div className="space-y-2">
-                      <h2 className="font-heading text-xl group-hover:text-gold transition-colors duration-200">
+                    <div className="space-y-1.5 md:space-y-2">
+                      <h2 className="font-heading text-base md:text-xl leading-snug group-hover:text-gold transition-colors duration-200">
                         {product.name}
                       </h2>
-                      <div className="flex items-center gap-3">
-                        <span className="font-sans text-base font-medium">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 md:gap-3">
+                        <span className="font-sans text-sm md:text-base font-medium">
                           {formatPrice(product.price)}
                         </span>
                         {product.compareAtPrice > product.price && (
-                          <span className="font-sans text-sm text-afinju-black/40 line-through">
+                          <span className="font-sans text-xs md:text-sm text-afinju-black/40 line-through">
                             {formatPrice(product.compareAtPrice)}
                           </span>
                         )}

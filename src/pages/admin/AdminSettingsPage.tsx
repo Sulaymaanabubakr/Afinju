@@ -12,7 +12,7 @@ export default function AdminSettingsPage() {
   })
 
   const [form, setForm] = useState({
-    storeName: 'AFINJU',
+    storeName: 'Afínjú',
     whatsappNumber: '2347071861932',
     supportEmail: '',
     shippingFee: 5000,

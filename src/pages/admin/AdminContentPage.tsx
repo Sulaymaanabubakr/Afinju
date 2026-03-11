@@ -10,8 +10,8 @@ export default function AdminContentPage() {
 
   const [form, setForm] = useState({
     announcementEnabled: true,
-    announcementText: 'Only Ten Men Will Own This Launch Edition · Once It Is Closed, It Is Closed · AFINJU — Authority Set',
-    heroHeadline: 'AFINJU is not for you if you cannot handle attention.',
+    announcementText: 'Only Ten Men Will Own This Launch Edition · Once It Is Closed, It Is Closed · Afínjú — Authority Set',
+    heroHeadline: 'Afínjú is not for you if you cannot handle attention.',
     heroSubheadline: 'The authority set for the man who understands that standards are not negotiable.',
     heroCta: 'Secure Your Position',
     scarcityEnabled: true,

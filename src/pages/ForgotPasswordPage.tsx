@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-sm">
-        <Link to="/" className="font-display text-xl tracking-[0.3em] block mb-12">AFINJU</Link>
+        <Link to="/" className="font-display text-xl tracking-[0.3em] block mb-12">Afínjú</Link>
 
         {sent ? (
           <div className="text-center space-y-6">

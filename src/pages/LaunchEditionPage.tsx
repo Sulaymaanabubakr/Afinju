@@ -6,44 +6,43 @@ import { getProducts } from '@/lib/db'
 import ScarcityCounter from '@/components/shared/ScarcityCounter'
 
 const PACKAGE_ITEMS = [
-  { name: 'Pure Skin Leather Half Shoe', desc: 'Hand-crafted from premium Nigerian leather, bevelled edges, mirror finish' },
-  { name: 'Matching Premium Purse', desc: 'Coordinated to the millimetre. Same leather, same tone, same authority' },
-  { name: 'Matching Gobi Cap', desc: 'The finishing touch. The signature of a man who notices everything' },
+  { name: 'Pure Skin Leather Half Shoe', desc: '(Black, Brown, Red and Blue)' },
+  { name: 'Matching Premium Leather Purse', desc: '(Black, Brown, Red and Blue)' },
+  { name: 'Matching Gobi Cap', desc: '(Black, Brown, Red and Blue)' },
   { name: 'Signature Oil Perfume', desc: 'A scent that announces your arrival before you speak' },
-  { name: 'Matching Polish Kit', desc: 'Maintain your investment. Your standards should never dip' },
   { name: 'Luxury Black Packaging Box', desc: 'A statement before you even open it. Gifting yourself is an act of authority' },
 ]
 
 const AUTHORITY_COPY = [
   {
     number: '01',
-    title: 'Attention is Currency',
-    body: 'The moment you enter a room in AFINJU, the conversation changes. People notice. They wonder. That is not an accident. That is the design.',
+    title: 'If You Cannot Stand Public Attention.',
+    body: 'When you step out in this half shoe, matching purse and Gobi cap, you will not blend in. You will command space. Eyes will follow you. Conversations will pause. If you prefer to enter quietly and leave unnoticed, this is not your package. Afínjú does not whisper. It announces.',
   },
   {
     number: '02',
-    title: 'No Assumptions Here',
-    body: 'This is not for everyone. Either you understand what presence means or you will remain comfortable. We are not trying to convince you.',
+    title: 'If You Prefer To Go Unnoticed.',
+    body: 'This set is built for visible occasions. It draws compliments, attention, and questions. If you prefer a quieter presence, it will feel like too much. If that makes you uncomfortable, keep your money.',
   },
   {
     number: '03',
-    title: 'Cheap is the Real Waste',
-    body: 'You spend on cheap things, replace them endlessly, and arrive nowhere. AFINJU is an investment with a permanent return: respect.',
+    title: 'If You Cannot Handle Assumptions.',
+    body: 'Afínjú comes with a professionally formulated signature oil perfume. It is designed to be noticed. When you enter a room, your presence arrives before you speak. If you are not ready for that level of attention, Afínjú is not for you.',
   },
   {
     number: '04',
-    title: 'Elevation is a Choice',
-    body: 'The men who own rooms do not wait to be invited. They elevate their standard, and the world adjusts. AFINJU is that choice made visible.',
+    title: 'If You Still Think Cheap Is Smart.',
+    body: 'This is not a market purchase. This is identity, finish, and positioning. If you measure value only by price instead of presentation, Afínjú is not for you.',
   },
   {
     number: '05',
-    title: 'Confidence Wears Well',
-    body: 'True confidence is not loud. It is the cut of your leather, the match of your accessories, the scent that stays after you leave.',
+    title: 'If You Are Afraid Of Elevation.',
+    body: 'This combination changes perception. People respond differently when a look feels complete. If you are not ready for that shift, Afínjú is not for you.',
   },
   {
     number: '06',
-    title: 'Premium is a Standard',
-    body: 'Mediocrity is always available. So is excellence. The difference is the man who decides his floor is higher than most men\'s ceiling.',
+    title: 'If You Lack Confidence',
+    body: 'This package amplifies who you are. If you are unsure of yourself, it will expose it. Afínjú is bold and it amplifies presence. If you are not ready to carry that confidence, it is not for you.',
   },
 ]
 
@@ -68,14 +67,13 @@ export default function LaunchEditionPage() {
             <div className="scarcity-pill mb-8">
               Launch Edition - 10 Units Only
             </div>
-            <h1 className="font-heading text-4xl md:text-6xl lg:text-7xl leading-[1.05] mb-8">
-              AFINJU is not for you if you cannot handle{' '}
-              <span className="text-gold italic">attention.</span>
+            <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl leading-[1.05] mb-8">
+              Afínjú is not for{' '}
+              <span className="text-gold italic">everybody!</span>
             </h1>
             <div className="gold-rule mx-auto mb-8" />
             <p className="font-body text-afinju-cream/60 text-xl mb-12 max-w-xl mx-auto">
-              The authority set for the man who has decided that his standard is non-negotiable.
-              Once it is closed, it is closed.
+              If you find yourself in any of these six categories, Afínjú is probably not for you.
             </p>
             {product && (
               <div className="flex flex-wrap items-center gap-6 justify-center">
@@ -109,10 +107,10 @@ export default function LaunchEditionPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <p className="section-label">The Complete Authority Set</p>
-            <h2 className="font-heading text-4xl md:text-5xl mb-4">Six Pieces. One Standard.</h2>
+            <h2 className="font-heading text-4xl md:text-5xl mb-4">What does Afínjú package contain?</h2>
             <div className="gold-rule mx-auto" />
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-black/8">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-px bg-black/8">
             {PACKAGE_ITEMS.map((item, i) => (
               <motion.div
                 key={i}
@@ -120,15 +118,15 @@ export default function LaunchEditionPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08, duration: 0.5 }}
-                className="bg-afinju-offwhite p-10 group hover:bg-afinju-cream transition-colors duration-300"
+                className="bg-afinju-offwhite p-5 md:p-10 group hover:bg-afinju-cream transition-colors duration-300"
               >
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-8 h-8 border border-gold/40 flex items-center justify-center mt-1">
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <div className="flex-shrink-0 w-7 h-7 md:w-8 md:h-8 border border-gold/40 flex items-center justify-center mt-1">
                     <Check size={14} className="text-gold" strokeWidth={2} />
                   </div>
                   <div>
-                    <h3 className="font-heading text-xl mb-2">{item.name}</h3>
-                    <p className="font-body text-afinju-black/55 leading-relaxed">{item.desc}</p>
+                    <h3 className="font-heading text-base md:text-xl mb-2 leading-snug">{item.name}</h3>
+                    <p className="font-body text-sm md:text-base text-afinju-black/55 leading-relaxed">{item.desc}</p>
                   </div>
                 </div>
               </motion.div>
@@ -141,10 +139,10 @@ export default function LaunchEditionPage() {
       <section className="bg-afinju-black text-afinju-cream py-28 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <p className="section-label text-gold/60">The Philosophy</p>
-            <h2 className="font-heading text-4xl md:text-5xl text-afinju-cream">Why AFINJU</h2>
+            <p className="section-label text-gold/60">The Filter</p>
+            <h2 className="font-heading text-4xl md:text-5xl text-afinju-cream">6 reasons not to buy</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-12">
             {AUTHORITY_COPY.map((section, i) => (
               <motion.div
                 key={i}
@@ -155,8 +153,8 @@ export default function LaunchEditionPage() {
                 className="border-t border-white/10 pt-8"
               >
                 <p className="font-display text-gold text-xs tracking-[0.3em] mb-4">{section.number}</p>
-                <h3 className="font-heading text-2xl text-afinju-cream mb-4">{section.title}</h3>
-                <p className="font-body text-afinju-cream/50 leading-relaxed">{section.body}</p>
+                <h3 className="font-heading text-lg md:text-2xl text-afinju-cream mb-4">{section.title}</h3>
+                <p className="font-body text-sm md:text-base text-afinju-cream/50 leading-relaxed">{section.body}</p>
               </motion.div>
             ))}
           </div>
@@ -167,18 +165,32 @@ export default function LaunchEditionPage() {
       <section className="py-28 px-6 bg-afinju-cream">
         <div className="max-w-3xl mx-auto text-center">
           <p className="section-label mb-6">For Those Who Qualify</p>
-          <h2 className="font-heading text-4xl md:text-5xl lg:text-6xl mb-8 leading-tight">
-            Welcome. You are <span className="text-gold italic">AFINJU.</span>
+          <h2 className="font-heading text-4xl md:text-5xl lg:text-5xl mb-8 leading-tight">
+            Welcome to the <span className="text-gold italic block mt-2">Afínjú Men's Club.</span>
           </h2>
           <div className="gold-rule mx-auto mb-8" />
           <p className="font-body text-xl text-afinju-black/65 mb-4 leading-relaxed">
-            If you have read this far, you already know. You have not been looking for permission.
-            You have been waiting for something worthy of your standards.
+            If you have passed these six categories, then congratulations. Every piece was designed for one outcome: impact.
           </p>
           <p className="font-body text-xl text-afinju-black/65 mb-12 leading-relaxed">
-            This is it. Only 10 men will own this launch edition.
-            Will you be one of them?
+            When you step out in Afínjú, you do not blend in. You command space. Eyes follow you. Conversations slow down.
           </p>
+          <div className="max-w-xl mx-auto mb-10 border border-gold/20 bg-white/40 px-6 py-6">
+            <p className="font-sans text-[10px] tracking-[0.24em] uppercase text-gold-dark">
+              Launch Details
+            </p>
+            <p className="mt-4 font-body text-base text-afinju-black/70 leading-relaxed">
+              Only for the first ten men to order. Includes free delivery within 2 to 5 days.
+            </p>
+            <a
+              href="https://wa.me/2347071861932"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex mt-5 items-center justify-center border border-gold/30 px-6 py-3 font-sans text-xs tracking-[0.16em] uppercase text-gold-dark transition-colors hover:border-gold-dark hover:text-gold-dark"
+            >
+              Send sizing details on WhatsApp
+            </a>
+          </div>
           {product && (
             <Link
               to={`/product/${product.slug}`}

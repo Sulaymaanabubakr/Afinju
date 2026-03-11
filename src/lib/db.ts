@@ -15,7 +15,8 @@ import {
   onSnapshot,
   type DocumentData,
 } from 'firebase/firestore'
-import { db } from './firebase'
+import { httpsCallable } from 'firebase/functions'
+import { db, functions } from './firebase'
 import type {
   Product,
   Order,
@@ -99,15 +100,27 @@ export async function upsertProduct(product: Partial<Product> & { id?: string })
 }
 
 // ─── ORDERS ───────────────────────────────────────────────────────────────────
-export async function createOrder(order: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-  const now = serverTimestamp()
-  const ref = await addDoc(collection(db, 'orders'), {
-    ...order,
-    orderNumber: generateOrderNumber(),
-    createdAt: now,
-    updatedAt: now,
-  })
-  return ref.id
+export async function createOrder(data: {
+  items: any[]
+  customerName: string
+  customerPhone: string
+  customerAltPhone?: string
+  customerEmail?: string
+  deliveryAddress: any
+  notes?: string
+}): Promise<{ orderId: string; orderNumber: string; total: number }> {
+  const createOrderCallable = httpsCallable<{
+    items: any[]
+    customerName: string
+    customerPhone: string
+    customerAltPhone?: string
+    customerEmail?: string
+    deliveryAddress: any
+    notes?: string
+  }, { orderId: string; orderNumber: string; total: number }>(functions, 'createOrder')
+
+  const result = await createOrderCallable(data)
+  return result.data
 }
 
 export async function getOrderById(id: string): Promise<Order | null> {
@@ -233,4 +246,14 @@ export async function getRemainingUnits(productId: string): Promise<number> {
   const product = await getProductById(productId)
   if (!product) return 0
   return Math.max(0, product.inventory.launchEditionLimit - product.inventory.soldCount)
+}
+
+// ─── UPLOADS ─────────────────────────────────────────────────────────────────
+export async function getCloudinaryUploadSignature() {
+  const getSignature = httpsCallable<void, { timestamp: number; signature: string; apiKey: string; cloudName: string }>(
+    functions,
+    'getCloudinarySignature'
+  )
+  const result = await getSignature()
+  return result.data
 }

@@ -68,7 +68,7 @@ export default function AdminOrderDetailPage() {
     )
   }
 
-  const waGreeting = `Hello ${order.customerName}, this is AFINJU regarding your order #${order.orderNumber}.`
+  const waGreeting = `Hello ${order.customerName}, this is Afínjú regarding your order #${order.orderNumber}.`
   const waLink = whatsappLink(order.customerPhone, waGreeting)
 
   return (
@@ -125,7 +125,7 @@ export default function AdminOrderDetailPage() {
               </a>
               {order.customerEmail && (
                 <a
-                  href={`mailto:${order.customerEmail}?subject=Your AFINJU Order ${order.orderNumber}`}
+                  href={`mailto:${order.customerEmail}?subject=Your Afínjú Order ${order.orderNumber}`}
                   className="flex items-center gap-2 border border-black/15 px-4 py-2 font-sans text-xs tracking-wider hover:border-afinju-black transition-colors"
                 >
                   <Mail size={12} strokeWidth={2} /> Email

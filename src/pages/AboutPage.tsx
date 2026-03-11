@@ -21,7 +21,7 @@ export default function AboutPage() {
       <section className="py-24 px-6">
         <div className="max-w-3xl mx-auto space-y-10 font-body text-lg text-afinju-black/75 leading-relaxed text-center">
           <p>
-            AFINJU was not born from a business plan. It was born from a frustration. The kind that comes from watching
+            Afínjú was not born from a business plan. It was born from a frustration. The kind that comes from watching
             men of genuine calibre dress beneath their worth. The kind that comes from walking into a room knowing you
             are the most capable person there, but having nothing on your body that communicates that truth.
           </p>
@@ -30,9 +30,9 @@ export default function AboutPage() {
             values. When a man invests in himself at the highest level, he signals to every room he enters: <em>I operate
               at a different standard.</em>
           </p>
-          <div className="border-l-2 border-gold pl-8 py-2 text-left max-w-lg mx-auto">
+          <div className="border-t-2 border-gold pt-6 px-4 max-w-lg mx-auto text-center">
             <p className="font-heading text-2xl text-afinju-black italic leading-snug">
-              "AFINJU is not for you if you cannot handle attention."
+              "Afínjú is not for you if you cannot handle attention."
             </p>
           </div>
           <p>
@@ -41,14 +41,14 @@ export default function AboutPage() {
             room receives you before you open your mouth.
           </p>
           <p>
-            The AFINJU Authority Set, our flagship launch collection, is the full expression of this philosophy.
+            The Afínjú Authority Set, our flagship launch collection, is the full expression of this philosophy.
             Six coordinated pieces, crafted from premium Nigerian leather, designed to work as one unified statement.
             From shoe to purse, cap to scent, polish to packaging, every element speaks the same language: <em>this man
               is decided.</em>
           </p>
           <p>
             We produce in limited quantities by design. Not as a marketing tactic. As a principle. The men who wear
-            AFINJU are not common. The set should not be either.
+            Afínjú are not common. The set should not be either.
           </p>
         </div>
       </section>
@@ -60,11 +60,11 @@ export default function AboutPage() {
             <p className="section-label mb-3">Our Principles</p>
             <h2 className="font-heading text-4xl">What We Stand For</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-10">
             {[
               { title: 'Premium Without Compromise', body: 'Every material, every stitch, every finish is held to the same question: is this worthy of the man who will wear it? If the answer is anything other than yes, it does not leave our workshop.' },
               { title: 'Limited by Design', body: 'Mass production and prestige are incompatible. We produce what we can make with absolute care. Nothing more. When it is gone, it is gone, and that is exactly the point.' },
-              { title: 'Nigerian Excellence', body: 'AFINJU is made in Nigeria, for the African man of authority. We are not imitating anyone. We are setting the standard for what Nigerian luxury looks, feels, and communicates.' },
+              { title: 'Nigerian Excellence', body: 'Afínjú is made in Nigeria, for the African man of authority. We are not imitating anyone. We are setting the standard for what Nigerian luxury looks, feels, and communicates.' },
             ].map((v, i) => (
               <motion.div
                 key={i}
@@ -72,10 +72,10 @@ export default function AboutPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
-                className="border-t border-black/10 pt-8 text-center"
+                className="border-t border-black/10 pt-6 md:pt-8 text-center"
               >
-                <h3 className="font-heading text-xl mb-4">{v.title}</h3>
-                <p className="font-body text-afinju-black/60 leading-relaxed">{v.body}</p>
+                <h3 className="font-heading text-lg md:text-xl mb-3 md:mb-4">{v.title}</h3>
+                <p className="font-body text-sm md:text-base text-afinju-black/60 leading-relaxed">{v.body}</p>
               </motion.div>
             ))}
           </div>

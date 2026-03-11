@@ -34,7 +34,7 @@ export default function SignupPage() {
     try {
       const cred = await createUserWithEmailAndPassword(auth, data.email, data.password)
       await updateProfile(cred.user, { displayName: data.displayName })
-      toast.success('Account created. Welcome to AFINJU.')
+      toast.success('Account created. Welcome to Afínjú.')
       navigate('/account')
     } catch (err: any) {
       const msg = err.code === 'auth/email-already-in-use'
@@ -49,7 +49,7 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
       <div className="hidden lg:flex flex-col bg-afinju-black text-afinju-cream p-16 justify-between">
-        <Link to="/" className="font-display text-xl tracking-[0.3em]">AFINJU</Link>
+        <Link to="/" className="font-display text-xl tracking-[0.3em]">Afínjú</Link>
         <div className="max-w-sm">
           <p className="font-heading text-3xl italic text-gold/80 mb-6">
             "Only ten men will own this launch edition."
@@ -59,13 +59,13 @@ export default function SignupPage() {
             Create your account. Secure your position. Claim the authority set.
           </p>
         </div>
-        <p className="font-sans text-xs text-afinju-cream/20 tracking-wider">© 2024 AFINJU</p>
+        <p className="font-sans text-xs text-afinju-cream/20 tracking-wider">© 2024 Afínjú</p>
       </div>
 
       <div className="flex items-center justify-center px-8 py-16">
         <div className="w-full max-w-sm">
           <div className="mb-10">
-            <p className="section-label mb-2">Join AFINJU</p>
+            <p className="section-label mb-2">Join Afínjú</p>
             <h1 className="font-heading text-3xl">Create Account</h1>
           </div>
 

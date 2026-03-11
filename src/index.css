@@ -49,6 +49,36 @@
     line-height: 1.7;
   }
 
+  .public-site main,
+  .public-site footer {
+    text-align: center;
+  }
+
+  .public-site main h1,
+  .public-site main h2,
+  .public-site main h3,
+  .public-site main h4,
+  .public-site main h5,
+  .public-site main h6,
+  .public-site main p,
+  .public-site main li,
+  .public-site main dt,
+  .public-site main dd,
+  .public-site main th,
+  .public-site main td,
+  .public-site main label,
+  .public-site footer h1,
+  .public-site footer h2,
+  .public-site footer h3,
+  .public-site footer h4,
+  .public-site footer h5,
+  .public-site footer h6,
+  .public-site footer p,
+  .public-site footer li,
+  .public-site footer a {
+    text-align: center;
+  }
+
   h1,
   h2,
   h3,

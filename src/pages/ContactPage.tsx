@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { MessageCircle, Phone, Mail } from 'lucide-react'
-import { helpWhatsappLink, BRAND_WHATSAPP } from '@/lib/utils'
+import { MessageCircle, Phone } from 'lucide-react'
+import { BRAND_WHATSAPP } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
 export default function ContactPage() {
@@ -10,7 +10,7 @@ export default function ContactPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     // For now, open WhatsApp with the message
-    const msg = `Hello AFINJU, my name is ${form.name}. ${form.message}`
+    const msg = `Hello Afínjú, my name is ${form.name}. ${form.message}`
     window.open(`https://wa.me/${BRAND_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank')
     setSent(true)
     toast.success('Opening WhatsApp with your message.')
@@ -81,8 +81,8 @@ export default function ContactPage() {
             <p className="section-label mb-6">Send a Message</p>
             {sent ? (
               <div className="p-8 bg-afinju-cream text-center">
-                <p className="font-heading text-xl mb-2">Message Sent</p>
-                <p className="font-body text-afinju-black/60">Your WhatsApp message has been prepared. We will respond shortly.</p>
+                <p className="font-heading text-xl mb-2">WhatsApp Opened</p>
+                <p className="font-body text-afinju-black/60">Your message has been prepared in WhatsApp. Send it there and we will respond shortly.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-7">

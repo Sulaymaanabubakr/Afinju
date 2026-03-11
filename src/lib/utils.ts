@@ -35,12 +35,12 @@ export function whatsappLink(phone: string, message: string): string {
 export const BRAND_WHATSAPP = '2347071861932'
 
 export function orderWhatsappLink(orderNumber: string): string {
-  const message = `Hello AFINJU, I just placed order #${orderNumber}. I'm reaching out regarding my purchase.`
+  const message = `Hello Afínjú, I just placed order #${orderNumber}. I'm reaching out regarding my purchase.`
   return whatsappLink(BRAND_WHATSAPP, message)
 }
 
 export function helpWhatsappLink(): string {
-  const message = `Hello AFINJU, I need help with sizing before placing my order.`
+  const message = `Hello Afínjú, I need help with sizing before placing my order.`
   return whatsappLink(BRAND_WHATSAPP, message)
 }
 

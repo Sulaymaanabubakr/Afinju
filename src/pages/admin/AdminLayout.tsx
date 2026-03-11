@@ -33,7 +33,7 @@ export default function AdminLayout() {
       )}>
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-6 border-b border-white/10">
-          <Link to="/" className="font-display text-sm tracking-[0.25em]">AFINJU</Link>
+          <Link to="/" className="font-display text-sm tracking-[0.25em]">Afínjú</Link>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white/50">
             <X size={18} strokeWidth={1.5} />
           </button>

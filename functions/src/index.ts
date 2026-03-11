@@ -1,6 +1,8 @@
 import * as functions from 'firebase-functions'
 import * as admin from 'firebase-admin'
 import axios from 'axios'
+import { Resend } from 'resend'
+import { v2 as cloudinary } from 'cloudinary'
 
 admin.initializeApp()
 const db = admin.firestore()
@@ -8,6 +10,25 @@ const db = admin.firestore()
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 const PAYSTACK_SECRET = functions.config().paystack?.secret_key || process.env.PAYSTACK_SECRET_KEY || ''
 const PAYSTACK_WEBHOOK_SECRET = functions.config().paystack?.webhook_secret || ''
+const RESEND_API_KEY = functions.config().resend?.api_key || process.env.RESEND_API_KEY || ''
+const ADMIN_EMAIL = functions.config().admin?.email || 'admin@afinju.com' // Fallback for notifications
+
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null
+
+// Cloudinary config
+cloudinary.config({
+  cloud_name: functions.config().cloudinary?.cloud_name || process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: functions.config().cloudinary?.api_key || process.env.CLOUDINARY_API_KEY,
+  api_secret: functions.config().cloudinary?.api_secret || process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+})
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function generateOrderNumber(): string {
+  const timestamp = Date.now().toString(36).toUpperCase()
+  const random = Math.random().toString(36).substring(2, 5).toUpperCase()
+  return `AFJ-${timestamp}-${random}`
+}
 
 // ─── HELPER: Verify Paystack Payment ─────────────────────────────────────────
 async function verifyPaystackPayment(reference: string): Promise<{
@@ -40,9 +61,104 @@ async function verifyPaystackPayment(reference: string): Promise<{
   }
 }
 
+// ─── CALLABLE: Create Order Securely ──────────────────────────────────────────
+export const createOrder = functions
+  .region('europe-west1')
+  .runWith({ timeoutSeconds: 30 })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated to create an order.')
+    }
+
+    const {
+      items, // { productId, quantity, preferences }
+      customerName,
+      customerPhone,
+      customerAltPhone,
+      customerEmail,
+      deliveryAddress,
+      notes,
+    } = data
+
+    if (!items || !items.length) {
+      throw new functions.https.HttpsError('invalid-argument', 'Cart is empty')
+    }
+
+    // Securely calculate total by fetching real prices from Firestore
+    let subtotal = 0
+    const orderItems = []
+
+    for (const item of items) {
+      const productDoc = await db.collection('products').doc(item.productId).get()
+      if (!productDoc.exists) {
+        throw new functions.https.HttpsError('not-found', `Product ${item.productId} not found`)
+      }
+      
+      const product = productDoc.data()!
+      if (product.status !== 'active') {
+        throw new functions.https.HttpsError('failed-precondition', `Product ${product.name} is not available`)
+      }
+
+      const itemTotal = product.price * item.quantity
+      subtotal += itemTotal
+
+      orderItems.push({
+        productId: item.productId,
+        productName: product.name,
+        productSlug: product.slug,
+        productImage: product.images?.[0]?.url || '',
+        price: product.price,
+        quantity: item.quantity,
+        preferences: item.preferences || {},
+      })
+    }
+
+    // Fetch store settings for shipping fee
+    const settingsDoc = await db.collection('config').doc('settings').get()
+    const settings = settingsDoc.exists ? settingsDoc.data()! : { shippingFee: 0 }
+    const shippingFee = settings.shippingFee || 0
+    const total = subtotal + shippingFee
+
+    // Construct Order
+    const orderNumber = generateOrderNumber()
+    const newOrder = {
+      orderNumber,
+      userId: context.auth.uid,
+      customerName,
+      customerPhone,
+      customerAltPhone: customerAltPhone || '',
+      customerEmail,
+      deliveryAddress,
+      items: orderItems,
+      subtotal,
+      shippingFee,
+      total,
+      currency: 'NGN',
+      paymentStatus: 'unpaid',
+      status: 'pending_payment',
+      statusTimeline: [
+        { status: 'pending_payment', timestamp: admin.firestore.FieldValue.serverTimestamp(), note: 'Order created, awaiting payment.' }
+      ],
+      notes: notes || '',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }
+
+    const orderRef = await db.collection('orders').add(newOrder)
+    
+    functions.logger.info(`Order ${orderNumber} securely created by user ${context.auth.uid}`, { orderId: orderRef.id })
+
+    return {
+      success: true,
+      orderId: orderRef.id,
+      orderNumber,
+      total,
+    }
+  })
+
 // ─── CALLABLE: Verify Payment & Confirm Order ─────────────────────────────────
 export const verifyPayment = functions
-  .region('us-central1')
+  .region('europe-west1')
   .runWith({ timeoutSeconds: 30 })
   .https.onCall(async (data: { reference: string; orderId: string }, context) => {
     // Require authenticated user
@@ -152,7 +268,7 @@ export const verifyPayment = functions
 
 // ─── WEBHOOK: Paystack Webhook (server-side verification fallback) ─────────────
 export const paystackWebhook = functions
-  .region('us-central1')
+  .region('europe-west1')
   .https.onRequest(async (req, res) => {
     if (req.method !== 'POST') {
       res.status(405).send('Method Not Allowed')
@@ -264,6 +380,117 @@ export const setAdminRole = functions
 
     functions.logger.info('Role assigned', { uid, role, by: context.auth.uid })
     return { success: true }
+  })
+
+// ─── CALLABLE: Secure Cloudinary Signature ────────────────────────────────────
+export const getCloudinarySignature = functions
+  .region('us-central1')
+  .https.onCall(async (data, context) => {
+    // Only admins/staff should generate upload signatures
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated')
+    }
+    
+    const callerRecord = await admin.auth().getUser(context.auth.uid)
+    const role = callerRecord.customClaims?.role
+    if (role !== 'admin' && role !== 'staff') {
+      throw new functions.https.HttpsError('permission-denied', 'Only authorized staff can upload images')
+    }
+
+    const timestamp = Math.round(new Date().getTime() / 1000)
+    
+    // Cloudinary expects params to be signed. We sign the timestamp.
+    const signature = cloudinary.utils.api_sign_request(
+      { timestamp },
+      cloudinary.config().api_secret as string
+    )
+
+    return {
+      timestamp,
+      signature,
+      apiKey: cloudinary.config().api_key,
+      cloudName: cloudinary.config().cloud_name
+    }
+  })
+
+// ─── FIRESTORE TRIGGER: Transactional Emails ──────────────────────────────────
+export const onOrderUpdated = functions
+  .region('us-central1')
+  .firestore.document('orders/{orderId}')
+  .onUpdate(async (change, context) => {
+    const orderBefore = change.before.data()
+    const orderAfter = change.after.data()
+
+    // Email sending requires RESEND API KEY
+    if (!RESEND_API_KEY) {
+      functions.logger.warn('RESEND_API_KEY missing - skipping transactional emails')
+      return null
+    }
+    if (!resend) {
+      functions.logger.warn('Resend client unavailable - skipping transactional emails')
+      return null
+    }
+
+    // 1. Order Confirmed/Paid Email
+    if (orderBefore.paymentStatus !== 'paid' && orderAfter.paymentStatus === 'paid') {
+      try {
+        // Send to Customer
+        await resend.emails.send({
+          from: 'AFINJU <orders@afinju.com>', // Replace with your verified domain
+          to: orderAfter.customerEmail || ADMIN_EMAIL,
+          subject: `AFINJU Order Confirmed - ${orderAfter.orderNumber}`,
+          html: `
+            <h1>Your AFINJU Authority Set is secured.</h1>
+            <p>Dear ${orderAfter.customerName},</p>
+            <p>We have received your payment of ₦${orderAfter.total.toLocaleString()} for order <strong>${orderAfter.orderNumber}</strong>.</p>
+            <p>Your launch edition set has been reserved and our craftsmen have been notified. We will update you once your order is packaged and dispatched.</p>
+            <br/>
+            <h3>Order Details:</h3>
+            <ul>
+              ${orderAfter.items.map((i: any) => `<li>${i.quantity}x ${i.productName} (Shoe: ${i.preferences?.shoeSize}, Head: ${i.preferences?.headSize}, Color: ${i.preferences?.preferredColor})</li>`).join('')}
+            </ul>
+            <p><strong>Delivery Address:</strong><br/>${orderAfter.deliveryAddress?.fullAddress}<br/>${orderAfter.deliveryAddress?.city}, ${orderAfter.deliveryAddress?.state}</p>
+            <br/>
+            <p>If you have questions, reply to this email.</p>
+            <p>Best regards,<br/>The AFINJU Team</p>
+          `
+        })
+
+        // Notify Admin
+        await resend.emails.send({
+          from: 'AFINJU System <system@afinju.com>',
+          to: ADMIN_EMAIL,
+          subject: `🚨 NEW PAID ORDER - ${orderAfter.orderNumber}`,
+          html: `<p>New Launch Edition order received for ${orderAfter.items[0]?.quantity} units. Total: ₦${orderAfter.total.toLocaleString()}</p>`
+        })
+      } catch (err: any) {
+        functions.logger.error('Failed to send Order Confirmation email', err)
+      }
+    }
+
+    // 2. Order Shipped Email
+    if (orderBefore.status !== 'dispatched' && orderAfter.status === 'dispatched') {
+      try {
+        await resend.emails.send({
+          from: 'AFINJU <orders@afinju.com>',
+          to: orderAfter.customerEmail || ADMIN_EMAIL,
+          subject: `AFINJU Order Dispatched - ${orderAfter.orderNumber}`,
+          html: `
+            <h1>Your AFINJU Set is on its way.</h1>
+            <p>Dear ${orderAfter.customerName},</p>
+            <p>Your order <strong>${orderAfter.orderNumber}</strong> has been dispatched.</p>
+            <p>Please ensure someone is available at the delivery address to receive it.</p>
+            <p><strong>Delivery Address:</strong><br/>${orderAfter.deliveryAddress?.fullAddress}<br/>${orderAfter.deliveryAddress?.city}, ${orderAfter.deliveryAddress?.state}</p>
+            <br/>
+            <p>Best regards,<br/>The AFINJU Team</p>
+          `
+        })
+      } catch (err: any) {
+        functions.logger.error('Failed to send Shipping email', err)
+      }
+    }
+
+    return null
   })
 
 // ─── HTTP: Bootstrap First Admin ──────────────────────────────────────────────

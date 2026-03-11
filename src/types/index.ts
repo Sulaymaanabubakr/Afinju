@@ -41,6 +41,7 @@ export interface Product {
 
 // ─── CART ─────────────────────────────────────────────────────────────────────
 export interface CartItem {
+  lineId: string
   productId: string
   productName: string
   productSlug: string
@@ -98,7 +99,7 @@ export interface Order {
   userId: string
   customerName: string
   customerPhone: string
-  customerAltPhone: string
+  customerAltPhone?: string
   customerEmail?: string
   deliveryAddress: DeliveryAddress
   items: OrderItem[]

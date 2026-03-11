@@ -49,7 +49,7 @@ export default function AdminCustomersPage() {
                         <a href={`tel:${user.phone}`} className="text-afinju-black/40 hover:text-afinju-black transition-colors">
                           <Phone size={13} strokeWidth={1.5} />
                         </a>
-                        <a href={whatsappLink(user.phone, `Hello ${user.displayName || ''}, this is AFINJU.`)} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 transition-colors">
+                        <a href={whatsappLink(user.phone, `Hello ${user.displayName || ''}, this is Afínjú.`)} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 transition-colors">
                           <MessageCircle size={13} strokeWidth={1.5} />
                         </a>
                       </>

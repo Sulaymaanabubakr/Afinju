@@ -42,7 +42,7 @@ export default function AdminOverviewPage() {
     <div className="space-y-8">
       <div>
         <h1 className="font-heading text-2xl mb-1">Dashboard</h1>
-        <p className="font-sans text-sm text-afinju-black/40">AFINJU Admin Overview</p>
+        <p className="font-sans text-sm text-afinju-black/40">Afínjú Admin Overview</p>
       </div>
 
       {/* Stats */}

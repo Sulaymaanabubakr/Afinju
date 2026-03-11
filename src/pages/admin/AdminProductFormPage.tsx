@@ -76,7 +76,7 @@ export default function AdminProductFormPage() {
         },
         status: form.status,
         seo: {
-          title: form.name + ' — AFINJU Authority Set',
+          title: form.name + ' — Afínjú Authority Set',
           description: form.description.slice(0, 160),
         },
       }
@@ -138,7 +138,7 @@ export default function AdminProductFormPage() {
           <input
             value={form.name}
             onChange={e => { setForm(f => ({ ...f, name: e.target.value, slug: slugify(e.target.value) })) }}
-            placeholder="AFINJU Authority Set — Launch Edition"
+            placeholder="Afínjú Authority Set — Launch Edition"
             className={inputClass}
           />
         </F>

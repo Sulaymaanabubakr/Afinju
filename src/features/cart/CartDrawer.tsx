@@ -7,6 +7,8 @@ import { cloudinaryUrl } from '@/lib/cloudinary'
 
 export function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, total } = useCartStore()
+  const getLineId = (item: typeof items[number]) =>
+    item.lineId || [item.productId, item.preferences?.preferredColor || '', item.preferences?.shoeSize || '', item.preferences?.headSize || ''].join(':')
 
   return (
     <AnimatePresence>
@@ -66,7 +68,7 @@ export function CartDrawer() {
               ) : (
                 <div className="space-y-6">
                   {items.map((item) => (
-                    <div key={item.productId} className="flex gap-4">
+                    <div key={getLineId(item)} className="flex gap-4">
                       {/* Image */}
                       <div className="w-20 h-24 flex-shrink-0 bg-afinju-cream overflow-hidden">
                         <img
@@ -93,21 +95,21 @@ export function CartDrawer() {
                         <div className="flex items-center justify-between mt-3">
                           <div className="flex items-center gap-3">
                             <button
-                              onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                              onClick={() => updateQuantity(getLineId(item), item.quantity - 1)}
                               className="w-6 h-6 border border-black/20 text-sm flex items-center justify-center hover:border-black transition-colors"
                             >
                               −
                             </button>
                             <span className="font-sans text-sm w-4 text-center">{item.quantity}</span>
                             <button
-                              onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                              onClick={() => updateQuantity(getLineId(item), item.quantity + 1)}
                               className="w-6 h-6 border border-black/20 text-sm flex items-center justify-center hover:border-black transition-colors"
                             >
                               +
                             </button>
                           </div>
                           <button
-                            onClick={() => removeItem(item.productId)}
+                            onClick={() => removeItem(getLineId(item))}
                             className="text-afinju-black/30 hover:text-destructive transition-colors"
                           >
                             <Trash2 size={14} strokeWidth={1.5} />

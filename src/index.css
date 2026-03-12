@@ -70,6 +70,10 @@
     .public-site main > section:first-of-type {
       padding-top: 5rem !important;
     }
+
+    .public-site .home-hero {
+      padding-top: 7rem !important;
+    }
   }
 
   .auth-luxury input:-webkit-autofill,

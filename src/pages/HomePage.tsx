@@ -86,7 +86,7 @@ export default function HomePage() {
   return (
     <div className="bg-obsidian">
       {/* ── Hero ────────────────────────────────────────────── */}
-      <section className="relative min-h-screen flex items-start md:items-center pt-10 md:pt-0 pb-16 md:pb-24 overflow-hidden">
+      <section className="home-hero relative min-h-screen flex items-start md:items-center pt-10 md:pt-0 pb-16 md:pb-24 overflow-hidden">
         {/* Background image */}
         <motion.div style={{ y }} className="absolute inset-0 z-0">
           <img

@@ -19,6 +19,11 @@ export function cloudinaryUrl(
 ): string {
   if (!publicIdOrUrl) return ''
 
+  // Support local images and external full URLs directly
+  if (publicIdOrUrl.startsWith('/') || publicIdOrUrl.startsWith('http')) {
+    return publicIdOrUrl
+  }
+
   const {
     width,
     height,
@@ -40,11 +45,6 @@ export function cloudinaryUrl(
   if (width || height) parts.push(`c_${crop}`, `g_${gravity}`)
 
   const transformStr = parts.join(',')
-
-  // If it's already a full Cloudinary URL, inject transforms
-  if (publicIdOrUrl.includes('cloudinary.com')) {
-    return publicIdOrUrl.replace('/upload/', `/upload/${transformStr}/`)
-  }
 
   // Otherwise build from public_id
   return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${transformStr}/${publicIdOrUrl}`

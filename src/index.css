@@ -54,6 +54,22 @@
     html {
       font-size: 15px;
     }
+
+    /* Compact oversized section spacing across the public site on phones */
+    .public-site section[class*="py-16"],
+    .public-site section[class*="py-20"],
+    .public-site section[class*="py-24"],
+    .public-site section[class*="py-28"],
+    .public-site section[class*="py-32"],
+    .public-site section[class*="py-40"] {
+      padding-top: 3.5rem !important;
+      padding-bottom: 3.5rem !important;
+    }
+
+    /* Keep first section clear of the sticky header area */
+    .public-site main > section:first-of-type {
+      padding-top: 5rem !important;
+    }
   }
 
   .auth-luxury input:-webkit-autofill,

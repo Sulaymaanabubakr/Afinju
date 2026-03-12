@@ -121,7 +121,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="font-display text-5xl md:text-6xl lg:text-7xl font-bold text-ivory leading-[0.95] tracking-tight"
+              className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-ivory leading-[0.95] tracking-tight"
             >
               Afínjú{' '}
               <span className="text-gold-400 italic">is not for everybody!</span>
@@ -131,7 +131,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="mt-6 text-xl md:text-2xl font-body text-ivory/80 leading-relaxed max-w-2xl mx-auto"
+              className="mt-6 text-lg md:text-2xl font-body text-ivory/80 leading-relaxed max-w-2xl mx-auto"
             >
               If you find yourself in any of these 6 categories, don't bother to buy, Afínjú is absolutely not for you!
             </motion.p>
@@ -140,7 +140,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
-              className="mt-5 text-lg md:text-xl font-body text-ivory/60 leading-relaxed max-w-xl mx-auto"
+              className="mt-5 text-base md:text-xl font-body text-ivory/60 leading-relaxed max-w-xl mx-auto"
             >
               The complete Nigerian authority set. Six precision-crafted pieces. One undeniable statement.
             </motion.p>
@@ -205,10 +205,10 @@ export default function HomePage() {
               </span>
               <div className="h-px w-8 bg-gold-500" />
             </div>
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-ivory leading-tight text-center">
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-ivory leading-tight text-center">
               Everything in one complete statement
             </h2>
-            <p className="mt-6 font-body text-ivory/55 leading-relaxed text-center max-w-2xl mx-auto">
+            <p className="mt-6 font-body text-base md:text-lg text-ivory/55 leading-relaxed text-center max-w-2xl mx-auto">
               Shoes, purse, cap, scent, and presentation, composed as one coordinated set for the man who wants the full look to land at once.
             </p>
           </motion.div>
@@ -278,10 +278,10 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="text-center mb-20"
           >
-            <h2 className="font-display text-4xl md:text-6xl font-bold text-ivory">
+            <h2 className="font-display text-3xl md:text-6xl font-bold text-ivory">
               6 reasons not to buy
             </h2>
-            <p className="mt-4 font-body text-ivory/40 text-lg max-w-2xl mx-auto">
+            <p className="mt-4 font-body text-ivory/40 text-base md:text-lg max-w-2xl mx-auto">
               If you fall into any of these categories, please keep your money. Afínjú is absolutely not for you.
             </p>
           </motion.div>
@@ -299,7 +299,7 @@ export default function HomePage() {
                 <span className="font-display text-5xl font-bold text-gold-500/20 group-hover:text-gold-500/30 transition-colors">
                   {section.number}
                 </span>
-                <h3 className="mt-3 font-heading text-lg md:text-2xl font-bold text-ivory group-hover:text-gold-400 transition-colors">
+                <h3 className="mt-3 font-heading text-base md:text-2xl font-bold text-ivory group-hover:text-gold-400 transition-colors">
                   {section.title}
                 </h3>
                 <p className="mt-3 font-body text-xs md:text-sm text-ivory/50 leading-relaxed">
@@ -322,10 +322,10 @@ export default function HomePage() {
             </span>
             <div className="h-px w-8 bg-gold-500" />
           </div>
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-ivory mb-6">
+          <h2 className="font-display text-2xl md:text-4xl font-bold text-ivory mb-6">
             Built for the Men Who Lead
           </h2>
-          <p className="font-body text-lg text-ivory/50 max-w-2xl mx-auto leading-relaxed">
+          <p className="font-body text-base md:text-lg text-ivory/50 max-w-2xl mx-auto leading-relaxed">
             Designed for men who want coordinated presentation, confident finishing, and a look that reads clearly from the first glance.
           </p>
           <div className="mt-10">
@@ -349,14 +349,14 @@ export default function HomePage() {
                 Questions
               </span>
             </div>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-ivory mb-12">
+            <h2 className="font-display text-2xl md:text-4xl font-bold text-ivory mb-12">
               What you should know.
             </h2>
 
             <Accordion type="single" collapsible className="space-y-0">
               {FAQ_ITEMS.map((item, i) => (
                 <AccordionItem key={i} value={`item-${i}`} className="border-b border-white/10">
-                  <AccordionTrigger className="text-ivory/80 hover:text-gold-400 text-base">
+                  <AccordionTrigger className="text-ivory/80 hover:text-gold-400 text-sm md:text-base">
                     {item.q}
                   </AccordionTrigger>
                   <AccordionContent className="text-ivory/50">
@@ -386,26 +386,26 @@ export default function HomePage() {
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="font-display text-5xl md:text-6xl font-bold text-ivory leading-tight">
+            <h2 className="font-display text-4xl md:text-6xl font-bold text-ivory leading-tight">
               Welcome to the{' '}
               <span className="gold-shimmer block mt-2">Afínjú Men's Club.</span>
             </h2>
 
-            <p className="mt-8 max-w-2xl mx-auto font-body text-xl text-ivory/50 leading-relaxed">
+            <p className="mt-8 max-w-2xl mx-auto font-body text-base md:text-xl text-ivory/50 leading-relaxed">
               If you have passed these six categories, then you already understand the point: every piece was designed for one outcome. Impact.
             </p>
 
-            <p className="mt-8 max-w-2xl mx-auto font-body text-lg text-ivory/60 leading-relaxed italic">
+            <p className="mt-8 max-w-2xl mx-auto font-body text-base md:text-lg text-ivory/60 leading-relaxed italic">
               When you step out in Afínjú, you do not blend in. You command space. Eyes follow you. Conversations slow down.
             </p>
 
             <div className="mt-14">
               <p className="text-xs font-body tracking-[0.4em] uppercase text-gold-400 mb-4">Launch Price</p>
               <div className="flex items-baseline gap-4 justify-center">
-                <span className="font-display text-5xl md:text-7xl font-bold text-ivory">
+                <span className="font-display text-4xl md:text-7xl font-bold text-ivory">
                   {formatPrice(product?.price ?? 200000)}
                 </span>
-                <span className="text-2xl font-body text-ivory/30 line-through">
+                <span className="text-xl md:text-2xl font-body text-ivory/30 line-through">
                   {formatPrice(product?.compareAtPrice ?? 250000)}
                 </span>
               </div>

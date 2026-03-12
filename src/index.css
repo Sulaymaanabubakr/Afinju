@@ -41,12 +41,19 @@
 
   html {
     scroll-behavior: smooth;
+    font-size: 16px;
   }
 
   body {
     @apply bg-afinju-offwhite text-afinju-black font-body antialiased;
-    font-size: 18px;
+    font-size: 1rem;
     line-height: 1.7;
+  }
+
+  @media (max-width: 768px) {
+    html {
+      font-size: 15px;
+    }
   }
 
   .auth-luxury input:-webkit-autofill,

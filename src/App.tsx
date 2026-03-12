@@ -1,4 +1,5 @@
-import { Routes, Route } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/features/auth/AuthProvider'
 import { RequireAdmin, RequireCustomer, RequireStaff, RedirectIfAdminAuth, RedirectIfAuth } from '@/features/auth/Guards'
@@ -51,6 +52,16 @@ import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage'
 
 import NotFoundPage from '@/pages/NotFoundPage'
 
+function ScrollToTop() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [pathname])
+
+  return null
+}
+
 function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="public-site">
@@ -76,6 +87,7 @@ function HeaderOnlyLayout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <AuthProvider>
+      <ScrollToTop />
       <PaystackScript />
       <Toaster
         position="top-right"

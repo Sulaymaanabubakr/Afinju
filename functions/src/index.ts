@@ -1,36 +1,65 @@
-import * as functions from 'firebase-functions'
 import * as admin from 'firebase-admin'
 import axios from 'axios'
 import { Resend } from 'resend'
 import { v2 as cloudinary } from 'cloudinary'
+import { defineString } from 'firebase-functions/params'
+import { logger } from 'firebase-functions/logger'
+import { onCall, onRequest, HttpsError } from 'firebase-functions/v2/https'
+import { onDocumentUpdated } from 'firebase-functions/v2/firestore'
 
 admin.initializeApp()
 const db = admin.firestore()
 
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-const PAYSTACK_SECRET = functions.config().paystack?.secret_key || process.env.PAYSTACK_SECRET_KEY || ''
-const PAYSTACK_WEBHOOK_SECRET = functions.config().paystack?.webhook_secret || ''
-const RESEND_API_KEY = functions.config().resend?.api_key || process.env.RESEND_API_KEY || ''
-const ADMIN_EMAIL = functions.config().admin?.email || 'admin@afinju.com' // Fallback for notifications
+const PAYSTACK_SECRET_KEY = defineString('PAYSTACK_SECRET_KEY', { default: '' })
+const PAYSTACK_WEBHOOK_SECRET = defineString('PAYSTACK_WEBHOOK_SECRET', { default: '' })
+const RESEND_API_KEY = defineString('RESEND_API_KEY', { default: '' })
+const ADMIN_EMAIL_PARAM = defineString('ADMIN_EMAIL', { default: 'admin@afinju.com' })
+const CLOUDINARY_CLOUD_NAME = defineString('CLOUDINARY_CLOUD_NAME', { default: '' })
+const CLOUDINARY_API_KEY = defineString('CLOUDINARY_API_KEY', { default: '' })
+const CLOUDINARY_API_SECRET = defineString('CLOUDINARY_API_SECRET', { default: '' })
+const BOOTSTRAP_SECRET = defineString('BOOTSTRAP_SECRET', { default: '' })
 
-const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null
+function readParam(param: { value: () => string }, fallback = ''): string {
+  try {
+    const value = param.value()
+    return value || fallback
+  } catch {
+    return fallback
+  }
+}
 
-// Cloudinary config
-cloudinary.config({
-  cloud_name: functions.config().cloudinary?.cloud_name || process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: functions.config().cloudinary?.api_key || process.env.CLOUDINARY_API_KEY,
-  api_secret: functions.config().cloudinary?.api_secret || process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-})
+function getPaystackSecret(): string {
+  return readParam(PAYSTACK_SECRET_KEY, process.env.PAYSTACK_SECRET_KEY || '')
+}
 
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function getWebhookSecret(): string {
+  return readParam(PAYSTACK_WEBHOOK_SECRET, process.env.PAYSTACK_WEBHOOK_SECRET || '')
+}
+
+function getAdminEmail(): string {
+  return readParam(ADMIN_EMAIL_PARAM, process.env.ADMIN_EMAIL || 'admin@afinju.com')
+}
+
+function getResendClient(): Resend | null {
+  const key = readParam(RESEND_API_KEY, process.env.RESEND_API_KEY || '')
+  return key ? new Resend(key) : null
+}
+
+function configureCloudinary(): void {
+  cloudinary.config({
+    cloud_name: readParam(CLOUDINARY_CLOUD_NAME, process.env.CLOUDINARY_CLOUD_NAME || ''),
+    api_key: readParam(CLOUDINARY_API_KEY, process.env.CLOUDINARY_API_KEY || ''),
+    api_secret: readParam(CLOUDINARY_API_SECRET, process.env.CLOUDINARY_API_SECRET || ''),
+    secure: true,
+  })
+}
+
 function generateOrderNumber(): string {
   const timestamp = Date.now().toString(36).toUpperCase()
   const random = Math.random().toString(36).substring(2, 5).toUpperCase()
   return `AFJ-${timestamp}-${random}`
 }
 
-// ─── HELPER: Verify Paystack Payment ─────────────────────────────────────────
 async function verifyPaystackPayment(reference: string): Promise<{
   status: boolean
   amount: number
@@ -41,7 +70,7 @@ async function verifyPaystackPayment(reference: string): Promise<{
     `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
     {
       headers: {
-        Authorization: `Bearer ${PAYSTACK_SECRET}`,
+        Authorization: `Bearer ${getPaystackSecret()}`,
         'Content-Type': 'application/json',
       },
       timeout: 10000,
@@ -55,48 +84,45 @@ async function verifyPaystackPayment(reference: string): Promise<{
 
   return {
     status: true,
-    amount: data.amount / 100, // Convert from kobo
+    amount: data.amount / 100,
     currency: data.currency,
     metadata: data.metadata,
   }
 }
 
-// ─── CALLABLE: Create Order Securely ──────────────────────────────────────────
-export const createOrder = functions
-  .region('europe-west1')
-  .runWith({ timeoutSeconds: 30 })
-  .https.onCall(async (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated to create an order.')
+export const createOrder = onCall(
+  { region: 'europe-west1', timeoutSeconds: 30 },
+  async (request: any) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'User must be authenticated to create an order.')
     }
 
     const {
-      items, // { productId, quantity, preferences }
+      items,
       customerName,
       customerPhone,
       customerAltPhone,
       customerEmail,
       deliveryAddress,
       notes,
-    } = data
+    } = request.data || {}
 
-    if (!items || !items.length) {
-      throw new functions.https.HttpsError('invalid-argument', 'Cart is empty')
+    if (!items || !Array.isArray(items) || !items.length) {
+      throw new HttpsError('invalid-argument', 'Cart is empty')
     }
 
-    // Securely calculate total by fetching real prices from Firestore
     let subtotal = 0
-    const orderItems = []
+    const orderItems: any[] = []
 
     for (const item of items) {
       const productDoc = await db.collection('products').doc(item.productId).get()
       if (!productDoc.exists) {
-        throw new functions.https.HttpsError('not-found', `Product ${item.productId} not found`)
+        throw new HttpsError('not-found', `Product ${item.productId} not found`)
       }
-      
+
       const product = productDoc.data()!
       if (product.status !== 'active') {
-        throw new functions.https.HttpsError('failed-precondition', `Product ${product.name} is not available`)
+        throw new HttpsError('failed-precondition', `Product ${product.name} is not available`)
       }
 
       const itemTotal = product.price * item.quantity
@@ -113,17 +139,15 @@ export const createOrder = functions
       })
     }
 
-    // Fetch store settings for shipping fee
     const settingsDoc = await db.collection('config').doc('settings').get()
     const settings = settingsDoc.exists ? settingsDoc.data()! : { shippingFee: 0 }
     const shippingFee = settings.shippingFee || 0
     const total = subtotal + shippingFee
 
-    // Construct Order
     const orderNumber = generateOrderNumber()
     const newOrder = {
       orderNumber,
-      userId: context.auth.uid,
+      userId: request.auth.uid,
       customerName,
       customerPhone,
       customerAltPhone: customerAltPhone || '',
@@ -137,7 +161,11 @@ export const createOrder = functions
       paymentStatus: 'unpaid',
       status: 'pending_payment',
       statusTimeline: [
-        { status: 'pending_payment', timestamp: admin.firestore.FieldValue.serverTimestamp(), note: 'Order created, awaiting payment.' }
+        {
+          status: 'pending_payment',
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+          note: 'Order created, awaiting payment.',
+        },
       ],
       notes: notes || '',
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -145,8 +173,7 @@ export const createOrder = functions
     }
 
     const orderRef = await db.collection('orders').add(newOrder)
-    
-    functions.logger.info(`Order ${orderNumber} securely created by user ${context.auth.uid}`, { orderId: orderRef.id })
+    logger.info(`Order ${orderNumber} securely created by user ${request.auth.uid}`, { orderId: orderRef.id })
 
     return {
       success: true,
@@ -154,69 +181,58 @@ export const createOrder = functions
       orderNumber,
       total,
     }
-  })
+  }
+)
 
-// ─── CALLABLE: Verify Payment & Confirm Order ─────────────────────────────────
-export const verifyPayment = functions
-  .region('europe-west1')
-  .runWith({ timeoutSeconds: 30 })
-  .https.onCall(async (data: { reference: string; orderId: string }, context) => {
-    // Require authenticated user
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Authentication required.')
+export const verifyPayment = onCall(
+  { region: 'europe-west1', timeoutSeconds: 30 },
+  async (request: any) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Authentication required.')
     }
 
-    const { reference, orderId } = data
+    const { reference, orderId } = request.data || {}
     if (!reference || !orderId) {
-      throw new functions.https.HttpsError('invalid-argument', 'Reference and orderId are required.')
+      throw new HttpsError('invalid-argument', 'Reference and orderId are required.')
     }
 
     const orderRef = db.collection('orders').doc(orderId)
     const orderSnap = await orderRef.get()
-
     if (!orderSnap.exists) {
-      throw new functions.https.HttpsError('not-found', 'Order not found.')
+      throw new HttpsError('not-found', 'Order not found.')
     }
 
     const order = orderSnap.data()!
-
-    // Security: ensure the caller owns this order
-    if (order.userId !== context.auth.uid) {
-      throw new functions.https.HttpsError('permission-denied', 'Access denied.')
+    if (order.userId !== request.auth.uid) {
+      throw new HttpsError('permission-denied', 'Access denied.')
     }
-
-    // Idempotency: if already paid, return success
     if (order.paymentStatus === 'paid') {
       return { success: true, alreadyPaid: true }
     }
 
-    // Verify with Paystack
     let paymentData: Awaited<ReturnType<typeof verifyPaystackPayment>>
     try {
       paymentData = await verifyPaystackPayment(reference)
     } catch (err: any) {
-      functions.logger.error('Paystack verification failed', { reference, orderId, error: err.message })
-      throw new functions.https.HttpsError('failed-precondition', 'Payment could not be verified: ' + err.message)
+      logger.error('Paystack verification failed', { reference, orderId, error: err.message })
+      throw new HttpsError('failed-precondition', `Payment could not be verified: ${err.message}`)
     }
 
-    // Verify amount matches (within ₦1 tolerance for floating point)
     const expectedAmount = order.total
     if (Math.abs(paymentData.amount - expectedAmount) > 1) {
-      functions.logger.error('Amount mismatch', { paid: paymentData.amount, expected: expectedAmount, orderId })
-      throw new functions.https.HttpsError(
+      logger.error('Amount mismatch', { paid: paymentData.amount, expected: expectedAmount, orderId })
+      throw new HttpsError(
         'failed-precondition',
-        `Payment amount mismatch. Expected ₦${expectedAmount}, received ₦${paymentData.amount}.`
+        `Payment amount mismatch. Expected N${expectedAmount}, received N${paymentData.amount}.`
       )
     }
 
-    // Update order atomically
     await db.runTransaction(async (tx) => {
       const freshSnap = await tx.get(orderRef)
       if (!freshSnap.exists) throw new Error('Order disappeared')
       const fresh = freshSnap.data()!
-      if (fresh.paymentStatus === 'paid') return // Already processed
+      if (fresh.paymentStatus === 'paid') return
 
-      // Enforce inventory limit
       for (const item of order.items) {
         const productRef = db.collection('products').doc(item.productId)
         const productSnap = await tx.get(productRef)
@@ -226,20 +242,19 @@ export const verifyPayment = functions
         if (remaining < item.quantity) {
           throw new Error(`Insufficient stock for ${item.productName}. Only ${remaining} unit(s) remain.`)
         }
-        // Increment sold count
+
         tx.update(productRef, {
           'inventory.soldCount': admin.firestore.FieldValue.increment(item.quantity),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         })
       }
 
-      // Mark order as paid
       const newTimeline = [
         ...(fresh.statusTimeline || []),
         {
           status: 'paid',
           timestamp: new Date(),
-          note: `Payment of ₦${paymentData.amount.toLocaleString()} confirmed via Paystack. Reference: ${reference}`,
+          note: `Payment of N${paymentData.amount.toLocaleString()} confirmed via Paystack. Reference: ${reference}`,
         },
       ]
 
@@ -251,74 +266,77 @@ export const verifyPayment = functions
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       })
 
-      // Log audit event
       tx.set(db.collection('audit_logs').doc(), {
         type: 'payment_confirmed',
         orderId,
-        userId: context.auth!.uid,
+        userId: request.auth.uid,
         reference,
         amount: paymentData.amount,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       })
     })
 
-    functions.logger.info('Order paid successfully', { orderId, reference })
+    logger.info('Order paid successfully', { orderId, reference })
     return { success: true }
-  })
+  }
+)
 
-// ─── WEBHOOK: Paystack Webhook (server-side verification fallback) ─────────────
-export const paystackWebhook = functions
-  .region('europe-west1')
-  .https.onRequest(async (req, res) => {
+export const paystackWebhook = onRequest(
+  { region: 'europe-west1' },
+  async (req: any, res: any) => {
     if (req.method !== 'POST') {
       res.status(405).send('Method Not Allowed')
       return
     }
 
-    // Verify webhook signature
+    const webhookSecret = getWebhookSecret()
+    if (!webhookSecret) {
+      logger.error('PAYSTACK_WEBHOOK_SECRET missing')
+      res.status(500).send('Server misconfigured')
+      return
+    }
+
     const crypto = await import('crypto')
     const hash = crypto
-      .createHmac('sha512', PAYSTACK_WEBHOOK_SECRET)
-      .update(JSON.stringify(req.body))
+      .createHmac('sha512', webhookSecret)
+      .update(req.rawBody || JSON.stringify(req.body))
       .digest('hex')
 
     if (hash !== req.headers['x-paystack-signature']) {
-      functions.logger.warn('Invalid webhook signature')
+      logger.warn('Invalid webhook signature')
       res.status(400).send('Invalid signature')
       return
     }
 
     const event = req.body
-    functions.logger.info('Paystack webhook received', { event: event.event })
+    logger.info('Paystack webhook received', { event: event?.event })
 
-    if (event.event === 'charge.success') {
+    if (event?.event === 'charge.success') {
       const reference = event.data?.reference
       const metadata = event.data?.metadata
 
       if (!reference || !metadata?.orderId) {
-        res.status(200).send('OK') // Acknowledge but skip
+        res.status(200).send('OK')
         return
       }
 
       const orderId = metadata.orderId
       const orderRef = db.collection('orders').doc(orderId)
       const orderSnap = await orderRef.get()
-
       if (!orderSnap.exists) {
-        functions.logger.warn('Webhook: order not found', { orderId })
+        logger.warn('Webhook: order not found', { orderId })
         res.status(200).send('OK')
         return
       }
 
       const order = orderSnap.data()!
       if (order.paymentStatus === 'paid') {
-        res.status(200).send('OK') // Idempotent
+        res.status(200).send('OK')
         return
       }
 
-      // Verify with Paystack to be sure
       try {
-        const paymentData = await verifyPaystackPayment(reference)
+        await verifyPaystackPayment(reference)
 
         await db.runTransaction(async (tx) => {
           const fresh = (await tx.get(orderRef)).data()!
@@ -326,7 +344,6 @@ export const paystackWebhook = functions
 
           for (const item of order.items) {
             const productRef = db.collection('products').doc(item.productId)
-            const product = (await tx.get(productRef)).data()!
             tx.update(productRef, {
               'inventory.soldCount': admin.firestore.FieldValue.increment(item.quantity),
             })
@@ -345,61 +362,56 @@ export const paystackWebhook = functions
           })
         })
 
-        functions.logger.info('Webhook: order confirmed', { orderId, reference })
+        logger.info('Webhook: order confirmed', { orderId, reference })
       } catch (err: any) {
-        functions.logger.error('Webhook: verification failed', { error: err.message, reference })
+        logger.error('Webhook: verification failed', { error: err.message, reference })
       }
     }
 
     res.status(200).send('OK')
-  })
+  }
+)
 
-// ─── CALLABLE: Set Admin Role ─────────────────────────────────────────────────
-// Run this manually or via a one-time script to promote a user to admin
-export const setAdminRole = functions
-  .region('us-central1')
-  .https.onCall(async (data: { uid: string; role: 'admin' | 'staff' | 'customer' }, context) => {
-    // Only an existing admin can assign roles
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'Authentication required.')
+export const setAdminRole = onCall(
+  { region: 'europe-west1' },
+  async (request: any) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Authentication required.')
     }
 
-    const callerRecord = await admin.auth().getUser(context.auth.uid)
-    const callerClaims = callerRecord.customClaims || {}
-    if (callerClaims.role !== 'admin') {
-      throw new functions.https.HttpsError('permission-denied', 'Only admins can assign roles.')
+    const callerRecord = await admin.auth().getUser(request.auth.uid)
+    if (callerRecord.customClaims?.role !== 'admin') {
+      throw new HttpsError('permission-denied', 'Only admins can assign roles.')
     }
 
-    const { uid, role } = data
+    const { uid, role } = request.data || {}
     if (!uid || !role) {
-      throw new functions.https.HttpsError('invalid-argument', 'uid and role are required.')
+      throw new HttpsError('invalid-argument', 'uid and role are required.')
     }
 
     await admin.auth().setCustomUserClaims(uid, { role })
-    await db.collection('users').doc(uid).update({ role })
+    await db.collection('users').doc(uid).set({ role }, { merge: true })
 
-    functions.logger.info('Role assigned', { uid, role, by: context.auth.uid })
+    logger.info('Role assigned', { uid, role, by: request.auth.uid })
     return { success: true }
-  })
+  }
+)
 
-// ─── CALLABLE: Secure Cloudinary Signature ────────────────────────────────────
-export const getCloudinarySignature = functions
-  .region('us-central1')
-  .https.onCall(async (data, context) => {
-    // Only admins/staff should generate upload signatures
-    if (!context.auth) {
-      throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated')
+export const getCloudinarySignature = onCall(
+  { region: 'europe-west1' },
+  async (request: any) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'User must be authenticated')
     }
-    
-    const callerRecord = await admin.auth().getUser(context.auth.uid)
+
+    const callerRecord = await admin.auth().getUser(request.auth.uid)
     const role = callerRecord.customClaims?.role
     if (role !== 'admin' && role !== 'staff') {
-      throw new functions.https.HttpsError('permission-denied', 'Only authorized staff can upload images')
+      throw new HttpsError('permission-denied', 'Only authorized staff can upload images')
     }
 
-    const timestamp = Math.round(new Date().getTime() / 1000)
-    
-    // Cloudinary expects params to be signed. We sign the timestamp.
+    configureCloudinary()
+    const timestamp = Math.round(Date.now() / 1000)
     const signature = cloudinary.utils.api_sign_request(
       { timestamp },
       cloudinary.config().api_secret as string
@@ -409,99 +421,79 @@ export const getCloudinarySignature = functions
       timestamp,
       signature,
       apiKey: cloudinary.config().api_key,
-      cloudName: cloudinary.config().cloud_name
+      cloudName: cloudinary.config().cloud_name,
     }
-  })
+  }
+)
 
-// ─── FIRESTORE TRIGGER: Transactional Emails ──────────────────────────────────
-export const onOrderUpdated = functions
-  .region('us-central1')
-  .firestore.document('orders/{orderId}')
-  .onUpdate(async (change, context) => {
-    const orderBefore = change.before.data()
-    const orderAfter = change.after.data()
+export const onOrderUpdated = onDocumentUpdated(
+  { region: 'europe-west1', document: 'orders/{orderId}' },
+  async (event: any) => {
+    const orderBefore = event.data?.before?.data()
+    const orderAfter = event.data?.after?.data()
+    if (!orderBefore || !orderAfter) return null
 
-    // Email sending requires RESEND API KEY
-    if (!RESEND_API_KEY) {
-      functions.logger.warn('RESEND_API_KEY missing - skipping transactional emails')
-      return null
-    }
+    const resend = getResendClient()
     if (!resend) {
-      functions.logger.warn('Resend client unavailable - skipping transactional emails')
+      logger.warn('RESEND_API_KEY missing or client unavailable - skipping transactional emails')
       return null
     }
 
-    // 1. Order Confirmed/Paid Email
+    const adminEmail = getAdminEmail()
+
     if (orderBefore.paymentStatus !== 'paid' && orderAfter.paymentStatus === 'paid') {
       try {
-        // Send to Customer
         await resend.emails.send({
-          from: 'AFINJU <orders@afinju.com>', // Replace with your verified domain
-          to: orderAfter.customerEmail || ADMIN_EMAIL,
+          from: 'AFINJU <orders@afinju.com>',
+          to: orderAfter.customerEmail || adminEmail,
           subject: `AFINJU Order Confirmed - ${orderAfter.orderNumber}`,
           html: `
             <h1>Your AFINJU Authority Set is secured.</h1>
             <p>Dear ${orderAfter.customerName},</p>
-            <p>We have received your payment of ₦${orderAfter.total.toLocaleString()} for order <strong>${orderAfter.orderNumber}</strong>.</p>
+            <p>We have received your payment of N${orderAfter.total.toLocaleString()} for order <strong>${orderAfter.orderNumber}</strong>.</p>
             <p>Your launch edition set has been reserved and our craftsmen have been notified. We will update you once your order is packaged and dispatched.</p>
-            <br/>
-            <h3>Order Details:</h3>
-            <ul>
-              ${orderAfter.items.map((i: any) => `<li>${i.quantity}x ${i.productName} (Shoe: ${i.preferences?.shoeSize}, Head: ${i.preferences?.headSize}, Color: ${i.preferences?.preferredColor})</li>`).join('')}
-            </ul>
-            <p><strong>Delivery Address:</strong><br/>${orderAfter.deliveryAddress?.fullAddress}<br/>${orderAfter.deliveryAddress?.city}, ${orderAfter.deliveryAddress?.state}</p>
-            <br/>
-            <p>If you have questions, reply to this email.</p>
-            <p>Best regards,<br/>The AFINJU Team</p>
-          `
+          `,
         })
 
-        // Notify Admin
         await resend.emails.send({
           from: 'AFINJU System <system@afinju.com>',
-          to: ADMIN_EMAIL,
-          subject: `🚨 NEW PAID ORDER - ${orderAfter.orderNumber}`,
-          html: `<p>New Launch Edition order received for ${orderAfter.items[0]?.quantity} units. Total: ₦${orderAfter.total.toLocaleString()}</p>`
+          to: adminEmail,
+          subject: `NEW PAID ORDER - ${orderAfter.orderNumber}`,
+          html: `<p>New Launch Edition order received. Total: N${orderAfter.total.toLocaleString()}</p>`,
         })
       } catch (err: any) {
-        functions.logger.error('Failed to send Order Confirmation email', err)
+        logger.error('Failed to send Order Confirmation email', err)
       }
     }
 
-    // 2. Order Shipped Email
     if (orderBefore.status !== 'dispatched' && orderAfter.status === 'dispatched') {
       try {
         await resend.emails.send({
           from: 'AFINJU <orders@afinju.com>',
-          to: orderAfter.customerEmail || ADMIN_EMAIL,
+          to: orderAfter.customerEmail || adminEmail,
           subject: `AFINJU Order Dispatched - ${orderAfter.orderNumber}`,
           html: `
             <h1>Your AFINJU Set is on its way.</h1>
             <p>Dear ${orderAfter.customerName},</p>
             <p>Your order <strong>${orderAfter.orderNumber}</strong> has been dispatched.</p>
-            <p>Please ensure someone is available at the delivery address to receive it.</p>
-            <p><strong>Delivery Address:</strong><br/>${orderAfter.deliveryAddress?.fullAddress}<br/>${orderAfter.deliveryAddress?.city}, ${orderAfter.deliveryAddress?.state}</p>
-            <br/>
-            <p>Best regards,<br/>The AFINJU Team</p>
-          `
+          `,
         })
       } catch (err: any) {
-        functions.logger.error('Failed to send Shipping email', err)
+        logger.error('Failed to send Shipping email', err)
       }
     }
 
     return null
-  })
+  }
+)
 
-// ─── HTTP: Bootstrap First Admin ──────────────────────────────────────────────
-// One-time endpoint — disable after first use or secure with a secret
-export const bootstrapAdmin = functions
-  .region('us-central1')
-  .https.onRequest(async (req, res) => {
-    const { uid, secret } = req.query
+export const bootstrapAdmin = onRequest(
+  { region: 'europe-west1' },
+  async (req: any, res: any) => {
+    const uid = req.query.uid
+    const secret = req.query.secret
 
-    // Simple bootstrap secret — set this in functions config
-    const bootstrapSecret = functions.config().bootstrap?.secret || process.env.BOOTSTRAP_SECRET
+    const bootstrapSecret = readParam(BOOTSTRAP_SECRET, process.env.BOOTSTRAP_SECRET || '')
     if (!bootstrapSecret || secret !== bootstrapSecret) {
       res.status(403).send('Forbidden')
       return
@@ -515,6 +507,7 @@ export const bootstrapAdmin = functions
     await admin.auth().setCustomUserClaims(uid, { role: 'admin' })
     await db.collection('users').doc(uid).set({ role: 'admin' }, { merge: true })
 
-    functions.logger.info('Bootstrap admin set', { uid })
+    logger.info('Bootstrap admin set', { uid })
     res.status(200).json({ success: true, message: `User ${uid} is now admin. Disable this endpoint.` })
-  })
+  }
+)

@@ -1,4 +1,3 @@
-import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, useScroll, useTransform } from 'framer-motion'
@@ -74,10 +73,9 @@ const FAQ_ITEMS = [
 ]
 
 export default function HomePage() {
-  const heroRef = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '30%'])
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0])
+  const { scrollY } = useScroll()
+  const y = useTransform(scrollY, [0, 700], ['0%', '30%'])
+  const opacity = useTransform(scrollY, [0, 500], [1, 0])
   const { data: products } = useQuery({ queryKey: ['products'], queryFn: getProducts })
   const product = products?.[0]
   const productLink = product ? `/product/${product.slug}` : '/shop'
@@ -88,7 +86,7 @@ export default function HomePage() {
   return (
     <div className="bg-obsidian">
       {/* ── Hero ────────────────────────────────────────────── */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center pb-24 overflow-hidden">
+      <section className="relative min-h-screen flex items-center pb-24 overflow-hidden">
         {/* Background image */}
         <motion.div style={{ y }} className="absolute inset-0 z-0">
           <img
@@ -245,7 +243,7 @@ export default function HomePage() {
               </div>
             </motion.div>
 
-            <div className="grid grid-cols-2 gap-4 md:gap-5">
+            <div className="grid grid-cols-2 gap-3 md:gap-5">
               {PACKAGE_ITEMS.map((item, i) => (
                 <motion.div
                   key={item.name}
@@ -253,15 +251,15 @@ export default function HomePage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.08, duration: 0.5 }}
-                  className="flex min-h-[136px] flex-col items-center justify-center border border-white/8 bg-white/[0.03] px-4 py-5 text-center transition-colors hover:border-gold-500/25 hover:bg-white/[0.05]"
+                  className="flex min-h-[112px] flex-col items-center justify-center border border-white/8 bg-white/[0.03] px-3 py-4 text-center transition-colors hover:border-gold-500/25 hover:bg-white/[0.05] md:min-h-[136px] md:px-4 md:py-5"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-gold-500/25 bg-gold-500/10">
-                    <Check className="h-3.5 w-3.5 text-gold-500" />
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full border border-gold-500/25 bg-gold-500/10 md:h-8 md:w-8">
+                    <Check className="h-3 w-3 text-gold-500 md:h-3.5 md:w-3.5" />
                   </div>
-                  <p className="mt-3 text-sm font-body font-semibold leading-snug text-ivory">
+                  <p className="mt-2 text-[12px] font-body font-semibold leading-snug text-ivory md:mt-3 md:text-sm">
                     {item.name}
                   </p>
-                  <p className="mt-1.5 text-[11px] md:text-xs font-body text-ivory/40 leading-relaxed">
+                  <p className="mt-1 text-[10px] md:mt-1.5 md:text-xs font-body text-ivory/40 leading-relaxed">
                     {item.desc}
                   </p>
                 </motion.div>

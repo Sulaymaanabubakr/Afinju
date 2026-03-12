@@ -48,13 +48,19 @@ export function Navbar() {
         'sticky top-0 z-50 transition-all duration-300 border-b border-black/5',
         scrolled ? 'bg-afinju-offwhite/95 backdrop-blur-md shadow-sm' : 'bg-afinju-offwhite'
       )}>
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 h-20 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-300">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3 lg:hidden">
+            <button onClick={() => setMenuOpen(v => !v)} className="text-afinju-black">
+              {menuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
+            </button>
+          </div>
+
+          <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3 hover:opacity-80 transition-opacity duration-300 lg:static lg:translate-x-0">
             <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-black/8 bg-afinju-cream">
               <img src="/logo.png" alt="Afínjú" className="h-10 w-10 object-contain" />
             </span>
             <span className="flex flex-col leading-none">
-              <span className="font-display text-sm tracking-[0.22em] text-afinju-black">Afínjú</span>
+              <span className="font-display text-sm font-bold tracking-[0.22em] text-afinju-black">Afínjú</span>
               <span className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-afinju-black/45">Authority Set</span>
             </span>
           </Link>
@@ -72,9 +78,9 @@ export function Navbar() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-5">
+          <div className="hidden lg:flex items-center gap-5">
             {user ? (
-              <div className="hidden lg:flex items-center gap-4">
+              <div className="flex items-center gap-4">
                 {isStaff() && (
                   <Link to="/admin" className="font-sans text-xs tracking-[0.18em] uppercase text-gold hover:text-gold-dark transition-colors">
                     Admin Portal
@@ -103,9 +109,44 @@ export function Navbar() {
                 </span>
               )}
             </button>
+          </div>
 
-            <button onClick={() => setMenuOpen(v => !v)} className="lg:hidden text-afinju-black">
-              {menuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
+          <div className="flex items-center gap-3 lg:hidden">
+            {user ? (
+              isStaff() ? (
+                <Link
+                  to="/admin"
+                  className="inline-flex h-10 w-10 items-center justify-center text-afinju-black hover:text-gold transition-colors"
+                  aria-label="Admin portal"
+                >
+                  <User size={20} strokeWidth={1.5} />
+                </Link>
+              ) : (
+                <Link
+                  to="/account"
+                  className="inline-flex h-10 w-10 items-center justify-center text-afinju-black hover:text-gold transition-colors"
+                  aria-label="My account"
+                >
+                  <User size={20} strokeWidth={1.5} />
+                </Link>
+              )
+            ) : (
+              <Link
+                to="/login"
+                className="inline-flex h-10 w-10 items-center justify-center text-afinju-black hover:text-gold transition-colors"
+                aria-label="Sign in"
+              >
+                <User size={20} strokeWidth={1.5} />
+              </Link>
+            )}
+
+            <button onClick={openCart} className="relative text-afinju-black hover:text-gold transition-colors">
+              <ShoppingBag size={20} strokeWidth={1.5} />
+              {count > 0 && (
+                <span className="absolute -top-2 -right-2 w-4 h-4 bg-gold text-white rounded-full text-[10px] font-sans font-medium flex items-center justify-center">
+                  {count}
+                </span>
+              )}
             </button>
           </div>
         </div>

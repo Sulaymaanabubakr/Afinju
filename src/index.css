@@ -49,6 +49,15 @@
     line-height: 1.7;
   }
 
+  .auth-luxury input:-webkit-autofill,
+  .auth-luxury input:-webkit-autofill:hover,
+  .auth-luxury input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #f5f0e8;
+    box-shadow: 0 0 0px 1000px rgba(10, 10, 10, 0.92) inset;
+    border-bottom-color: rgba(245, 240, 232, 0.25);
+    transition: background-color 9999s ease-in-out 0s;
+  }
+
   .public-site main,
   .public-site footer {
     text-align: center;

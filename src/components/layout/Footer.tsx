@@ -31,7 +31,7 @@ export function Footer() {
             <Link to="/" className="inline-flex items-center gap-4 mb-5">
               <img src="/logo.png" alt="Afínjú" className="h-14 w-14 rounded-2xl object-cover" />
               <span className="flex flex-col leading-none">
-                <span className="font-display text-sm tracking-[0.22em] text-afinju-cream">Afínjú</span>
+                <span className="font-display text-sm font-bold tracking-[0.22em] text-afinju-cream">Afínjú</span>
                 <span className="mt-1 font-sans text-[10px] uppercase tracking-[0.18em] text-afinju-cream/45">Authority Set</span>
               </span>
             </Link>

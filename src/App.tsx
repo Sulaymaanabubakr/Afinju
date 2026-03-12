@@ -63,6 +63,16 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
   )
 }
 
+function HeaderOnlyLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="public-site">
+      <Navbar />
+      <main>{children}</main>
+      <CartDrawer />
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -96,11 +106,11 @@ export default function App() {
         <Route path="/shipping-returns" element={<PublicLayout><ShippingReturnsPage /></PublicLayout>} />
 
         {/* Auth */}
-        <Route path="/login" element={<RedirectIfAuth><LoginPage /></RedirectIfAuth>} />
+        <Route path="/login" element={<RedirectIfAuth><HeaderOnlyLayout><LoginPage /></HeaderOnlyLayout></RedirectIfAuth>} />
         <Route path="/admin/login" element={<RedirectIfAdminAuth><AdminLoginPage /></RedirectIfAdminAuth>} />
         <Route path="/admin/forgot-password" element={<RedirectIfAdminAuth><AdminForgotPasswordPage /></RedirectIfAdminAuth>} />
-        <Route path="/signup" element={<RedirectIfAuth><SignupPage /></RedirectIfAuth>} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/signup" element={<RedirectIfAuth><HeaderOnlyLayout><SignupPage /></HeaderOnlyLayout></RedirectIfAuth>} />
+        <Route path="/forgot-password" element={<HeaderOnlyLayout><ForgotPasswordPage /></HeaderOnlyLayout>} />
 
         {/* Account */}
         <Route path="/account" element={<RequireCustomer><PublicLayout><AccountPage /></PublicLayout></RequireCustomer>} />

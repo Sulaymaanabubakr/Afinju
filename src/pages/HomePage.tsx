@@ -77,11 +77,13 @@ export default function HomePage() {
   const y = useTransform(scrollY, [0, 700], ['0%', '30%'])
   const opacity = useTransform(scrollY, [0, 500], [1, 0])
   const { data: products } = useQuery({ queryKey: ['products'], queryFn: getProducts })
-  const product = products?.[0]
+  // The backend product slug is likely different. Let's just grab the first product if the specific ID isn't found, 
+  // or specifically look for the one with the slug 'afinju-authority-set-launch-edition' since that's what we just saved.
+  const product = products?.find(p => p.slug === 'afinju-authority-set-launch-edition') || products?.[0]
   const productLink = product ? `/product/${product.slug}` : '/shop'
 
-  const soldCount = product?.inventory.soldCount ?? 3
-  const totalLimit = product?.inventory.launchEditionLimit ?? 10
+  const soldCount = product?.inventory?.soldCount ?? 0
+  const totalLimit = product?.inventory?.launchEditionLimit ?? 10
 
   return (
     <div className="bg-obsidian">
@@ -163,9 +165,11 @@ export default function HomePage() {
               className="mt-6 flex flex-wrap items-center gap-6 justify-center"
             >
               <Link to={productLink}>
-                <Button variant="gold" size="lg" className="group">
-                  Discover the Authority Set
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                <Button variant="gold" size="lg" className="group" asChild>
+                  <span>
+                    Discover the Authority Set
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </span>
                 </Button>
               </Link>
             </motion.div>
@@ -330,9 +334,11 @@ export default function HomePage() {
           </p>
           <div className="mt-10">
             <Link to={productLink}>
-              <Button variant="outline-gold" size="lg" className="group">
-                Be Among the First
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              <Button variant="outline-gold" size="lg" className="group" asChild>
+                <span>
+                  Be Among the First
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </span>
               </Button>
             </Link>
           </div>
@@ -368,8 +374,8 @@ export default function HomePage() {
 
             <div className="mt-10 flex justify-center">
               <Link to="/faq">
-                <Button variant="outline-gold" size="sm">
-                  Full FAQ
+                <Button variant="outline-gold" size="sm" asChild>
+                  <span>Full FAQ</span>
                 </Button>
               </Link>
             </div>
@@ -417,9 +423,11 @@ export default function HomePage() {
             <div className="mt-12">
               <ScarcityCounter sold={soldCount} total={totalLimit} className="max-w-md mx-auto mb-10" />
               <Link to={productLink}>
-                <Button variant="gold" size="xl" className="group">
-                  Order Your Authority Set
-                  <ArrowRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                <Button variant="gold" size="xl" className="group" asChild>
+                  <span>
+                    Order Your Authority Set
+                    <ArrowRight className="ml-3 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  </span>
                 </Button>
               </Link>
             </div>

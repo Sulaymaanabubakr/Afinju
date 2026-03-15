@@ -67,7 +67,7 @@ export default function AdminProductFormPage() {
         price: form.price,
         compareAtPrice: form.compareAtPrice,
         currency: 'NGN' as const,
-        colors: form.colors as any,
+        colors: form.colors.filter(Boolean) as any,
         images,
         inventory: {
           launchEditionLimit: form.launchEditionLimit,
@@ -257,6 +257,40 @@ export default function AdminProductFormPage() {
           className="flex items-center gap-2 font-sans text-xs text-gold hover:text-gold-dark"
         >
           <Plus size={12} /> Add Feature
+        </button>
+      </div>
+
+      {/* Product Colors */}
+      <div className="bg-white border border-black/8 p-8 space-y-4">
+        <h2 className="font-display text-xs tracking-[0.2em]">PRODUCT COLOURS</h2>
+        <div className="p-3 bg-black/5 mb-2">
+          <p className="font-sans text-xs text-afinju-black/60">
+            Define the available colours for this product (e.g., Red, Blue, Black).
+            If the product has no variations, you can leave this empty.
+          </p>
+        </div>
+        
+        {form.colors.map((color, i) => (
+          <div key={i} className="flex gap-2">
+            <input
+              value={color}
+              onChange={e => setForm(f => ({ ...f, colors: f.colors.map((x, j) => j === i ? e.target.value : x) }))}
+              placeholder="e.g. Red"
+              className={`${inputClass} flex-1`}
+            />
+            <button
+              onClick={() => setForm(f => ({ ...f, colors: f.colors.filter((_, j) => j !== i) }))}
+              className="p-2 text-afinju-black/30 hover:text-destructive transition-colors"
+            >
+              <Trash2 size={14} strokeWidth={1.5} />
+            </button>
+          </div>
+        ))}
+        <button
+          onClick={() => setForm(f => ({ ...f, colors: [...f.colors, ''] }))}
+          className="flex items-center gap-2 font-sans text-xs text-gold hover:text-gold-dark"
+        >
+          <Plus size={12} /> Add Colour
         </button>
       </div>
 

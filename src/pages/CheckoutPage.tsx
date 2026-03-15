@@ -7,12 +7,13 @@ import { motion } from 'framer-motion'
 import { Lock, ChevronDown } from 'lucide-react'
 import { useCartStore } from '@/lib/store'
 import { useAuthStore } from '@/store/auth'
-import { createOrder, getRemainingUnits } from '@/lib/db'
+import { createOrder, getRemainingUnits, getStoreSettings } from '@/lib/db'
 import { openPaystackPopup, generateReference } from '@/lib/paystack'
 import { formatPrice, BRAND_WHATSAPP } from '@/lib/utils'
 import { cloudinaryUrl } from '@/lib/cloudinary'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@/lib/firebase'
+import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { PRODUCT_COLORS, SHOE_SIZES, HEAD_SIZES, type ProductColor } from '@/types'
 
@@ -42,9 +43,15 @@ export default function CheckoutPage() {
   const navigate = useNavigate()
   const { items, total, clearCart } = useCartStore()
   const { user } = useAuthStore()
+  
+  const { data: settings } = useQuery({
+    queryKey: ['store-settings'],
+    queryFn: getStoreSettings,
+  })
+
   const [processing, setProcessing] = useState(false)
   const subtotal = total()
-  const shippingFee = 5000 // ₦5,000 flat
+  const shippingFee = settings?.shippingFee ?? 5000
   const orderTotal = subtotal + shippingFee
   const getLineId = (item: typeof items[number]) =>
     item.lineId || [item.productId, item.preferences?.preferredColor || '', item.preferences?.shoeSize || '', item.preferences?.headSize || ''].join(':')

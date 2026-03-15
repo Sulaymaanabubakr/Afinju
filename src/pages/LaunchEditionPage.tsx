@@ -48,7 +48,7 @@ const AUTHORITY_COPY = [
 
 export default function LaunchEditionPage() {
   const { data: products } = useQuery({ queryKey: ['products'], queryFn: getProducts })
-  const product = products?.[0]
+  const product = products?.find(p => p.id === 'afinju-authority-set-launch-v1') || products?.[0]
 
   return (
     <div className="min-h-screen">

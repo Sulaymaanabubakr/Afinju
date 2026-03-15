@@ -56,17 +56,17 @@ async function seed() {
     colors: ['Blue', 'Red', 'Black', 'Brown'],
     images: [
       {
-        url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1200&q=90',
+        url: '/products/afinju_red_hero_1773322751923.png',
         alt: 'AFINJU Authority Set — Launch Edition',
         publicId: 'afinju/products/launch-v1/hero',
       },
       {
-        url: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&q=90',
+        url: '/products/afinju_red_detail_1773322771608.png',
         alt: 'AFINJU Authority Set — Leather Detail',
         publicId: 'afinju/products/launch-v1/detail-1',
       },
       {
-        url: 'https://images.unsplash.com/photo-1614252369475-531eba835eb1?w=1200&q=90',
+        url: '/products/afinju_red_lifestyle_1773322801188.png',
         alt: 'AFINJU Authority Set — Full Collection',
         publicId: 'afinju/products/launch-v1/detail-2',
       },
@@ -98,7 +98,7 @@ async function seed() {
       subheadline:
         'The authority set for the man who has decided that his standard is non-negotiable. Six pieces. One statement. Ten men.',
       ctaText: 'Secure Your Position',
-      imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1600&q=90',
+      imageUrl: '/products/afinju_black_lifestyle_1773322925749.png',
     },
     scarcityBanner: {
       enabled: true,

@@ -63,6 +63,11 @@ function docToOrder(id: string, data: DocumentData): Order {
   } as Order
 }
 
+function isPublicProductStatus(status: unknown): boolean {
+  if (status === undefined || status === null) return true
+  return status === 'active' || status === 'published'
+}
+
 // ─── PRODUCTS ─────────────────────────────────────────────────────────────────
 export async function getProducts(): Promise<Product[]> {
   const orderedQuery = query(
@@ -78,11 +83,9 @@ export async function getProducts(): Promise<Product[]> {
     return orderedSnap.docs.map((d) => docToProduct(d.id, d.data()))
   }
 
-  const fallbackQuery = query(
-    collection(db, 'products'),
-    where('status', '==', 'active')
-  )
-  const fallbackSnap = await getDocs(fallbackQuery)
+  // Final fallback: fetch all publicly readable products.
+  // Firestore rules still block drafts for anonymous users.
+  const fallbackSnap = await getDocs(collection(db, 'products'))
   const products = fallbackSnap.docs.map((d) => docToProduct(d.id, d.data()))
 
   return products.sort((a, b) => {
@@ -114,11 +117,23 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
       const d = snap.docs[0]
       return docToProduct(d.id, d.data())
     }
+
+    // Legacy fallback: slug match without status filter.
+    const legacyQ = query(
+      collection(db, 'products'),
+      where('slug', '==', candidate),
+      limit(1)
+    )
+    const legacySnap = await getDocs(legacyQ)
+    if (!legacySnap.empty) {
+      const d = legacySnap.docs[0]
+      return docToProduct(d.id, d.data())
+    }
   }
 
   // Backward-compatible fallback for links using product ID in the URL
   const byId = await getProductById(slug)
-  if (byId?.status === 'active') return byId
+  if (byId && isPublicProductStatus((byId as unknown as { status?: unknown }).status)) return byId
 
   return null
 }

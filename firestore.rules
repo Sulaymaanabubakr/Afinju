@@ -26,7 +26,13 @@ service cloud.firestore {
     // ── Products ────────────────────────────────────────────────────────────
     // Anyone can read active products; only admins can write
     match /products/{productId} {
-      allow read: if resource.data.status == 'active' || isStaff();
+      // Legacy compatibility:
+      // - some older product docs have no status
+      // - some environments used "published" for visible products
+      allow read: if
+        !('status' in resource.data) ||
+        resource.data.status in ['active', 'published'] ||
+        isStaff();
       allow create, update, delete: if isAdmin();
     }
 

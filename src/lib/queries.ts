@@ -10,6 +10,7 @@ import {
   addDoc,
   updateDoc,
   serverTimestamp,
+  arrayUnion,
   onSnapshot,
   limit,
 } from 'firebase/firestore'
@@ -136,10 +137,9 @@ export function useUpdateOrderStatus() {
       }
       await updateDoc(doc(db, 'orders', orderId), {
         status,
-        statusHistory: [],
+        statusTimeline: arrayUnion(event),
         updatedAt: serverTimestamp(),
       })
-      // We use arrayUnion in a real implementation; for now update field
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-orders'] })

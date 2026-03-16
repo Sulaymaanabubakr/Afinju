@@ -35,6 +35,12 @@ function tsToDate(ts: any): Date {
   return new Date()
 }
 
+function removeUndefined<T extends Record<string, any>>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => value !== undefined)
+  ) as T
+}
+
 function docToProduct(id: string, data: DocumentData): Product {
   return {
     ...data,
@@ -69,11 +75,32 @@ export async function getProducts(): Promise<Product[]> {
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const q = query(collection(db, 'products'), where('slug', '==', slug), limit(1))
-  const snap = await getDocs(q)
-  if (snap.empty) return null
-  const d = snap.docs[0]
-  return docToProduct(d.id, d.data())
+  const legacySlugAliases: Record<string, string[]> = {
+    'afinju-authority-set-launch-edition': ['afinju-authority-set-launch-v1'],
+    'afinju-authority-set-launch-v1': ['afinju-authority-set-launch-edition'],
+  }
+
+  const candidates = Array.from(new Set([slug, ...(legacySlugAliases[slug] || [])]))
+
+  for (const candidate of candidates) {
+    const q = query(
+      collection(db, 'products'),
+      where('slug', '==', candidate),
+      where('status', '==', 'active'),
+      limit(1)
+    )
+    const snap = await getDocs(q)
+    if (!snap.empty) {
+      const d = snap.docs[0]
+      return docToProduct(d.id, d.data())
+    }
+  }
+
+  // Backward-compatible fallback for links using product ID in the URL
+  const byId = await getProductById(slug)
+  if (byId?.status === 'active') return byId
+
+  return null
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
@@ -206,7 +233,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
 
 export async function createUserProfile(profile: Omit<UserProfile, 'createdAt'>): Promise<void> {
   await setDoc(doc(db, 'users', profile.uid), {
-    ...profile,
+    ...removeUndefined(profile as Record<string, any>),
     createdAt: serverTimestamp(),
   })
 }

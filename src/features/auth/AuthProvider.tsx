@@ -12,10 +12,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      setLoading(true)
+
       if (!firebaseUser) {
         setUser(null)
         setLoading(false)
         return
+      }
+
+      const fallbackProfile: UserProfile = {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email || undefined,
+        phone: firebaseUser.phoneNumber || undefined,
+        displayName: firebaseUser.displayName || undefined,
+        role: 'customer',
+        createdAt: new Date(),
       }
 
       try {
@@ -24,11 +35,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (!profile) {
           const newProfile: Omit<UserProfile, 'createdAt'> = {
-            uid: firebaseUser.uid,
-            email: firebaseUser.email || undefined,
-            phone: firebaseUser.phoneNumber || undefined,
-            displayName: firebaseUser.displayName || undefined,
-            role: 'customer',
+            uid: fallbackProfile.uid,
+            email: fallbackProfile.email,
+            phone: fallbackProfile.phone,
+            displayName: fallbackProfile.displayName,
+            role: fallbackProfile.role,
           }
           await createUserProfile(newProfile)
           profile = { ...newProfile, createdAt: new Date() }
@@ -43,7 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(profile)
       } catch (err) {
         console.error('Auth error:', err)
-        setUser(null)
+        // Keep authenticated UX working even if profile read/write fails transiently.
+        setUser(fallbackProfile)
       } finally {
         setLoading(false)
       }

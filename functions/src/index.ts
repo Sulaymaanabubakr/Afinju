@@ -13,7 +13,10 @@ const db = admin.firestore()
 const PAYSTACK_SECRET_KEY = defineString('PAYSTACK_SECRET_KEY', { default: '' })
 const PAYSTACK_WEBHOOK_SECRET = defineString('PAYSTACK_WEBHOOK_SECRET', { default: '' })
 const RESEND_API_KEY = defineString('RESEND_API_KEY', { default: '' })
+const BREVO_API_KEY = defineString('BREVO_API_KEY', { default: '' })
 const ADMIN_EMAIL_PARAM = defineString('ADMIN_EMAIL', { default: 'admin@afinju.com' })
+const MAIL_FROM_EMAIL_PARAM = defineString('MAIL_FROM_EMAIL', { default: 'noreply@afinju247.com' })
+const MAIL_FROM_NAME_PARAM = defineString('MAIL_FROM_NAME', { default: 'AFINJU' })
 const CLOUDINARY_CLOUD_NAME = defineString('CLOUDINARY_CLOUD_NAME', { default: '' })
 const CLOUDINARY_API_KEY = defineString('CLOUDINARY_API_KEY', { default: '' })
 const CLOUDINARY_API_SECRET = defineString('CLOUDINARY_API_SECRET', { default: '' })
@@ -45,6 +48,63 @@ function getResendClient(): Resend | null {
   return key ? new Resend(key) : null
 }
 
+function getBrevoApiKey(): string {
+  return readParam(BREVO_API_KEY, process.env.BREVO_API_KEY || '')
+}
+
+function getMailFromEmail(): string {
+  return readParam(MAIL_FROM_EMAIL_PARAM, process.env.MAIL_FROM_EMAIL || 'noreply@afinju247.com')
+}
+
+function getMailFromName(): string {
+  return readParam(MAIL_FROM_NAME_PARAM, process.env.MAIL_FROM_NAME || 'AFINJU')
+}
+
+function parseFrom(from: string): { email: string; name?: string } {
+  const match = from.match(/^(.*)<([^>]+)>$/)
+  if (!match) return { email: from.trim() }
+  const name = match[1].trim().replace(/^"|"$/g, '')
+  const email = match[2].trim()
+  return { email, ...(name ? { name } : {}) }
+}
+
+async function sendTransactionalEmail(args: {
+  resend: Resend | null
+  brevoApiKey: string
+  from: string
+  to: string
+  subject: string
+  html: string
+}): Promise<void> {
+  const { resend, brevoApiKey, from, to, subject, html } = args
+  if (resend) {
+    await resend.emails.send({ from, to, subject, html })
+    return
+  }
+  if (brevoApiKey) {
+    const sender = parseFrom(from)
+    await axios.post(
+      'https://api.brevo.com/v3/smtp/email',
+      {
+        sender,
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+      },
+      {
+        headers: {
+          accept: 'application/json',
+          'content-type': 'application/json',
+          'api-key': brevoApiKey,
+        },
+        timeout: 10000,
+      }
+    )
+    return
+  }
+  throw new Error('No email provider configured')
+}
+
 function configureCloudinary(): void {
   cloudinary.config({
     cloud_name: readParam(CLOUDINARY_CLOUD_NAME, process.env.CLOUDINARY_CLOUD_NAME || ''),
@@ -58,6 +118,37 @@ function generateOrderNumber(): string {
   const timestamp = Date.now().toString(36).toUpperCase()
   const random = Math.random().toString(36).substring(2, 5).toUpperCase()
   return `AFJ-${timestamp}-${random}`
+}
+
+function sanitizeForFirestore<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeForFirestore(item)) as T
+  }
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => [k, sanitizeForFirestore(v)])
+    return Object.fromEntries(entries) as T
+  }
+  return value
+}
+
+function normalizeInventory(product: any): { limit: number; sold: number } {
+  const rawLimit = Number(product?.inventory?.launchEditionLimit)
+  const sold = Number(product?.inventory?.soldCount ?? 0)
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? rawLimit : Number.MAX_SAFE_INTEGER
+  return {
+    limit,
+    sold: Number.isFinite(sold) && sold >= 0 ? sold : 0,
+  }
+}
+
+function validateQuantity(input: unknown): number {
+  const quantity = Number(input)
+  if (!Number.isInteger(quantity) || quantity <= 0 || quantity > 20) {
+    throw new HttpsError('invalid-argument', 'Each item quantity must be an integer between 1 and 20.')
+  }
+  return quantity
 }
 
 async function verifyPaystackPayment(reference: string): Promise<{
@@ -115,6 +206,11 @@ export const createOrder = onCall(
     const orderItems: any[] = []
 
     for (const item of items) {
+      if (!item || typeof item.productId !== 'string' || !item.productId.trim()) {
+        throw new HttpsError('invalid-argument', 'Each cart item must include a valid productId.')
+      }
+      const quantity = validateQuantity(item.quantity)
+
       const productDoc = await db.collection('products').doc(item.productId).get()
       if (!productDoc.exists) {
         throw new HttpsError('not-found', `Product ${item.productId} not found`)
@@ -125,7 +221,7 @@ export const createOrder = onCall(
         throw new HttpsError('failed-precondition', `Product ${product.name} is not available`)
       }
 
-      const itemTotal = product.price * item.quantity
+      const itemTotal = product.price * quantity
       subtotal += itemTotal
 
       orderItems.push({
@@ -134,8 +230,8 @@ export const createOrder = onCall(
         productSlug: product.slug,
         productImage: product.images?.[0]?.url || '',
         price: product.price,
-        quantity: item.quantity,
-        preferences: item.preferences || {},
+        quantity,
+        preferences: sanitizeForFirestore(item.preferences || {}),
       })
     }
 
@@ -151,8 +247,13 @@ export const createOrder = onCall(
       customerName,
       customerPhone,
       customerAltPhone: customerAltPhone || '',
-      customerEmail,
-      deliveryAddress,
+      customerEmail: customerEmail || '',
+      deliveryAddress: sanitizeForFirestore({
+        fullAddress: deliveryAddress?.fullAddress || '',
+        city: deliveryAddress?.city || '',
+        state: deliveryAddress?.state || '',
+        landmark: deliveryAddress?.landmark || '',
+      }),
       items: orderItems,
       subtotal,
       shippingFee,
@@ -172,7 +273,7 @@ export const createOrder = onCall(
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     }
 
-    const orderRef = await db.collection('orders').add(newOrder)
+    const orderRef = await db.collection('orders').add(sanitizeForFirestore(newOrder))
     logger.info(`Order ${orderNumber} securely created by user ${request.auth.uid}`, { orderId: orderRef.id })
 
     return {
@@ -210,6 +311,16 @@ export const verifyPayment = onCall(
       return { success: true, alreadyPaid: true }
     }
 
+    const duplicateRefSnap = await db
+      .collection('orders')
+      .where('paymentReference', '==', reference)
+      .where('paymentStatus', '==', 'paid')
+      .limit(1)
+      .get()
+    if (!duplicateRefSnap.empty && duplicateRefSnap.docs[0].id !== orderId) {
+      throw new HttpsError('failed-precondition', 'Payment reference has already been used.')
+    }
+
     let paymentData: Awaited<ReturnType<typeof verifyPaystackPayment>>
     try {
       paymentData = await verifyPaystackPayment(reference)
@@ -226,55 +337,104 @@ export const verifyPayment = onCall(
         `Payment amount mismatch. Expected N${expectedAmount}, received N${paymentData.amount}.`
       )
     }
+    if (paymentData.currency !== 'NGN') {
+      throw new HttpsError('failed-precondition', `Unexpected payment currency: ${paymentData.currency}`)
+    }
+    if (paymentData.metadata?.orderId && paymentData.metadata.orderId !== orderId) {
+      throw new HttpsError('failed-precondition', 'Payment metadata does not match this order.')
+    }
 
-    await db.runTransaction(async (tx) => {
-      const freshSnap = await tx.get(orderRef)
-      if (!freshSnap.exists) throw new Error('Order disappeared')
-      const fresh = freshSnap.data()!
-      if (fresh.paymentStatus === 'paid') return
+    try {
+      await db.runTransaction(async (tx) => {
+        const freshSnap = await tx.get(orderRef)
+        if (!freshSnap.exists) throw new Error('Order disappeared')
+        const fresh = freshSnap.data()!
+        if (fresh.paymentStatus === 'paid') return
 
-      for (const item of order.items) {
-        const productRef = db.collection('products').doc(item.productId)
-        const productSnap = await tx.get(productRef)
-        if (!productSnap.exists) throw new Error(`Product ${item.productId} not found`)
-        const product = productSnap.data()!
-        const remaining = product.inventory.launchEditionLimit - product.inventory.soldCount
-        if (remaining < item.quantity) {
-          throw new Error(`Insufficient stock for ${item.productName}. Only ${remaining} unit(s) remain.`)
+        const paymentReferenceRef = db.collection('payment_references').doc(reference)
+        const paymentReferenceSnap = await tx.get(paymentReferenceRef)
+        if (paymentReferenceSnap.exists) {
+          const lockedOrderId = paymentReferenceSnap.data()?.orderId
+          if (lockedOrderId !== orderId) {
+            throw new Error('Payment reference has already been used.')
+          }
         }
 
-        tx.update(productRef, {
-          'inventory.soldCount': admin.firestore.FieldValue.increment(item.quantity),
+        const productUpdates: Array<{ ref: FirebaseFirestore.DocumentReference; quantity: number }> = []
+        for (const item of fresh.items || []) {
+          const quantity = Number(item.quantity)
+          if (!Number.isFinite(quantity) || quantity <= 0) {
+            throw new Error(`Invalid quantity for ${item.productName || item.productId}`)
+          }
+
+          const productRef = db.collection('products').doc(item.productId)
+          const productSnap = await tx.get(productRef)
+          if (!productSnap.exists) throw new Error(`Product ${item.productId} not found`)
+          const product = productSnap.data()!
+          const { limit, sold } = normalizeInventory(product)
+          const remaining = limit - sold
+          if (remaining < quantity) {
+            throw new Error(`Insufficient stock for ${item.productName}. Only ${Math.max(0, remaining)} unit(s) remain.`)
+          }
+
+          productUpdates.push({ ref: productRef, quantity })
+        }
+
+        const newTimeline = [
+          ...(fresh.statusTimeline || []),
+          {
+            status: 'paid',
+            timestamp: new Date(),
+            note: `Payment of N${paymentData.amount.toLocaleString()} confirmed via Paystack. Reference: ${reference}`,
+          },
+        ]
+
+        if (!paymentReferenceSnap.exists) {
+          tx.set(paymentReferenceRef, {
+            orderId,
+            userId: request.auth.uid,
+            source: 'callable',
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          })
+        }
+
+        for (const update of productUpdates) {
+          tx.update(update.ref, {
+            'inventory.soldCount': admin.firestore.FieldValue.increment(update.quantity),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          })
+        }
+
+        tx.update(orderRef, {
+          paymentStatus: 'paid',
+          paymentReference: reference,
+          status: 'paid',
+          statusTimeline: newTimeline,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         })
+
+        tx.set(db.collection('audit_logs').doc(), {
+          type: 'payment_confirmed',
+          orderId,
+          userId: request.auth.uid,
+          reference,
+          amount: paymentData.amount,
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        })
+      })
+    } catch (err: any) {
+      const message = err?.message || 'Unknown transaction failure'
+      logger.error('verifyPayment transaction failed', { orderId, reference, message })
+      if (
+        message.includes('Insufficient stock') ||
+        message.includes('already been used') ||
+        message.includes('not found') ||
+        message.includes('Invalid quantity')
+      ) {
+        throw new HttpsError('failed-precondition', message)
       }
-
-      const newTimeline = [
-        ...(fresh.statusTimeline || []),
-        {
-          status: 'paid',
-          timestamp: new Date(),
-          note: `Payment of N${paymentData.amount.toLocaleString()} confirmed via Paystack. Reference: ${reference}`,
-        },
-      ]
-
-      tx.update(orderRef, {
-        paymentStatus: 'paid',
-        paymentReference: reference,
-        status: 'paid',
-        statusTimeline: newTimeline,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      })
-
-      tx.set(db.collection('audit_logs').doc(), {
-        type: 'payment_confirmed',
-        orderId,
-        userId: request.auth.uid,
-        reference,
-        amount: paymentData.amount,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      })
-    })
+      throw new HttpsError('internal', 'Payment verified, but order finalization failed. Please contact support.')
+    }
 
     logger.info('Order paid successfully', { orderId, reference })
     return { success: true }
@@ -301,8 +461,21 @@ export const paystackWebhook = onRequest(
       .createHmac('sha512', webhookSecret)
       .update(req.rawBody || JSON.stringify(req.body))
       .digest('hex')
-
-    if (hash !== req.headers['x-paystack-signature']) {
+    const receivedSignatureHeader = req.headers['x-paystack-signature']
+    const receivedSignature = Array.isArray(receivedSignatureHeader)
+      ? receivedSignatureHeader[0]
+      : receivedSignatureHeader
+    if (typeof receivedSignature !== 'string') {
+      logger.warn('Missing webhook signature')
+      res.status(400).send('Invalid signature')
+      return
+    }
+    const expectedSig = Buffer.from(hash, 'hex')
+    const providedSig = Buffer.from(receivedSignature, 'hex')
+    if (
+      expectedSig.length !== providedSig.length ||
+      !crypto.timingSafeEqual(expectedSig, providedSig)
+    ) {
       logger.warn('Invalid webhook signature')
       res.status(400).send('Invalid signature')
       return
@@ -336,16 +509,68 @@ export const paystackWebhook = onRequest(
       }
 
       try {
-        await verifyPaystackPayment(reference)
+        const paymentData = await verifyPaystackPayment(reference)
+        if (paymentData.currency !== 'NGN') {
+          throw new Error(`Unexpected payment currency: ${paymentData.currency}`)
+        }
+        if (paymentData.metadata?.orderId && paymentData.metadata.orderId !== orderId) {
+          throw new Error('Payment metadata does not match order')
+        }
+        const duplicateRefSnap = await db
+          .collection('orders')
+          .where('paymentReference', '==', reference)
+          .where('paymentStatus', '==', 'paid')
+          .limit(1)
+          .get()
+        if (!duplicateRefSnap.empty && duplicateRefSnap.docs[0].id !== orderId) {
+          throw new Error('Payment reference already used by another order')
+        }
 
         await db.runTransaction(async (tx) => {
           const fresh = (await tx.get(orderRef)).data()!
           if (fresh.paymentStatus === 'paid') return
 
-          for (const item of order.items) {
+          const paymentReferenceRef = db.collection('payment_references').doc(reference)
+          const paymentReferenceSnap = await tx.get(paymentReferenceRef)
+          if (paymentReferenceSnap.exists) {
+            const lockedOrderId = paymentReferenceSnap.data()?.orderId
+            if (lockedOrderId !== orderId) {
+              throw new Error('Payment reference has already been used.')
+            }
+          }
+
+          const productUpdates: Array<{ ref: FirebaseFirestore.DocumentReference; quantity: number }> = []
+          for (const item of fresh.items || []) {
+            const quantity = Number(item.quantity)
+            if (!Number.isFinite(quantity) || quantity <= 0) {
+              throw new Error(`Invalid quantity for ${item.productName || item.productId}`)
+            }
             const productRef = db.collection('products').doc(item.productId)
-            tx.update(productRef, {
-              'inventory.soldCount': admin.firestore.FieldValue.increment(item.quantity),
+            const productSnap = await tx.get(productRef)
+            if (!productSnap.exists) throw new Error(`Product ${item.productId} not found`)
+            const product = productSnap.data()!
+            const { limit, sold } = normalizeInventory(product)
+            const remaining = limit - sold
+            if (remaining < quantity) {
+              throw new Error(`Insufficient stock for ${item.productName}. Only ${Math.max(0, remaining)} unit(s) remain.`)
+            }
+
+            productUpdates.push({ ref: productRef, quantity })
+          }
+
+          if (!paymentReferenceSnap.exists) {
+            tx.set(paymentReferenceRef, {
+              orderId,
+              userId: fresh.userId || null,
+              source: 'webhook',
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            })
+          }
+
+          for (const update of productUpdates) {
+            tx.update(update.ref, {
+              'inventory.soldCount': admin.firestore.FieldValue.increment(update.quantity),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             })
           }
 
@@ -434,17 +659,21 @@ export const onOrderUpdated = onDocumentUpdated(
     if (!orderBefore || !orderAfter) return null
 
     const resend = getResendClient()
-    if (!resend) {
-      logger.warn('RESEND_API_KEY missing or client unavailable - skipping transactional emails')
+    const brevoApiKey = getBrevoApiKey()
+    if (!resend && !brevoApiKey) {
+      logger.warn('No transactional email provider configured (set RESEND_API_KEY or BREVO_API_KEY)')
       return null
     }
 
     const adminEmail = getAdminEmail()
+    const mailFrom = `${getMailFromName()} <${getMailFromEmail()}>`
 
     if (orderBefore.paymentStatus !== 'paid' && orderAfter.paymentStatus === 'paid') {
       try {
-        await resend.emails.send({
-          from: 'AFINJU <orders@afinju.com>',
+        await sendTransactionalEmail({
+          resend,
+          brevoApiKey,
+          from: mailFrom,
           to: orderAfter.customerEmail || adminEmail,
           subject: `AFINJU Order Confirmed - ${orderAfter.orderNumber}`,
           html: `
@@ -455,8 +684,10 @@ export const onOrderUpdated = onDocumentUpdated(
           `,
         })
 
-        await resend.emails.send({
-          from: 'AFINJU System <system@afinju.com>',
+        await sendTransactionalEmail({
+          resend,
+          brevoApiKey,
+          from: mailFrom,
           to: adminEmail,
           subject: `NEW PAID ORDER - ${orderAfter.orderNumber}`,
           html: `<p>New Launch Edition order received. Total: N${orderAfter.total.toLocaleString()}</p>`,
@@ -468,8 +699,10 @@ export const onOrderUpdated = onDocumentUpdated(
 
     if (orderBefore.status !== 'dispatched' && orderAfter.status === 'dispatched') {
       try {
-        await resend.emails.send({
-          from: 'AFINJU <orders@afinju.com>',
+        await sendTransactionalEmail({
+          resend,
+          brevoApiKey,
+          from: mailFrom,
           to: orderAfter.customerEmail || adminEmail,
           subject: `AFINJU Order Dispatched - ${orderAfter.orderNumber}`,
           html: `
@@ -490,8 +723,12 @@ export const onOrderUpdated = onDocumentUpdated(
 export const bootstrapAdmin = onRequest(
   { region: 'europe-west1' },
   async (req: any, res: any) => {
-    const uid = req.query.uid
-    const secret = req.query.secret
+    if (req.method !== 'POST') {
+      res.status(405).send('Method Not Allowed')
+      return
+    }
+    const uid = req.body?.uid
+    const secret = req.get('x-bootstrap-secret') || req.body?.secret
 
     const bootstrapSecret = readParam(BOOTSTRAP_SECRET, process.env.BOOTSTRAP_SECRET || '')
     if (!bootstrapSecret || secret !== bootstrapSecret) {

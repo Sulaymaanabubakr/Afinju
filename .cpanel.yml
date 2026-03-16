@@ -9,4 +9,4 @@ deployment:
     # 2. Copy the built files from 'dist' to your public_html folder
     # IMPORTANT: Replace 'username' with your actual cPanel username!
     - export DEPLOYPATH=/home/username/public_html
-    - /bin/cp -R dist/* $DEPLOYPATH/
+    - /bin/cp -R dist/. $DEPLOYPATH/

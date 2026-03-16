@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { CartItem, ProductColor } from '@/types'
-import type { User as FirebaseUser } from 'firebase/auth'
 
 // ─── Cart Store ───────────────────────────────────────────────────────────────
 
@@ -74,26 +73,6 @@ export const useCartStore = create<CartStore>()(
     { name: 'afinju-cart' }
   )
 )
-
-// ─── Auth Store ───────────────────────────────────────────────────────────────
-
-interface AuthStore {
-  user: FirebaseUser | null
-  userRole: 'customer' | 'admin' | 'staff' | null
-  loading: boolean
-  setUser: (user: FirebaseUser | null) => void
-  setUserRole: (role: 'customer' | 'admin' | 'staff' | null) => void
-  setLoading: (loading: boolean) => void
-}
-
-export const useAuthStore = create<AuthStore>((set) => ({
-  user: null,
-  userRole: null,
-  loading: true,
-  setUser: (user) => set({ user }),
-  setUserRole: (userRole) => set({ userRole }),
-  setLoading: (loading) => set({ loading }),
-}))
 
 // ─── Preferences Store (for product page state) ───────────────────────────────
 

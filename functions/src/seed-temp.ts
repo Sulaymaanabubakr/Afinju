@@ -1,6 +1,6 @@
 import { initializeApp, cert } from 'firebase-admin/app'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
-import path from 'path'
+import * as path from 'path'
 
 // Initialise Firebase Admin
 const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT

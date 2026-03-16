@@ -18,7 +18,8 @@ type FormData = z.infer<typeof schema>
 export default function LoginPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const returnTo = searchParams.get('return') || '/account'
+  const rawReturnTo = searchParams.get('return') || '/account'
+  const returnTo = rawReturnTo.startsWith('/') ? rawReturnTo : '/account'
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -41,7 +42,7 @@ export default function LoginPage() {
       }
 
       toast.success('Welcome back.')
-      navigate(returnTo)
+      navigate(returnTo, { replace: true })
     } catch (err: any) {
       const msg = err.code === 'auth/invalid-credential'
         ? 'Invalid email or password.'

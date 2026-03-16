@@ -8,7 +8,7 @@
   "dependencies": {
     "axios": "^1.13.6",
     "cloudinary": "^2.9.0",
-    "firebase-admin": "^11.11.1",
+    "firebase-admin": "^13.7.0",
     "firebase-functions": "^7.1.1",
     "resend": "^6.9.3"
   },
@@ -19,5 +19,8 @@
   "main": "lib/index.js",
   "engines": {
     "node": "22"
+  },
+  "overrides": {
+    "@tootallnate/once": "3.0.1"
   }
 }

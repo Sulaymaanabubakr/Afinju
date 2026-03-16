@@ -12,7 +12,7 @@ import { openPaystackPopup, generateReference } from '@/lib/paystack'
 import { formatPrice, BRAND_WHATSAPP } from '@/lib/utils'
 import { cloudinaryUrl } from '@/lib/cloudinary'
 import { httpsCallable } from 'firebase/functions'
-import { functions } from '@/lib/firebase'
+import { functions, auth } from '@/lib/firebase'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { PRODUCT_COLORS, SHOE_SIZES, HEAD_SIZES, type ProductColor } from '@/types'
@@ -83,6 +83,11 @@ export default function CheckoutPage() {
   const onSubmit = async (data: FormData) => {
     if (!user) { toast.error('Please sign in to continue'); return }
     if (processing) return
+    if (!auth.currentUser) {
+      toast.error('Your session expired. Please sign in again.')
+      navigate('/login?return=%2Fcheckout')
+      return
+    }
 
     // Validate inventory before payment
     for (const item of items) {
@@ -100,6 +105,9 @@ export default function CheckoutPage() {
     let orderId: string
     let serverTotal: number
     try {
+      // Ensure callable has a fresh ID token
+      await auth.currentUser.getIdToken(true)
+
       const result = await createOrder({
         customerName: data.fullName,
         customerPhone: data.phone,
@@ -121,8 +129,32 @@ export default function CheckoutPage() {
       
       orderId = result.orderId
       serverTotal = result.total
-    } catch (err) {
-      toast.error('Failed to create order securely. Please try again.')
+    } catch (err: any) {
+      const code = err?.code || err?.details?.code || ''
+      const message = err?.message || err?.details || ''
+
+      if (
+        code === 'functions/unauthenticated' ||
+        code === 'unauthenticated' ||
+        code === 'auth/user-token-expired'
+      ) {
+        toast.error('Session expired. Please sign in again.')
+        navigate('/login?return=%2Fcheckout')
+      } else if (
+        code === 'functions/not-found'
+      ) {
+        toast.error('Order service is unavailable. Please refresh and try again.')
+      } else if (
+        code === 'functions/failed-precondition' ||
+        code === 'failed-precondition' ||
+        code === 'functions/invalid-argument' ||
+        code === 'invalid-argument'
+      ) {
+        const clean = typeof message === 'string' ? message.replace(/^.*?:\s*/, '') : ''
+        toast.error(clean || 'Order validation failed. Please review your cart and try again.')
+      } else {
+        toast.error('Failed to create order securely. Please try again.')
+      }
       setProcessing(false)
       return
     }

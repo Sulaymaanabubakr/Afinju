@@ -17,17 +17,25 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const projectRoot = path.resolve(__dirname, '..')
 
+function requireEnv(name: string): string {
+  const value = process.env[name]
+  if (!value) throw new Error(`Missing required environment variable: ${name}`)
+  return value
+}
+
 // ── Config ──────────────────────────────────────────────────────────────────────
-const serviceAccountPath = path.join(projectRoot, 'afinju-luxury-firebase-adminsdk-fbsvc-21d9c1b699.json')
+const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH
+  ? path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT_PATH)
+  : path.join(projectRoot, 'service-account.json')
 const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf-8'))
 
 initializeApp({ credential: cert(serviceAccount) })
 const db = getFirestore()
 
 cloudinary.config({
-  cloud_name: 'du782gsda',
-  api_key: '987486131528321',
-  api_secret: 'R5flpG3kxSma1OfPNpPrel-NGBo',
+  cloud_name: requireEnv('CLOUDINARY_CLOUD_NAME'),
+  api_key: requireEnv('CLOUDINARY_API_KEY'),
+  api_secret: requireEnv('CLOUDINARY_API_SECRET'),
 })
 
 // ── Upload Helper ───────────────────────────────────────────────────────────────
@@ -349,7 +357,7 @@ async function main() {
     whatsappNumber: '2347071861932',
     supportEmail: 'hello@afinju.com',
     shippingFee: 5000,
-    paystackPublicKey: 'pk_test_99de4b14acaa95ef2ce3b8dd9d389064e4136d70',
+    paystackPublicKey: process.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_placeholder',
     instagramUrl: 'https://instagram.com/afinju',
     twitterUrl: '',
     updatedAt: Timestamp.now(),

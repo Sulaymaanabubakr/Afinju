@@ -48,6 +48,7 @@ export interface CartItem {
   productImage: string
   price: number
   quantity: number
+  maxAvailable?: number
   preferences?: OrderPreferences
 }
 

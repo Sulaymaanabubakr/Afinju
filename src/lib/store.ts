@@ -7,7 +7,7 @@ import type { CartItem, ProductColor } from '@/types'
 interface CartStore {
   items: CartItem[]
   isOpen: boolean
-  addItem: (item: CartItem) => void
+  addItem: (item: CartItem) => { addedQuantity: number; limited: boolean }
   removeItem: (lineId: string) => void
   updateQuantity: (lineId: string, quantity: number) => void
   clearCart: () => void
@@ -33,19 +33,47 @@ export const useCartStore = create<CartStore>()(
       isOpen: false,
 
       addItem: (item) => {
+        const maxAvailable = typeof item.maxAvailable === 'number' ? Math.max(0, item.maxAvailable) : undefined
+        const existingProductQty = get()
+          .items
+          .filter((i) => i.productId === item.productId)
+          .reduce((sum, i) => sum + i.quantity, 0)
+        const allowedAdditional = maxAvailable === undefined
+          ? item.quantity
+          : Math.max(0, maxAvailable - existingProductQty)
+        const addedQuantity = Math.min(item.quantity, allowedAdditional)
+        if (addedQuantity <= 0) return { addedQuantity: 0, limited: true }
+
         const itemLineId = getCartLineId(item)
         const existing = get().items.find((i) => getCartLineId(i) === itemLineId)
         if (existing) {
           set({
             items: get().items.map((i) =>
               getCartLineId(i) === itemLineId
-                ? { ...i, lineId: itemLineId, quantity: i.quantity + item.quantity }
+                ? {
+                  ...i,
+                  lineId: itemLineId,
+                  quantity: i.quantity + addedQuantity,
+                  ...(maxAvailable !== undefined ? { maxAvailable } : {}),
+                }
                 : i
             ),
           })
         } else {
-          set({ items: [...get().items, { ...item, lineId: itemLineId }] })
+          set({
+            items: [
+              ...get().items,
+              {
+                ...item,
+                lineId: itemLineId,
+                quantity: addedQuantity,
+                ...(maxAvailable !== undefined ? { maxAvailable } : {}),
+              },
+            ],
+          })
         }
+
+        return { addedQuantity, limited: addedQuantity < item.quantity }
       },
 
       removeItem: (lineId) =>
@@ -56,9 +84,24 @@ export const useCartStore = create<CartStore>()(
           get().removeItem(lineId)
           return
         }
+        const current = get().items.find((i) => getCartLineId(i) === lineId)
+        if (!current) return
+        const maxAvailable = typeof current.maxAvailable === 'number' ? Math.max(0, current.maxAvailable) : undefined
+        const otherLinesQty = get()
+          .items
+          .filter((i) => i.productId === current.productId && getCartLineId(i) !== lineId)
+          .reduce((sum, i) => sum + i.quantity, 0)
+        const maxForLine = maxAvailable === undefined
+          ? quantity
+          : Math.max(0, maxAvailable - otherLinesQty)
+        const nextQuantity = Math.min(quantity, maxForLine)
+        if (nextQuantity <= 0) {
+          get().removeItem(lineId)
+          return
+        }
         set({
           items: get().items.map((i) =>
-            getCartLineId(i) === lineId ? { ...i, lineId, quantity } : i
+            getCartLineId(i) === lineId ? { ...i, lineId, quantity: nextQuantity } : i
           ),
         })
       },

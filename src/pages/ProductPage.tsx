@@ -30,7 +30,6 @@ export default function ProductPage() {
   const [qty, setQty] = useState(1)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const hasUncertainSizing = shoeSize === 'Not sure' || headSize === 'Not sure'
-  const canAddToCart = !!shoeSize && !!headSize && !!preferredColor && qty > 0
 
   const remaining = product
     ? product.inventory.launchEditionLimit - product.inventory.soldCount
@@ -57,7 +56,7 @@ export default function ProductPage() {
       return false
     }
 
-    addItem({
+    const addResult = addItem({
       lineId: [product.id, preferredColor, shoeSize, headSize].join(':'),
       productId: product.id,
       productName: product.name,
@@ -65,14 +64,23 @@ export default function ProductPage() {
       productImage: product.images[0]?.url || '',
       price: product.price,
       quantity: qty,
+      maxAvailable: remaining,
       preferences: {
         shoeSize,
         headSize,
         preferredColor: preferredColor as ProductColor,
       },
     })
+    if (addResult.addedQuantity <= 0) {
+      toast.error(`Only ${Math.max(0, remaining)} unit(s) available for this product.`)
+      return false
+    }
     openCart()
-    toast.success('Added to your selection.')
+    if (addResult.limited) {
+      toast.success(`Added ${addResult.addedQuantity} unit(s). Stock limit reached for this product.`)
+    } else {
+      toast.success('Added to your selection.')
+    }
     return true
   }
 
@@ -355,16 +363,14 @@ export default function ProductPage() {
               <button
                 type="button"
                 onClick={handleBuyNow}
-                disabled={!canAddToCart}
-                className="btn-gold w-full text-sm py-4 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="btn-gold w-full text-sm py-4"
               >
                 Secure Your Position - {formatPrice(product.price * qty)}
               </button>
               <button
                 type="button"
                 onClick={handleAddToCart}
-                disabled={!canAddToCart}
-                className="btn-outline w-full text-xs disabled:opacity-60 disabled:cursor-not-allowed"
+                className="btn-outline w-full text-xs"
               >
                 Add to Cart
               </button>

@@ -95,39 +95,39 @@ function statusEmailCopy(status) {
     const map = {
         pending_payment: {
             title: 'Order Received',
-            message: 'We have received your order and we are currently awaiting payment confirmation.',
+            message: 'Your request has been received and reserved briefly while payment is confirmed.',
         },
         paid: {
             title: 'Payment Confirmed',
-            message: 'Your payment has been confirmed and your order is now being prepared.',
+            message: 'Payment is confirmed. Your set is now in private preparation.',
         },
         confirmed: {
             title: 'Order Confirmed',
-            message: 'Your order has been confirmed and moved into processing.',
+            message: 'Your order has been formally confirmed and moved to production.',
         },
         packaging: {
             title: 'Now Packaging',
-            message: 'Your order is currently being packaged by our team.',
+            message: 'Your pieces are being hand-finished and packaged.',
         },
         dispatched: {
             title: 'Order Dispatched',
-            message: 'Your order has been dispatched and is on the way.',
+            message: 'Your order has left our studio and is in transit.',
         },
         out_for_delivery: {
             title: 'Out For Delivery',
-            message: 'Your order is now out for delivery.',
+            message: 'Your order is with the final courier for delivery today.',
         },
         delivered: {
             title: 'Delivered',
-            message: 'Your order has been marked as delivered.',
+            message: 'Delivery is complete. We trust it arrived in excellent condition.',
         },
         cancelled: {
             title: 'Order Cancelled',
-            message: 'Your order has been cancelled. Contact support if you need assistance.',
+            message: 'This order has been cancelled. Our concierge can assist with next steps.',
         },
         refunded: {
             title: 'Refund Processed',
-            message: 'A refund has been processed for your order.',
+            message: 'A refund has been issued for this order.',
         },
     };
     return map[status] || {
@@ -146,9 +146,11 @@ function escapeHtml(value) {
 function buildEmailHtml(args) {
     const heading = escapeHtml(args.heading);
     const greetingName = escapeHtml(args.greetingName || 'Valued Customer');
-    const body = args.bodyLines.map((line) => `<p style="margin:0 0 12px;">${escapeHtml(line)}</p>`).join('');
+    const body = args.bodyLines
+        .map((line) => `<p style="margin:0 0 14px;font-size:15px;line-height:1.75;color:#d5c6a1;">${escapeHtml(line)}</p>`)
+        .join('');
     const orderLine = args.orderNumber
-        ? `<p style="margin:8px 0 0;font-size:13px;color:#6b7280;">Order: <strong style="color:#111827;">${escapeHtml(args.orderNumber)}</strong></p>`
+        ? `<p style="margin:20px 0 0;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#b89a5f;">Order Number</p><p style="margin:6px 0 0;font-size:16px;font-family:Georgia,'Times New Roman',serif;color:#f6e6bf;">${escapeHtml(args.orderNumber)}</p>`
         : '';
     return `<!doctype html>
 <html>
@@ -157,28 +159,39 @@ function buildEmailHtml(args) {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${heading}</title>
   </head>
-  <body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;color:#111827;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f4f6;padding:20px 12px;">
+  <body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;color:#f5f5f5;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0a0a0a;padding:26px 12px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border:1px solid #e5e7eb;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;background:#101010;border:1px solid #4a3a1f;">
             <tr>
-              <td style="background:#0b0b0b;color:#f6f0dc;padding:18px 24px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;">
-                AFINJU Authority Set
+              <td style="padding:0;background:#101010;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td style="height:4px;background:#b89a5f;font-size:0;line-height:0;">&nbsp;</td>
+                  </tr>
+                </table>
               </td>
             </tr>
             <tr>
-              <td style="padding:26px 24px 20px;">
-                <h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;font-family:Georgia,'Times New Roman',serif;color:#111827;">${heading}</h1>
-                <p style="margin:0 0 14px;">Dear ${greetingName},</p>
+              <td style="padding:28px 28px 6px;text-align:center;">
+                <p style="margin:0 0 10px;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:#b89a5f;">AFINJU</p>
+                <p style="margin:0;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8f7a4a;">Authority Set</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:22px 28px 20px;">
+                <h1 style="margin:0 0 18px;font-size:31px;line-height:1.22;font-weight:500;font-family:Georgia,'Times New Roman',serif;color:#f6e6bf;">${heading}</h1>
+                <p style="margin:0 0 16px;font-size:15px;color:#efe4cb;">Dear ${greetingName},</p>
                 ${body}
                 ${orderLine}
               </td>
             </tr>
             <tr>
-              <td style="padding:0 24px 24px;">
-                <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 14px;" />
-                <p style="margin:0;font-size:12px;color:#6b7280;">AFINJU</p>
+              <td style="padding:0 28px 28px;">
+                <hr style="border:none;border-top:1px solid #4a3a1f;margin:0 0 14px;" />
+                <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.13em;text-transform:uppercase;color:#8f7a4a;">Crafted for Men of Authority</p>
+                <p style="margin:0;font-size:12px;color:#7f7f7f;">AFINJU Concierge</p>
               </td>
             </tr>
           </table>
@@ -691,9 +704,9 @@ exports.onOrderUpdated = (0, firestore_1.onDocumentUpdated)({ region: 'europe-we
                         heading: 'Your AFINJU Authority Set is secured.',
                         greetingName: orderAfter.customerName,
                         bodyLines: [
-                            `We have received your payment of N${orderAfter.total.toLocaleString()}.`,
-                            'Your launch edition set has been reserved and our craftsmen have been notified.',
-                            'We will update you once your order is packaged and dispatched.',
+                            `We have received N${orderAfter.total.toLocaleString()} in full.`,
+                            'Your launch edition allocation is secured, and private preparation has begun.',
+                            'You will receive discreet updates at each milestone.',
                         ],
                         orderNumber: orderAfter.orderNumber,
                     }),
@@ -723,7 +736,7 @@ exports.onOrderUpdated = (0, firestore_1.onDocumentUpdated)({ region: 'europe-we
                     heading: 'New paid order received',
                     greetingName: 'Admin',
                     bodyLines: [
-                        `A new Launch Edition order has been paid.`,
+                        'A Launch Edition order has been successfully paid.',
                         `Customer: ${orderAfter.customerName || 'Unknown'}`,
                         `Total: N${orderAfter.total.toLocaleString()}`,
                     ],

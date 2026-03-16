@@ -1,9 +1,8 @@
 ---
 deployment:
   tasks:
-    - /bin/cd /home/askabent/repositories/Afinju
-    - export PATH=/opt/cpanel/ea-nodejs20/bin:$PATH
-    - npm ci
-    - npm run build
+    - /opt/cpanel/ea-nodejs20/bin/npm --prefix /home/askabent/repositories/Afinju ci
+    - /opt/cpanel/ea-nodejs20/bin/npm --prefix /home/askabent/repositories/Afinju run build
     - /bin/mkdir -p /home/askabent/public_html
-    - /bin/cp -R dist/. /home/askabent/public_html/
+    - /bin/cp -R /home/askabent/repositories/Afinju/dist/. /home/askabent/public_html/
+    - /bin/date > /home/askabent/public_html/.last_deploy

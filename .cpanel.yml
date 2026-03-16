@@ -1,11 +1,9 @@
 ---
 deployment:
   tasks:
-    # 1. Install dependencies and build the Vite React app
-    - export PATH=/opt/cpanel/ea-nodejs20/bin:$PATH # Adjust Node.js path if needed
-    - npm install
+    - /bin/cd /home/askabent/repositories/Afinju
+    - export PATH=/opt/cpanel/ea-nodejs20/bin:$PATH
+    - npm ci
     - npm run build
-    
-    # 2. Copy the built files from 'dist' to your public_html folder
-    - export DEPLOYPATH=/home/askabent/public_html
-    - /bin/cp -R dist/. $DEPLOYPATH/
+    - /bin/mkdir -p /home/askabent/public_html
+    - /bin/cp -R dist/. /home/askabent/public_html/

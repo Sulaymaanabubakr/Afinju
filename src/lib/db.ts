@@ -65,13 +65,33 @@ function docToOrder(id: string, data: DocumentData): Order {
 
 // ─── PRODUCTS ─────────────────────────────────────────────────────────────────
 export async function getProducts(): Promise<Product[]> {
-  const q = query(
+  const orderedQuery = query(
     collection(db, 'products'),
     where('status', '==', 'active'),
     orderBy('createdAt', 'desc')
   )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => docToProduct(d.id, d.data()))
+  const orderedSnap = await getDocs(orderedQuery)
+
+  // Older manually inserted product docs may not have createdAt.
+  // Firestore excludes those docs when orderBy(createdAt) is used.
+  if (!orderedSnap.empty) {
+    return orderedSnap.docs.map((d) => docToProduct(d.id, d.data()))
+  }
+
+  const fallbackQuery = query(
+    collection(db, 'products'),
+    where('status', '==', 'active')
+  )
+  const fallbackSnap = await getDocs(fallbackQuery)
+  const products = fallbackSnap.docs.map((d) => docToProduct(d.id, d.data()))
+
+  return products.sort((a, b) => {
+    const aTime = (a.createdAt instanceof Date ? a.createdAt.getTime() : 0)
+      || (a.updatedAt instanceof Date ? a.updatedAt.getTime() : 0)
+    const bTime = (b.createdAt instanceof Date ? b.createdAt.getTime() : 0)
+      || (b.updatedAt instanceof Date ? b.updatedAt.getTime() : 0)
+    return bTime - aTime
+  })
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {

@@ -17,7 +17,7 @@ function ProductCardSkeleton() {
 }
 
 export default function ShopPage() {
-  const { data: products, isLoading } = useQuery({
+  const { data: products, isLoading, isError } = useQuery({
     queryKey: ['products'],
     queryFn: getProducts,
   })
@@ -44,6 +44,13 @@ export default function ShopPage() {
           {isLoading ? (
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-10 md:gap-x-8 md:gap-y-14">
               {[1, 2, 3, 4].map((i) => <ProductCardSkeleton key={i} />)}
+            </div>
+          ) : isError ? (
+            <div className="text-center py-24">
+              <p className="font-heading text-2xl text-afinju-black/50">Unable to load products right now.</p>
+              <p className="font-sans text-xs tracking-[0.16em] uppercase text-afinju-black/35 mt-3">
+                Please refresh in a moment.
+              </p>
             </div>
           ) : !products?.length ? (
             <div className="text-center py-24">

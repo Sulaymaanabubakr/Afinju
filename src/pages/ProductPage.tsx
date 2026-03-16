@@ -30,6 +30,7 @@ export default function ProductPage() {
   const [qty, setQty] = useState(1)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const hasUncertainSizing = shoeSize === 'Not sure' || headSize === 'Not sure'
+  const canAddToCart = !!shoeSize && !!headSize && !!preferredColor && qty > 0
 
   const remaining = product
     ? product.inventory.launchEditionLimit - product.inventory.soldCount
@@ -45,7 +46,11 @@ export default function ProductPage() {
   }
 
   const handleAddToCart = () => {
-    if (!product || !validate()) return false
+    if (!product) return false
+    if (!validate()) {
+      toast.error('Please choose colour, shoe size, and head size before adding to cart.')
+      return false
+    }
 
     if (remaining <= 0) {
       toast.error('This edition is sold out.')
@@ -225,6 +230,7 @@ export default function ProductPage() {
                   }
                   return (
                     <button
+                      type="button"
                       key={color}
                       onClick={() => { setPreferredColor(color); setErrors(e => ({ ...e, preferredColor: '' })) }}
                       className={`group relative flex flex-col items-center gap-2 transition-all duration-150`}
@@ -265,6 +271,7 @@ export default function ProductPage() {
               <div className="flex flex-wrap gap-2">
                 {SHOE_SIZES.map((size) => (
                   <button
+                    type="button"
                     key={size}
                     onClick={() => { setShoeSize(size); setErrors(e => ({ ...e, shoeSize: '' })) }}
                     className={`${size === 'Not sure' ? 'px-3 h-12' : 'w-12 h-12'} border font-sans text-sm transition-all duration-150 ${shoeSize === size
@@ -297,6 +304,7 @@ export default function ProductPage() {
               <div className="flex flex-wrap gap-2">
                 {HEAD_SIZES.map((size) => (
                   <button
+                    type="button"
                     key={size}
                     onClick={() => { setHeadSize(size); setErrors(e => ({ ...e, headSize: '' })) }}
                     className={`px-3 h-10 border font-sans text-xs tracking-wider transition-all duration-150 ${headSize === size
@@ -324,6 +332,7 @@ export default function ProductPage() {
             <label className="font-sans text-xs tracking-[0.15em] uppercase text-afinju-black/50">Qty</label>
             <div className="flex items-center border border-black/20">
               <button
+                type="button"
                 onClick={() => setQty(Math.max(1, qty - 1))}
                 className="w-10 h-10 flex items-center justify-center hover:bg-black/5 transition-colors"
               >
@@ -331,6 +340,7 @@ export default function ProductPage() {
               </button>
               <span className="w-10 text-center font-sans text-sm">{qty}</span>
               <button
+                type="button"
                 onClick={() => setQty(Math.min(remaining, qty + 1))}
                 className="w-10 h-10 flex items-center justify-center hover:bg-black/5 transition-colors"
               >
@@ -342,10 +352,20 @@ export default function ProductPage() {
           {/* CTAs */}
           {remaining > 0 ? (
             <div className="space-y-3">
-              <button onClick={handleBuyNow} className="btn-gold w-full text-sm py-4">
+              <button
+                type="button"
+                onClick={handleBuyNow}
+                disabled={!canAddToCart}
+                className="btn-gold w-full text-sm py-4 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
                 Secure Your Position - {formatPrice(product.price * qty)}
               </button>
-              <button onClick={handleAddToCart} className="btn-outline w-full text-xs">
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={!canAddToCart}
+                className="btn-outline w-full text-xs disabled:opacity-60 disabled:cursor-not-allowed"
+              >
                 Add to Cart
               </button>
             </div>

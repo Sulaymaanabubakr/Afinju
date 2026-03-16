@@ -4,5 +4,8 @@ deployment:
     - /opt/cpanel/ea-nodejs20/bin/npm --prefix /home/askabent/repositories/Afinju ci
     - /opt/cpanel/ea-nodejs20/bin/npm --prefix /home/askabent/repositories/Afinju run build
     - /bin/mkdir -p /home/askabent/public_html
+    - /bin/mkdir -p /home/askabent/afinju247.com
     - /bin/cp -R /home/askabent/repositories/Afinju/dist/. /home/askabent/public_html/
+    - /bin/cp -R /home/askabent/repositories/Afinju/dist/. /home/askabent/afinju247.com/
     - /bin/date > /home/askabent/public_html/.last_deploy
+    - /bin/date > /home/askabent/afinju247.com/.last_deploy

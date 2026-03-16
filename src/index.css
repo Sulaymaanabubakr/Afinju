@@ -42,6 +42,8 @@
   html {
     scroll-behavior: smooth;
     font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
@@ -77,6 +79,14 @@
   @media (max-width: 768px) {
     html {
       font-size: 15px;
+    }
+
+    /* Prevent iOS Safari auto-zoom on auth fields (requires >=16px). */
+    .auth-luxury input,
+    .auth-luxury select,
+    .auth-luxury textarea,
+    .input-luxury {
+      font-size: 16px !important;
     }
 
     /* Compact oversized section spacing across the public site on phones */

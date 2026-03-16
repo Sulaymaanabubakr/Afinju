@@ -1,6 +1,5 @@
 import * as admin from 'firebase-admin'
 import axios from 'axios'
-import { Resend } from 'resend'
 import { v2 as cloudinary } from 'cloudinary'
 import { defineString } from 'firebase-functions/params'
 import { logger } from 'firebase-functions/logger'
@@ -12,7 +11,6 @@ const db = admin.firestore()
 
 const PAYSTACK_SECRET_KEY = defineString('PAYSTACK_SECRET_KEY', { default: '' })
 const PAYSTACK_WEBHOOK_SECRET = defineString('PAYSTACK_WEBHOOK_SECRET', { default: '' })
-const RESEND_API_KEY = defineString('RESEND_API_KEY', { default: '' })
 const BREVO_API_KEY = defineString('BREVO_API_KEY', { default: '' })
 const ADMIN_EMAIL_PARAM = defineString('ADMIN_EMAIL', { default: 'admin@afinju.com' })
 const MAIL_FROM_EMAIL_PARAM = defineString('MAIL_FROM_EMAIL', { default: 'noreply@afinju247.com' })
@@ -43,13 +41,16 @@ function getAdminEmail(): string {
   return readParam(ADMIN_EMAIL_PARAM, process.env.ADMIN_EMAIL || 'admin@afinju.com')
 }
 
-function getResendClient(): Resend | null {
-  const key = readParam(RESEND_API_KEY, process.env.RESEND_API_KEY || '')
-  return key ? new Resend(key) : null
+function normalizeSecret(raw: string): string {
+  const value = (raw || '').trim()
+  if (!value) return ''
+  const lowered = value.toLowerCase()
+  if (['disabled', 'none', 'null', 'false', '0'].includes(lowered)) return ''
+  return value
 }
 
 function getBrevoApiKey(): string {
-  return readParam(BREVO_API_KEY, process.env.BREVO_API_KEY || '')
+  return normalizeSecret(readParam(BREVO_API_KEY, process.env.BREVO_API_KEY || ''))
 }
 
 function getMailFromEmail(): string {
@@ -91,19 +92,66 @@ async function resolveCustomerEmail(order: any): Promise<string | null> {
   return null
 }
 
+function statusLabel(status: string): string {
+  return status
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (m) => m.toUpperCase())
+}
+
+function statusEmailCopy(status: string): { title: string; message: string } {
+  const map: Record<string, { title: string; message: string }> = {
+    pending_payment: {
+      title: 'Order Received',
+      message: 'We have received your order and we are currently awaiting payment confirmation.',
+    },
+    paid: {
+      title: 'Payment Confirmed',
+      message: 'Your payment has been confirmed and your order is now being prepared.',
+    },
+    confirmed: {
+      title: 'Order Confirmed',
+      message: 'Your order has been confirmed and moved into processing.',
+    },
+    packaging: {
+      title: 'Now Packaging',
+      message: 'Your order is currently being packaged by our team.',
+    },
+    dispatched: {
+      title: 'Order Dispatched',
+      message: 'Your order has been dispatched and is on the way.',
+    },
+    out_for_delivery: {
+      title: 'Out For Delivery',
+      message: 'Your order is now out for delivery.',
+    },
+    delivered: {
+      title: 'Delivered',
+      message: 'Your order has been marked as delivered.',
+    },
+    cancelled: {
+      title: 'Order Cancelled',
+      message: 'Your order has been cancelled. Contact support if you need assistance.',
+    },
+    refunded: {
+      title: 'Refund Processed',
+      message: 'A refund has been processed for your order.',
+    },
+  }
+
+  return map[status] || {
+    title: `Status Updated: ${statusLabel(status)}`,
+    message: `Your order status has been updated to ${statusLabel(status)}.`,
+  }
+}
+
 async function sendTransactionalEmail(args: {
-  resend: Resend | null
   brevoApiKey: string
   from: string
   to: string
   subject: string
   html: string
 }): Promise<void> {
-  const { resend, brevoApiKey, from, to, subject, html } = args
-  if (resend) {
-    await resend.emails.send({ from, to, subject, html })
-    return
-  }
+  const { brevoApiKey, from, to, subject, html } = args
   if (brevoApiKey) {
     const sender = parseFrom(from)
     await axios.post(
@@ -125,7 +173,7 @@ async function sendTransactionalEmail(args: {
     )
     return
   }
-  throw new Error('No email provider configured')
+  throw new Error('No email provider configured (BREVO_API_KEY missing)')
 }
 
 function configureCloudinary(): void {
@@ -681,10 +729,9 @@ export const onOrderUpdated = onDocumentUpdated(
     const orderAfter = event.data?.after?.data()
     if (!orderBefore || !orderAfter) return null
 
-    const resend = getResendClient()
     const brevoApiKey = getBrevoApiKey()
-    if (!resend && !brevoApiKey) {
-      logger.warn('No transactional email provider configured (set RESEND_API_KEY or BREVO_API_KEY)')
+    if (!brevoApiKey) {
+      logger.warn('No transactional email provider configured (set BREVO_API_KEY)')
       return null
     }
 
@@ -696,7 +743,6 @@ export const onOrderUpdated = onDocumentUpdated(
       if (customerEmail) {
         try {
           await sendTransactionalEmail({
-            resend,
             brevoApiKey,
             from: mailFrom,
             to: customerEmail,
@@ -724,7 +770,6 @@ export const onOrderUpdated = onDocumentUpdated(
 
       try {
         await sendTransactionalEmail({
-          resend,
           brevoApiKey,
           from: mailFrom,
           to: adminEmail,
@@ -741,28 +786,36 @@ export const onOrderUpdated = onDocumentUpdated(
       }
     }
 
-    if (orderBefore.status !== 'dispatched' && orderAfter.status === 'dispatched') {
+    const statusChanged = orderBefore.status !== orderAfter.status
+    const paymentJustConfirmed = orderBefore.paymentStatus !== 'paid' && orderAfter.paymentStatus === 'paid'
+
+    if (statusChanged) {
       if (!customerEmail) {
-        logger.warn('Skipping dispatch email: no valid customer email', {
+        logger.warn('Skipping status email: no valid customer email', {
           orderId: event.params?.orderId,
+          status: orderAfter.status,
         })
+      } else if (orderAfter.status === 'paid' && paymentJustConfirmed) {
+        // Already sent the richer payment confirmation email above.
       } else {
+        const copy = statusEmailCopy(String(orderAfter.status || 'updated'))
         try {
           await sendTransactionalEmail({
-            resend,
             brevoApiKey,
             from: mailFrom,
             to: customerEmail,
-            subject: `AFINJU Order Dispatched - ${orderAfter.orderNumber}`,
+            subject: `AFINJU Order Update - ${orderAfter.orderNumber} (${statusLabel(String(orderAfter.status || 'updated'))})`,
             html: `
-              <h1>Your AFINJU Set is on its way.</h1>
+              <h1>${copy.title}</h1>
               <p>Dear ${orderAfter.customerName},</p>
-              <p>Your order <strong>${orderAfter.orderNumber}</strong> has been dispatched.</p>
+              <p>${copy.message}</p>
+              <p>Order: <strong>${orderAfter.orderNumber}</strong></p>
             `,
           })
         } catch (err: any) {
-          logger.error('Failed to send customer shipping email', {
+          logger.error('Failed to send customer status email', {
             orderId: event.params?.orderId,
+            status: orderAfter.status,
             to: customerEmail,
             error: err?.message || 'unknown',
             providerResponse: err?.response?.data || null,

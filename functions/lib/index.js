@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.bootstrapAdmin = exports.onOrderUpdated = exports.getCloudinarySignature = exports.setAdminRole = exports.paystackWebhook = exports.verifyPayment = exports.createOrder = void 0;
 const admin = require("firebase-admin");
 const axios_1 = require("axios");
-const resend_1 = require("resend");
 const cloudinary_1 = require("cloudinary");
 const params_1 = require("firebase-functions/params");
 const logger_1 = require("firebase-functions/logger");
@@ -13,7 +12,6 @@ admin.initializeApp();
 const db = admin.firestore();
 const PAYSTACK_SECRET_KEY = (0, params_1.defineString)('PAYSTACK_SECRET_KEY', { default: '' });
 const PAYSTACK_WEBHOOK_SECRET = (0, params_1.defineString)('PAYSTACK_WEBHOOK_SECRET', { default: '' });
-const RESEND_API_KEY = (0, params_1.defineString)('RESEND_API_KEY', { default: '' });
 const BREVO_API_KEY = (0, params_1.defineString)('BREVO_API_KEY', { default: '' });
 const ADMIN_EMAIL_PARAM = (0, params_1.defineString)('ADMIN_EMAIL', { default: 'admin@afinju.com' });
 const MAIL_FROM_EMAIL_PARAM = (0, params_1.defineString)('MAIL_FROM_EMAIL', { default: 'noreply@afinju247.com' });
@@ -40,12 +38,17 @@ function getWebhookSecret() {
 function getAdminEmail() {
     return readParam(ADMIN_EMAIL_PARAM, process.env.ADMIN_EMAIL || 'admin@afinju.com');
 }
-function getResendClient() {
-    const key = readParam(RESEND_API_KEY, process.env.RESEND_API_KEY || '');
-    return key ? new resend_1.Resend(key) : null;
+function normalizeSecret(raw) {
+    const value = (raw || '').trim();
+    if (!value)
+        return '';
+    const lowered = value.toLowerCase();
+    if (['disabled', 'none', 'null', 'false', '0'].includes(lowered))
+        return '';
+    return value;
 }
 function getBrevoApiKey() {
-    return readParam(BREVO_API_KEY, process.env.BREVO_API_KEY || '');
+    return normalizeSecret(readParam(BREVO_API_KEY, process.env.BREVO_API_KEY || ''));
 }
 function getMailFromEmail() {
     return readParam(MAIL_FROM_EMAIL_PARAM, process.env.MAIL_FROM_EMAIL || 'noreply@afinju247.com');
@@ -83,12 +86,57 @@ async function resolveCustomerEmail(order) {
     }
     return null;
 }
+function statusLabel(status) {
+    return status
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (m) => m.toUpperCase());
+}
+function statusEmailCopy(status) {
+    const map = {
+        pending_payment: {
+            title: 'Order Received',
+            message: 'We have received your order and we are currently awaiting payment confirmation.',
+        },
+        paid: {
+            title: 'Payment Confirmed',
+            message: 'Your payment has been confirmed and your order is now being prepared.',
+        },
+        confirmed: {
+            title: 'Order Confirmed',
+            message: 'Your order has been confirmed and moved into processing.',
+        },
+        packaging: {
+            title: 'Now Packaging',
+            message: 'Your order is currently being packaged by our team.',
+        },
+        dispatched: {
+            title: 'Order Dispatched',
+            message: 'Your order has been dispatched and is on the way.',
+        },
+        out_for_delivery: {
+            title: 'Out For Delivery',
+            message: 'Your order is now out for delivery.',
+        },
+        delivered: {
+            title: 'Delivered',
+            message: 'Your order has been marked as delivered.',
+        },
+        cancelled: {
+            title: 'Order Cancelled',
+            message: 'Your order has been cancelled. Contact support if you need assistance.',
+        },
+        refunded: {
+            title: 'Refund Processed',
+            message: 'A refund has been processed for your order.',
+        },
+    };
+    return map[status] || {
+        title: `Status Updated: ${statusLabel(status)}`,
+        message: `Your order status has been updated to ${statusLabel(status)}.`,
+    };
+}
 async function sendTransactionalEmail(args) {
-    const { resend, brevoApiKey, from, to, subject, html } = args;
-    if (resend) {
-        await resend.emails.send({ from, to, subject, html });
-        return;
-    }
+    const { brevoApiKey, from, to, subject, html } = args;
     if (brevoApiKey) {
         const sender = parseFrom(from);
         await axios_1.default.post('https://api.brevo.com/v3/smtp/email', {
@@ -106,7 +154,7 @@ async function sendTransactionalEmail(args) {
         });
         return;
     }
-    throw new Error('No email provider configured');
+    throw new Error('No email provider configured (BREVO_API_KEY missing)');
 }
 function configureCloudinary() {
     cloudinary_1.v2.config({
@@ -570,10 +618,9 @@ exports.onOrderUpdated = (0, firestore_1.onDocumentUpdated)({ region: 'europe-we
     const orderAfter = (_d = (_c = event.data) === null || _c === void 0 ? void 0 : _c.after) === null || _d === void 0 ? void 0 : _d.data();
     if (!orderBefore || !orderAfter)
         return null;
-    const resend = getResendClient();
     const brevoApiKey = getBrevoApiKey();
-    if (!resend && !brevoApiKey) {
-        logger_1.logger.warn('No transactional email provider configured (set RESEND_API_KEY or BREVO_API_KEY)');
+    if (!brevoApiKey) {
+        logger_1.logger.warn('No transactional email provider configured (set BREVO_API_KEY)');
         return null;
     }
     const adminEmail = getAdminEmail();
@@ -583,7 +630,6 @@ exports.onOrderUpdated = (0, firestore_1.onDocumentUpdated)({ region: 'europe-we
         if (customerEmail) {
             try {
                 await sendTransactionalEmail({
-                    resend,
                     brevoApiKey,
                     from: mailFrom,
                     to: customerEmail,
@@ -612,7 +658,6 @@ exports.onOrderUpdated = (0, firestore_1.onDocumentUpdated)({ region: 'europe-we
         }
         try {
             await sendTransactionalEmail({
-                resend,
                 brevoApiKey,
                 from: mailFrom,
                 to: adminEmail,
@@ -629,30 +674,38 @@ exports.onOrderUpdated = (0, firestore_1.onDocumentUpdated)({ region: 'europe-we
             });
         }
     }
-    if (orderBefore.status !== 'dispatched' && orderAfter.status === 'dispatched') {
+    const statusChanged = orderBefore.status !== orderAfter.status;
+    const paymentJustConfirmed = orderBefore.paymentStatus !== 'paid' && orderAfter.paymentStatus === 'paid';
+    if (statusChanged) {
         if (!customerEmail) {
-            logger_1.logger.warn('Skipping dispatch email: no valid customer email', {
+            logger_1.logger.warn('Skipping status email: no valid customer email', {
                 orderId: (_k = event.params) === null || _k === void 0 ? void 0 : _k.orderId,
+                status: orderAfter.status,
             });
         }
+        else if (orderAfter.status === 'paid' && paymentJustConfirmed) {
+            // Already sent the richer payment confirmation email above.
+        }
         else {
+            const copy = statusEmailCopy(String(orderAfter.status || 'updated'));
             try {
                 await sendTransactionalEmail({
-                    resend,
                     brevoApiKey,
                     from: mailFrom,
                     to: customerEmail,
-                    subject: `AFINJU Order Dispatched - ${orderAfter.orderNumber}`,
+                    subject: `AFINJU Order Update - ${orderAfter.orderNumber} (${statusLabel(String(orderAfter.status || 'updated'))})`,
                     html: `
-              <h1>Your AFINJU Set is on its way.</h1>
+              <h1>${copy.title}</h1>
               <p>Dear ${orderAfter.customerName},</p>
-              <p>Your order <strong>${orderAfter.orderNumber}</strong> has been dispatched.</p>
+              <p>${copy.message}</p>
+              <p>Order: <strong>${orderAfter.orderNumber}</strong></p>
             `,
                 });
             }
             catch (err) {
-                logger_1.logger.error('Failed to send customer shipping email', {
+                logger_1.logger.error('Failed to send customer status email', {
                     orderId: (_l = event.params) === null || _l === void 0 ? void 0 : _l.orderId,
+                    status: orderAfter.status,
                     to: customerEmail,
                     error: (err === null || err === void 0 ? void 0 : err.message) || 'unknown',
                     providerResponse: ((_m = err === null || err === void 0 ? void 0 : err.response) === null || _m === void 0 ? void 0 : _m.data) || null,

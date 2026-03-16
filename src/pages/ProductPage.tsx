@@ -29,6 +29,7 @@ export default function ProductPage() {
   const [preferredColor, setPreferredColor] = useState<ProductColor | ''>('')
   const [qty, setQty] = useState(1)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const hasUncertainSizing = shoeSize === 'Not sure' || headSize === 'Not sure'
 
   const remaining = product
     ? product.inventory.launchEditionLimit - product.inventory.soldCount
@@ -266,7 +267,7 @@ export default function ProductPage() {
                   <button
                     key={size}
                     onClick={() => { setShoeSize(size); setErrors(e => ({ ...e, shoeSize: '' })) }}
-                    className={`w-12 h-12 border font-sans text-sm transition-all duration-150 ${shoeSize === size
+                    className={`${size === 'Not sure' ? 'px-3 h-12' : 'w-12 h-12'} border font-sans text-sm transition-all duration-150 ${shoeSize === size
                         ? 'bg-afinju-black text-afinju-cream border-afinju-black'
                         : 'border-black/20 hover:border-afinju-black'
                       }`}
@@ -308,6 +309,14 @@ export default function ProductPage() {
                 ))}
               </div>
             </div>
+
+            {hasUncertainSizing && (
+              <div className="border border-gold/30 bg-gold/5 px-4 py-3">
+                <p className="font-sans text-xs tracking-[0.08em] text-afinju-black/80">
+                  Not sure about your size? Don&apos;t worry, we will contact you after checkout to determine your exact shoe/head size.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Quantity */}

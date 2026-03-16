@@ -153,6 +153,11 @@ export default function AdminOrderDetailPage() {
                         Head {item.preferences.headSize}
                       </span>
                     </div>
+                    {(item.preferences.shoeSize === 'Not sure' || item.preferences.headSize === 'Not sure') && (
+                      <p className="font-sans text-[11px] text-yellow-800 bg-yellow-50 border border-yellow-200 inline-block px-2 py-1 mt-2">
+                        Customer selected &quot;Not sure&quot; sizing. Contact customer to confirm measurements.
+                      </p>
+                    )}
                     <p className="font-sans text-xs text-afinju-black/40 mt-1">Qty: {item.quantity}</p>
                   </div>
                   <p className="font-sans text-sm">{formatPrice(item.price * item.quantity)}</p>

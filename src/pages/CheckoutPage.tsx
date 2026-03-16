@@ -53,6 +53,9 @@ export default function CheckoutPage() {
   const subtotal = total()
   const shippingFee = settings?.shippingFee ?? 5000
   const orderTotal = subtotal + shippingFee
+  const hasUncertainSizing = items.some(
+    (item) => item.preferences?.shoeSize === 'Not sure' || item.preferences?.headSize === 'Not sure'
+  )
   const getLineId = (item: typeof items[number]) =>
     item.lineId || [item.productId, item.preferences?.preferredColor || '', item.preferences?.shoeSize || '', item.preferences?.headSize || ''].join(':')
 
@@ -276,6 +279,14 @@ export default function CheckoutPage() {
                 />
               </section>
 
+              {hasUncertainSizing && (
+                <div className="border border-gold/30 bg-gold/5 px-4 py-3">
+                  <p className="font-sans text-xs tracking-[0.08em] text-afinju-black/80">
+                    You selected &quot;Not sure&quot; for sizing. Don&apos;t worry, we will contact you after payment to determine the correct shoe/head size.
+                  </p>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={processing}
@@ -314,9 +325,16 @@ export default function CheckoutPage() {
                       <div className="flex-1 min-w-0">
                         <p className="font-heading text-sm leading-tight">{item.productName}</p>
                         {item.preferences && (
-                          <p className="font-sans text-xs text-afinju-black/50 mt-1">
-                            {item.preferences.preferredColor} · Shoe {item.preferences.shoeSize} · Head {item.preferences.headSize}
-                          </p>
+                          <>
+                            <p className="font-sans text-xs text-afinju-black/50 mt-1">
+                              {item.preferences.preferredColor} · Shoe {item.preferences.shoeSize} · Head {item.preferences.headSize}
+                            </p>
+                            {(item.preferences.shoeSize === 'Not sure' || item.preferences.headSize === 'Not sure') && (
+                              <p className="font-sans text-[10px] text-gold-dark mt-1">
+                                Size follow-up required: contact customer.
+                              </p>
+                            )}
+                          </>
                         )}
                         <p className="font-sans text-xs text-afinju-black/50">Qty: {item.quantity}</p>
                       </div>

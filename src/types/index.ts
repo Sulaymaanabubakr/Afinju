@@ -170,8 +170,8 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   refunded: 'Refunded',
 }
 
-export const SHOE_SIZES = ['38', '39', '40', '41', '42', '43', '44', '45', '46', '47']
-export const HEAD_SIZES = ['54cm', '55cm', '56cm', '57cm', '58cm', '59cm', '60cm', '61cm', '62cm', '63cm']
+export const SHOE_SIZES = ['38', '39', '40', '41', '42', '43', '44', '45', '46', '47', 'Not sure']
+export const HEAD_SIZES = ['54cm', '55cm', '56cm', '57cm', '58cm', '59cm', '60cm', '61cm', '62cm', '63cm', 'Not sure']
 export const PRODUCT_COLORS: ProductColor[] = ['Blue', 'Red', 'Black', 'Brown']
 
 // Legacy aliases for backward compatibility with existing code

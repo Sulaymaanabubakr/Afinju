@@ -135,6 +135,59 @@ function statusEmailCopy(status) {
         message: `Your order status has been updated to ${statusLabel(status)}.`,
     };
 }
+function escapeHtml(value) {
+    return String(value !== null && value !== void 0 ? value : '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+function buildEmailHtml(args) {
+    const heading = escapeHtml(args.heading);
+    const greetingName = escapeHtml(args.greetingName || 'Valued Customer');
+    const body = args.bodyLines.map((line) => `<p style="margin:0 0 12px;">${escapeHtml(line)}</p>`).join('');
+    const orderLine = args.orderNumber
+        ? `<p style="margin:8px 0 0;font-size:13px;color:#6b7280;">Order: <strong style="color:#111827;">${escapeHtml(args.orderNumber)}</strong></p>`
+        : '';
+    return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${heading}</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;color:#111827;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f4f6;padding:20px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border:1px solid #e5e7eb;">
+            <tr>
+              <td style="background:#0b0b0b;color:#f6f0dc;padding:18px 24px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;">
+                AFINJU Authority Set
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:26px 24px 20px;">
+                <h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;font-family:Georgia,'Times New Roman',serif;color:#111827;">${heading}</h1>
+                <p style="margin:0 0 14px;">Dear ${greetingName},</p>
+                ${body}
+                ${orderLine}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 24px 24px;">
+                <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 14px;" />
+                <p style="margin:0;font-size:12px;color:#6b7280;">AFINJU</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
 async function sendTransactionalEmail(args) {
     const { brevoApiKey, from, to, subject, html } = args;
     if (brevoApiKey) {
@@ -634,12 +687,16 @@ exports.onOrderUpdated = (0, firestore_1.onDocumentUpdated)({ region: 'europe-we
                     from: mailFrom,
                     to: customerEmail,
                     subject: `AFINJU Order Confirmed - ${orderAfter.orderNumber}`,
-                    html: `
-              <h1>Your AFINJU Authority Set is secured.</h1>
-              <p>Dear ${orderAfter.customerName},</p>
-              <p>We have received your payment of N${orderAfter.total.toLocaleString()} for order <strong>${orderAfter.orderNumber}</strong>.</p>
-              <p>Your launch edition set has been reserved and our craftsmen have been notified. We will update you once your order is packaged and dispatched.</p>
-            `,
+                    html: buildEmailHtml({
+                        heading: 'Your AFINJU Authority Set is secured.',
+                        greetingName: orderAfter.customerName,
+                        bodyLines: [
+                            `We have received your payment of N${orderAfter.total.toLocaleString()}.`,
+                            'Your launch edition set has been reserved and our craftsmen have been notified.',
+                            'We will update you once your order is packaged and dispatched.',
+                        ],
+                        orderNumber: orderAfter.orderNumber,
+                    }),
                 });
             }
             catch (err) {
@@ -662,7 +719,16 @@ exports.onOrderUpdated = (0, firestore_1.onDocumentUpdated)({ region: 'europe-we
                 from: mailFrom,
                 to: adminEmail,
                 subject: `NEW PAID ORDER - ${orderAfter.orderNumber}`,
-                html: `<p>New Launch Edition order received. Total: N${orderAfter.total.toLocaleString()}</p>`,
+                html: buildEmailHtml({
+                    heading: 'New paid order received',
+                    greetingName: 'Admin',
+                    bodyLines: [
+                        `A new Launch Edition order has been paid.`,
+                        `Customer: ${orderAfter.customerName || 'Unknown'}`,
+                        `Total: N${orderAfter.total.toLocaleString()}`,
+                    ],
+                    orderNumber: orderAfter.orderNumber,
+                }),
             });
         }
         catch (err) {
@@ -694,12 +760,12 @@ exports.onOrderUpdated = (0, firestore_1.onDocumentUpdated)({ region: 'europe-we
                     from: mailFrom,
                     to: customerEmail,
                     subject: `AFINJU Order Update - ${orderAfter.orderNumber} (${statusLabel(String(orderAfter.status || 'updated'))})`,
-                    html: `
-              <h1>${copy.title}</h1>
-              <p>Dear ${orderAfter.customerName},</p>
-              <p>${copy.message}</p>
-              <p>Order: <strong>${orderAfter.orderNumber}</strong></p>
-            `,
+                    html: buildEmailHtml({
+                        heading: copy.title,
+                        greetingName: orderAfter.customerName,
+                        bodyLines: [copy.message],
+                        orderNumber: orderAfter.orderNumber,
+                    }),
                 });
             }
             catch (err) {

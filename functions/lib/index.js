@@ -61,6 +61,28 @@ function parseFrom(from) {
     const email = match[2].trim();
     return Object.assign({ email }, (name ? { name } : {}));
 }
+function isValidEmail(value) {
+    return typeof value === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+async function resolveCustomerEmail(order) {
+    if (isValidEmail(order === null || order === void 0 ? void 0 : order.customerEmail))
+        return order.customerEmail.trim();
+    const userId = typeof (order === null || order === void 0 ? void 0 : order.userId) === 'string' ? order.userId.trim() : '';
+    if (!userId)
+        return null;
+    try {
+        const user = await admin.auth().getUser(userId);
+        if (isValidEmail(user.email))
+            return user.email.trim();
+    }
+    catch (err) {
+        logger_1.logger.warn('Could not resolve customer email from auth user', {
+            userId,
+            error: (err === null || err === void 0 ? void 0 : err.message) || 'unknown',
+        });
+    }
+    return null;
+}
 async function sendTransactionalEmail(args) {
     const { resend, brevoApiKey, from, to, subject, html } = args;
     if (resend) {
@@ -543,7 +565,7 @@ exports.getCloudinarySignature = (0, https_1.onCall)({ region: 'europe-west1' },
     };
 });
 exports.onOrderUpdated = (0, firestore_1.onDocumentUpdated)({ region: 'europe-west1', document: 'orders/{orderId}' }, async (event) => {
-    var _a, _b, _c, _d;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
     const orderBefore = (_b = (_a = event.data) === null || _a === void 0 ? void 0 : _a.before) === null || _b === void 0 ? void 0 : _b.data();
     const orderAfter = (_d = (_c = event.data) === null || _c === void 0 ? void 0 : _c.after) === null || _d === void 0 ? void 0 : _d.data();
     if (!orderBefore || !orderAfter)
@@ -556,21 +578,39 @@ exports.onOrderUpdated = (0, firestore_1.onDocumentUpdated)({ region: 'europe-we
     }
     const adminEmail = getAdminEmail();
     const mailFrom = `${getMailFromName()} <${getMailFromEmail()}>`;
+    const customerEmail = await resolveCustomerEmail(orderAfter);
     if (orderBefore.paymentStatus !== 'paid' && orderAfter.paymentStatus === 'paid') {
-        try {
-            await sendTransactionalEmail({
-                resend,
-                brevoApiKey,
-                from: mailFrom,
-                to: orderAfter.customerEmail || adminEmail,
-                subject: `AFINJU Order Confirmed - ${orderAfter.orderNumber}`,
-                html: `
-            <h1>Your AFINJU Authority Set is secured.</h1>
-            <p>Dear ${orderAfter.customerName},</p>
-            <p>We have received your payment of N${orderAfter.total.toLocaleString()} for order <strong>${orderAfter.orderNumber}</strong>.</p>
-            <p>Your launch edition set has been reserved and our craftsmen have been notified. We will update you once your order is packaged and dispatched.</p>
-          `,
+        if (customerEmail) {
+            try {
+                await sendTransactionalEmail({
+                    resend,
+                    brevoApiKey,
+                    from: mailFrom,
+                    to: customerEmail,
+                    subject: `AFINJU Order Confirmed - ${orderAfter.orderNumber}`,
+                    html: `
+              <h1>Your AFINJU Authority Set is secured.</h1>
+              <p>Dear ${orderAfter.customerName},</p>
+              <p>We have received your payment of N${orderAfter.total.toLocaleString()} for order <strong>${orderAfter.orderNumber}</strong>.</p>
+              <p>Your launch edition set has been reserved and our craftsmen have been notified. We will update you once your order is packaged and dispatched.</p>
+            `,
+                });
+            }
+            catch (err) {
+                logger_1.logger.error('Failed to send customer order confirmation email', {
+                    orderId: (_e = event.params) === null || _e === void 0 ? void 0 : _e.orderId,
+                    to: customerEmail,
+                    error: (err === null || err === void 0 ? void 0 : err.message) || 'unknown',
+                    providerResponse: ((_f = err === null || err === void 0 ? void 0 : err.response) === null || _f === void 0 ? void 0 : _f.data) || null,
+                });
+            }
+        }
+        else {
+            logger_1.logger.warn('Skipping customer confirmation email: no valid customer email', {
+                orderId: (_g = event.params) === null || _g === void 0 ? void 0 : _g.orderId,
             });
+        }
+        try {
             await sendTransactionalEmail({
                 resend,
                 brevoApiKey,
@@ -581,26 +621,43 @@ exports.onOrderUpdated = (0, firestore_1.onDocumentUpdated)({ region: 'europe-we
             });
         }
         catch (err) {
-            logger_1.logger.error('Failed to send Order Confirmation email', err);
+            logger_1.logger.error('Failed to send admin paid-order notification email', {
+                orderId: (_h = event.params) === null || _h === void 0 ? void 0 : _h.orderId,
+                to: adminEmail,
+                error: (err === null || err === void 0 ? void 0 : err.message) || 'unknown',
+                providerResponse: ((_j = err === null || err === void 0 ? void 0 : err.response) === null || _j === void 0 ? void 0 : _j.data) || null,
+            });
         }
     }
     if (orderBefore.status !== 'dispatched' && orderAfter.status === 'dispatched') {
-        try {
-            await sendTransactionalEmail({
-                resend,
-                brevoApiKey,
-                from: mailFrom,
-                to: orderAfter.customerEmail || adminEmail,
-                subject: `AFINJU Order Dispatched - ${orderAfter.orderNumber}`,
-                html: `
-            <h1>Your AFINJU Set is on its way.</h1>
-            <p>Dear ${orderAfter.customerName},</p>
-            <p>Your order <strong>${orderAfter.orderNumber}</strong> has been dispatched.</p>
-          `,
+        if (!customerEmail) {
+            logger_1.logger.warn('Skipping dispatch email: no valid customer email', {
+                orderId: (_k = event.params) === null || _k === void 0 ? void 0 : _k.orderId,
             });
         }
-        catch (err) {
-            logger_1.logger.error('Failed to send Shipping email', err);
+        else {
+            try {
+                await sendTransactionalEmail({
+                    resend,
+                    brevoApiKey,
+                    from: mailFrom,
+                    to: customerEmail,
+                    subject: `AFINJU Order Dispatched - ${orderAfter.orderNumber}`,
+                    html: `
+              <h1>Your AFINJU Set is on its way.</h1>
+              <p>Dear ${orderAfter.customerName},</p>
+              <p>Your order <strong>${orderAfter.orderNumber}</strong> has been dispatched.</p>
+            `,
+                });
+            }
+            catch (err) {
+                logger_1.logger.error('Failed to send customer shipping email', {
+                    orderId: (_l = event.params) === null || _l === void 0 ? void 0 : _l.orderId,
+                    to: customerEmail,
+                    error: (err === null || err === void 0 ? void 0 : err.message) || 'unknown',
+                    providerResponse: ((_m = err === null || err === void 0 ? void 0 : err.response) === null || _m === void 0 ? void 0 : _m.data) || null,
+                });
+            }
         }
     }
     return null;

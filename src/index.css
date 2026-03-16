@@ -50,6 +50,30 @@
     line-height: 1.7;
   }
 
+  a,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+    transition-duration: 240ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .page-shell {
+    animation: page-enter 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+
+  .public-site section {
+    animation: section-fade-up 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .public-site section:nth-of-type(2) { animation-delay: 70ms; }
+  .public-site section:nth-of-type(3) { animation-delay: 120ms; }
+  .public-site section:nth-of-type(4) { animation-delay: 170ms; }
+
   @media (max-width: 768px) {
     html {
       font-size: 15px;
@@ -129,6 +153,12 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
 }
 
 @layer components {
@@ -142,11 +172,13 @@
     @apply bg-afinju-black text-afinju-cream;
     @apply border border-afinju-black;
     @apply transition-all duration-300;
+    transform: translateY(0);
     letter-spacing: 0.14em;
   }
 
   .btn-luxury:hover {
     @apply bg-transparent text-afinju-black;
+    transform: translateY(-2px);
   }
 
   .btn-gold {
@@ -247,5 +279,27 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: shimmer 3s linear infinite;
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes section-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

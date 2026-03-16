@@ -45,10 +45,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           profile = { ...newProfile, createdAt: new Date() }
         }
 
-        // Check custom claims for admin role
-        const tokenResult = await firebaseUser.getIdTokenResult()
-        if (tokenResult.claims.role) {
-          profile = { ...profile, role: tokenResult.claims.role as UserProfile['role'] }
+        // Force-refresh token once so newly assigned admin/staff claims are picked up immediately.
+        const tokenResult = await firebaseUser.getIdTokenResult(true)
+        const claimRole = tokenResult.claims.role as UserProfile['role'] | undefined
+        if (claimRole) {
+          profile = { ...profile, role: claimRole }
         }
 
         setUser(profile)

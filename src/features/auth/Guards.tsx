@@ -59,7 +59,7 @@ export function RequireStaff({ children }: GuardProps) {
   if (loading) return <LoadingScreen />
 
   if (!user) return <Navigate to={`/admin/login?return=${encodeURIComponent(location.pathname)}`} replace />
-  if (!isStaff()) return <Navigate to="/" replace />
+  if (!isStaff()) return <Navigate to={`/admin/login?return=${encodeURIComponent(location.pathname)}`} replace />
 
   return <>{children}</>
 }
@@ -79,7 +79,8 @@ export function RedirectIfAdminAuth({ children }: GuardProps) {
 
   if (loading) return <LoadingScreen />
 
-  if (user) return <Navigate to={isStaff() ? '/admin' : '/account'} replace />
+  // Let signed-in non-staff users open /admin/login so they can switch account.
+  if (user && isStaff()) return <Navigate to="/admin" replace />
 
   return <>{children}</>
 }

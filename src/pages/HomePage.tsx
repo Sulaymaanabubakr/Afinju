@@ -1,16 +1,16 @@
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { AnimatePresence, motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowRight, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import ScarcityCounter from '@/components/shared/ScarcityCounter'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, cloudinaryOptimize } from '@/lib/utils'
 import { getProducts } from '@/lib/db'
 
-// Product images — replace with actual Cloudinary product photos when available
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1605812860427-4024433a70fd?w=1200&q=90'
-const LEATHER_IMAGE = 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800&q=90'
+const HERO_IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1605812860427-4024433a70fd?w=1200&q=90'
+const FEATURE_IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800&q=90'
 
 const PACKAGE_ITEMS = [
   { name: 'Pure Skin Leather Half Shoe', desc: '(Black, Brown, Red and Blue)' },
@@ -81,6 +81,30 @@ export default function HomePage() {
   // or specifically look for the one with the slug 'afinju-authority-set-launch-edition' since that's what we just saved.
   const product = products?.find(p => p.slug === 'afinju-authority-set-launch-edition') || products?.[0]
   const productLink = product ? `/product/${product.slug}` : '/shop'
+  const catalogImages = (products ?? [])
+    .flatMap((p) => (p.images ?? []).map((img) => img?.url).filter(Boolean))
+  const heroImages = useMemo(() => {
+    const optimized = catalogImages.map((img) => cloudinaryOptimize(img, 1600))
+    const unique = Array.from(new Set(optimized)).slice(0, 6)
+    return unique.length > 0 ? unique : [HERO_IMAGE_FALLBACK]
+  }, [catalogImages])
+  const [heroIndex, setHeroIndex] = useState(0)
+  const heroImage = heroImages[heroIndex] || HERO_IMAGE_FALLBACK
+  const featureImage = catalogImages[1]
+    ? cloudinaryOptimize(catalogImages[1], 1000)
+    : (catalogImages[0] ? cloudinaryOptimize(catalogImages[0], 1000) : FEATURE_IMAGE_FALLBACK)
+
+  useEffect(() => {
+    setHeroIndex(0)
+  }, [heroImages.length])
+
+  useEffect(() => {
+    if (heroImages.length <= 1) return
+    const timer = window.setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % heroImages.length)
+    }, 5000)
+    return () => window.clearInterval(timer)
+  }, [heroImages])
 
   const soldCount = product?.inventory?.soldCount ?? 0
   const totalLimit = product?.inventory?.launchEditionLimit ?? 10
@@ -91,12 +115,19 @@ export default function HomePage() {
       <section className="home-hero relative min-h-screen flex items-start md:items-center pt-10 md:pt-0 pb-16 md:pb-24 overflow-hidden">
         {/* Background image */}
         <motion.div style={{ y }} className="absolute inset-0 z-0">
-          <img
-            src={HERO_IMAGE}
-            alt="Afínjú Authority Set"
-            className="w-full h-full object-cover"
-            loading="eager"
-          />
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={heroImage}
+              src={heroImage}
+              alt="Afínjú Authority Set"
+              className="absolute inset-0 w-full h-full object-cover"
+              loading="eager"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8 }}
+            />
+          </AnimatePresence>
           <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/80 to-obsidian/30" />
           <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent" />
         </motion.div>
@@ -133,15 +164,6 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="mt-6 text-lg md:text-2xl font-body text-ivory/80 leading-relaxed max-w-2xl mx-auto"
-            >
-              If you find yourself in any of these 6 categories, don't bother to buy, Afínjú is absolutely not for you!
-            </motion.p>
-
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
               className="mt-5 text-base md:text-xl font-body text-ivory/60 leading-relaxed max-w-xl mx-auto"
             >
               The complete Nigerian authority set. Six precision-crafted pieces. One undeniable statement.
@@ -226,7 +248,7 @@ export default function HomePage() {
               className="relative mx-auto w-full max-w-[520px] overflow-hidden border border-white/10 bg-white/[0.03]"
             >
               <img
-                src={LEATHER_IMAGE}
+                src={featureImage}
                 alt="Afínjú Authority Set"
                 className="w-full object-cover aspect-[4/5]"
                 loading="lazy"

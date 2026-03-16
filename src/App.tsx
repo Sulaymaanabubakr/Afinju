@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion, MotionConfig } from 'framer-motion'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/features/auth/AuthProvider'
 import { RequireAdmin, RequireCustomer, RequireStaff, RedirectIfAdminAuth, RedirectIfAuth } from '@/features/auth/Guards'
@@ -66,7 +67,7 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="public-site">
       <Navbar />
-      <main>{children}</main>
+      <main className="page-shell">{children}</main>
       <Footer />
       <CartDrawer />
       <WhatsAppFAB />
@@ -78,77 +79,91 @@ function HeaderOnlyLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="public-site">
       <Navbar />
-      <main>{children}</main>
+      <main className="page-shell">{children}</main>
       <CartDrawer />
     </div>
   )
 }
 
 export default function App() {
+  const location = useLocation()
+
   return (
-    <AuthProvider>
-      <ScrollToTop />
-      <PaystackScript />
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: {
-            fontFamily: "'Outfit', sans-serif",
-            fontSize: '13px',
-            letterSpacing: '0.02em',
-            borderRadius: '2px',
-            background: '#0A0A0A',
-            color: '#F5F0E8',
-          },
-        }}
-      />
+    <MotionConfig reducedMotion="never">
+      <AuthProvider>
+        <ScrollToTop />
+        <PaystackScript />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: '13px',
+              letterSpacing: '0.02em',
+              borderRadius: '2px',
+              background: '#0A0A0A',
+              color: '#F5F0E8',
+            },
+          }}
+        />
 
-      <Routes>
-        {/* Public */}
-        <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
-        <Route path="/shop" element={<PublicLayout><ShopPage /></PublicLayout>} />
-        <Route path="/product/:slug" element={<PublicLayout><ProductPage /></PublicLayout>} />
-        <Route path="/collections/launch-edition" element={<PublicLayout><LaunchEditionPage /></PublicLayout>} />
-        <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
-        <Route path="/faq" element={<PublicLayout><FaqPage /></PublicLayout>} />
-        <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
-        <Route path="/size-guide" element={<PublicLayout><SizeGuidePage /></PublicLayout>} />
-        <Route path="/terms" element={<PublicLayout><TermsPage /></PublicLayout>} />
-        <Route path="/privacy" element={<PublicLayout><PrivacyPage /></PublicLayout>} />
-        <Route path="/shipping-returns" element={<PublicLayout><ShippingReturnsPage /></PublicLayout>} />
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Routes location={location}>
+            {/* Public */}
+            <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
+            <Route path="/shop" element={<PublicLayout><ShopPage /></PublicLayout>} />
+            <Route path="/product/:slug" element={<PublicLayout><ProductPage /></PublicLayout>} />
+            <Route path="/collections/launch-edition" element={<PublicLayout><LaunchEditionPage /></PublicLayout>} />
+            <Route path="/about" element={<PublicLayout><AboutPage /></PublicLayout>} />
+            <Route path="/faq" element={<PublicLayout><FaqPage /></PublicLayout>} />
+            <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
+            <Route path="/size-guide" element={<PublicLayout><SizeGuidePage /></PublicLayout>} />
+            <Route path="/terms" element={<PublicLayout><TermsPage /></PublicLayout>} />
+            <Route path="/privacy" element={<PublicLayout><PrivacyPage /></PublicLayout>} />
+            <Route path="/shipping-returns" element={<PublicLayout><ShippingReturnsPage /></PublicLayout>} />
 
-        {/* Auth */}
-        <Route path="/login" element={<RedirectIfAuth><HeaderOnlyLayout><LoginPage /></HeaderOnlyLayout></RedirectIfAuth>} />
-        <Route path="/admin/login" element={<RedirectIfAdminAuth><AdminLoginPage /></RedirectIfAdminAuth>} />
-        <Route path="/admin/forgot-password" element={<RedirectIfAdminAuth><AdminForgotPasswordPage /></RedirectIfAdminAuth>} />
-        <Route path="/signup" element={<RedirectIfAuth><HeaderOnlyLayout><SignupPage /></HeaderOnlyLayout></RedirectIfAuth>} />
-        <Route path="/forgot-password" element={<HeaderOnlyLayout><ForgotPasswordPage /></HeaderOnlyLayout>} />
+            {/* Auth */}
+            <Route path="/login" element={<RedirectIfAuth><HeaderOnlyLayout><LoginPage /></HeaderOnlyLayout></RedirectIfAuth>} />
+            <Route path="/admin/login" element={<RedirectIfAdminAuth><AdminLoginPage /></RedirectIfAdminAuth>} />
+            <Route path="/admin/forgot-password" element={<RedirectIfAdminAuth><AdminForgotPasswordPage /></RedirectIfAdminAuth>} />
+            <Route path="/signup" element={<RedirectIfAuth><HeaderOnlyLayout><SignupPage /></HeaderOnlyLayout></RedirectIfAuth>} />
+            <Route path="/forgot-password" element={<HeaderOnlyLayout><ForgotPasswordPage /></HeaderOnlyLayout>} />
 
-        {/* Account */}
-        <Route path="/account" element={<RequireCustomer><PublicLayout><AccountPage /></PublicLayout></RequireCustomer>} />
-        <Route path="/account/orders" element={<RequireCustomer><PublicLayout><OrdersPage /></PublicLayout></RequireCustomer>} />
-        <Route path="/account/orders/:id" element={<RequireCustomer><PublicLayout><OrderDetailPage /></PublicLayout></RequireCustomer>} />
+            {/* Account */}
+            <Route path="/account" element={<RequireCustomer><PublicLayout><AccountPage /></PublicLayout></RequireCustomer>} />
+            <Route path="/account/orders" element={<RequireCustomer><PublicLayout><OrdersPage /></PublicLayout></RequireCustomer>} />
+            <Route path="/account/orders/:id" element={<RequireCustomer><PublicLayout><OrderDetailPage /></PublicLayout></RequireCustomer>} />
 
-        {/* Checkout */}
-        <Route path="/checkout" element={<RequireCustomer><PublicLayout><CheckoutPage /></PublicLayout></RequireCustomer>} />
-        <Route path="/order-confirmation/:id" element={<RequireCustomer><PublicLayout><OrderConfirmationPage /></PublicLayout></RequireCustomer>} />
+            {/* Checkout */}
+            <Route path="/checkout" element={<RequireCustomer><PublicLayout><CheckoutPage /></PublicLayout></RequireCustomer>} />
+            <Route path="/order-confirmation/:id" element={<RequireCustomer><PublicLayout><OrderConfirmationPage /></PublicLayout></RequireCustomer>} />
 
-        {/* Admin */}
-        <Route path="/admin" element={<RequireStaff><AdminLayout /></RequireStaff>}>
-          <Route index element={<AdminOverviewPage />} />
-          <Route path="orders" element={<AdminOrdersPage />} />
-          <Route path="orders/:id" element={<AdminOrderDetailPage />} />
-          <Route path="products" element={<AdminProductsPage />} />
-          <Route path="products/new" element={<AdminProductFormPage />} />
-          <Route path="products/:id/edit" element={<AdminProductFormPage />} />
-          <Route path="customers" element={<AdminCustomersPage />} />
-          <Route path="settings" element={<RequireAdmin><AdminSettingsPage /></RequireAdmin>} />
-          <Route path="content" element={<AdminContentPage />} />
-          <Route path="analytics" element={<AdminAnalyticsPage />} />
-        </Route>
+            {/* Admin */}
+            <Route path="/admin" element={<RequireStaff><AdminLayout /></RequireStaff>}>
+              <Route index element={<AdminOverviewPage />} />
+              <Route path="orders" element={<AdminOrdersPage />} />
+              <Route path="orders/:id" element={<AdminOrderDetailPage />} />
+              <Route path="products" element={<AdminProductsPage />} />
+              <Route path="products/new" element={<AdminProductFormPage />} />
+              <Route path="products/:id/edit" element={<AdminProductFormPage />} />
+              <Route path="customers" element={<AdminCustomersPage />} />
+              <Route path="settings" element={<RequireAdmin><AdminSettingsPage /></RequireAdmin>} />
+              <Route path="content" element={<AdminContentPage />} />
+              <Route path="analytics" element={<AdminAnalyticsPage />} />
+            </Route>
 
-        <Route path="*" element={<PublicLayout><NotFoundPage /></PublicLayout>} />
-      </Routes>
-    </AuthProvider>
+              <Route path="*" element={<PublicLayout><NotFoundPage /></PublicLayout>} />
+            </Routes>
+          </motion.div>
+        </AnimatePresence>
+      </AuthProvider>
+    </MotionConfig>
   )
 }

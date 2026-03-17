@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.bootstrapAdmin = exports.onOrderUpdated = exports.getCloudinarySignature = exports.setAdminRole = exports.paystackWebhook = exports.verifyPayment = exports.createOrder = void 0;
+exports.bootstrapAdmin = exports.onOrderCreated = exports.onOrderUpdated = exports.getCloudinarySignature = exports.setAdminRole = exports.paystackWebhook = exports.verifyPayment = exports.createOrder = void 0;
 const admin = require("firebase-admin");
 const axios_1 = require("axios");
 const cloudinary_1 = require("cloudinary");
@@ -14,6 +14,9 @@ const PAYSTACK_SECRET_KEY = (0, params_1.defineString)('PAYSTACK_SECRET_KEY', { 
 const PAYSTACK_WEBHOOK_SECRET = (0, params_1.defineString)('PAYSTACK_WEBHOOK_SECRET', { default: '' });
 const BREVO_API_KEY = (0, params_1.defineString)('BREVO_API_KEY', { default: '' });
 const ADMIN_EMAIL_PARAM = (0, params_1.defineString)('ADMIN_EMAIL', { default: 'admin@afinju.com' });
+const ADMIN_DASHBOARD_BASE_URL_PARAM = (0, params_1.defineString)('ADMIN_DASHBOARD_BASE_URL', {
+    default: 'https://afinju247.com/admin',
+});
 const MAIL_FROM_EMAIL_PARAM = (0, params_1.defineString)('MAIL_FROM_EMAIL', { default: 'noreply@afinju247.com' });
 const MAIL_FROM_NAME_PARAM = (0, params_1.defineString)('MAIL_FROM_NAME', { default: 'AFINJU' });
 const CLOUDINARY_CLOUD_NAME = (0, params_1.defineString)('CLOUDINARY_CLOUD_NAME', { default: '' });
@@ -37,6 +40,9 @@ function getWebhookSecret() {
 }
 function getAdminEmail() {
     return readParam(ADMIN_EMAIL_PARAM, process.env.ADMIN_EMAIL || 'admin@afinju.com');
+}
+function getAdminDashboardBaseUrl() {
+    return readParam(ADMIN_DASHBOARD_BASE_URL_PARAM, process.env.ADMIN_DASHBOARD_BASE_URL || 'https://afinju247.com/admin');
 }
 function normalizeSecret(raw) {
     const value = (raw || '').trim();
@@ -152,6 +158,16 @@ function buildEmailHtml(args) {
     const orderLine = args.orderNumber
         ? `<p style="margin:20px 0 0;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#b89a5f;">Order Number</p><p style="margin:6px 0 0;font-size:16px;font-family:Georgia,'Times New Roman',serif;color:#f6e6bf;">${escapeHtml(args.orderNumber)}</p>`
         : '';
+    const detailsHtml = args.detailsHtml || '';
+    const ctaHtml = args.ctaLabel && args.ctaUrl
+        ? `<table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:22px;">
+          <tr>
+            <td style="background:#b89a5f;">
+              <a href="${escapeHtml(args.ctaUrl)}" style="display:inline-block;padding:12px 18px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#111111;text-decoration:none;font-weight:700;">${escapeHtml(args.ctaLabel)}</a>
+            </td>
+          </tr>
+        </table>`
+        : '';
     return `<!doctype html>
 <html>
   <head>
@@ -185,6 +201,8 @@ function buildEmailHtml(args) {
                 <p style="margin:0 0 16px;font-size:15px;color:#efe4cb;">Dear ${greetingName},</p>
                 ${body}
                 ${orderLine}
+                ${detailsHtml}
+                ${ctaHtml}
               </td>
             </tr>
             <tr>
@@ -200,6 +218,88 @@ function buildEmailHtml(args) {
     </table>
   </body>
 </html>`;
+}
+function formatNaira(value) {
+    const amount = Number(value);
+    if (!Number.isFinite(amount))
+        return 'N0';
+    return `N${amount.toLocaleString()}`;
+}
+function getAdminOrderUrl(orderId) {
+    const base = getAdminDashboardBaseUrl().trim().replace(/\/+$/, '');
+    const adminBase = base.endsWith('/admin') ? base : `${base}/admin`;
+    return `${adminBase}/orders/${encodeURIComponent(orderId)}`;
+}
+function formatPreferenceKey(key) {
+    return key
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+function formatOrderCreatedAt(value) {
+    try {
+        if ((value === null || value === void 0 ? void 0 : value.toDate) && typeof value.toDate === 'function') {
+            return value.toDate().toLocaleString();
+        }
+        if (value instanceof Date) {
+            return value.toLocaleString();
+        }
+    }
+    catch (_a) {
+        // Ignore formatting failure and return a neutral fallback.
+    }
+    return 'Just now';
+}
+function buildAdminOrderDetailsHtml(order) {
+    var _a, _b, _c, _d;
+    const items = Array.isArray(order === null || order === void 0 ? void 0 : order.items) ? order.items : [];
+    const itemRows = items
+        .map((item, index) => {
+        var _a;
+        const preferences = (item === null || item === void 0 ? void 0 : item.preferences) && typeof item.preferences === 'object'
+            ? Object.entries(item.preferences)
+                .filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== '')
+                .map(([k, v]) => `${formatPreferenceKey(k)}: ${String(v)}`)
+                .join(' | ')
+            : '';
+        return `<tr>
+        <td style="padding:10px 0;border-bottom:1px solid #2a2a2a;vertical-align:top;color:#efe4cb;font-size:14px;line-height:1.5;">
+          <strong style="color:#f6e6bf;">${index + 1}. ${escapeHtml((item === null || item === void 0 ? void 0 : item.productName) || 'Item')}</strong><br/>
+          Qty: ${escapeHtml((_a = item === null || item === void 0 ? void 0 : item.quantity) !== null && _a !== void 0 ? _a : 1)} · Unit: ${escapeHtml(formatNaira(item === null || item === void 0 ? void 0 : item.price))} · Subtotal: ${escapeHtml(formatNaira(Number((item === null || item === void 0 ? void 0 : item.price) || 0) * Number((item === null || item === void 0 ? void 0 : item.quantity) || 1)))}<br/>
+          ${preferences ? `Preferences: ${escapeHtml(preferences)}` : 'Preferences: None'}
+        </td>
+      </tr>`;
+    })
+        .join('');
+    const address = [
+        (_a = order === null || order === void 0 ? void 0 : order.deliveryAddress) === null || _a === void 0 ? void 0 : _a.fullAddress,
+        (_b = order === null || order === void 0 ? void 0 : order.deliveryAddress) === null || _b === void 0 ? void 0 : _b.city,
+        (_c = order === null || order === void 0 ? void 0 : order.deliveryAddress) === null || _c === void 0 ? void 0 : _c.state,
+        ((_d = order === null || order === void 0 ? void 0 : order.deliveryAddress) === null || _d === void 0 ? void 0 : _d.landmark) ? `Landmark: ${order.deliveryAddress.landmark}` : '',
+    ]
+        .filter(Boolean)
+        .join(', ');
+    return `
+    <div style="margin-top:22px;padding:16px;border:1px solid #3a2f1e;background:#0f0f0f;">
+      <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#b89a5f;">Customer</p>
+      <p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#d5c6a1;">
+        ${escapeHtml((order === null || order === void 0 ? void 0 : order.customerName) || 'Unknown')}<br/>
+        Email: ${escapeHtml((order === null || order === void 0 ? void 0 : order.customerEmail) || 'N/A')}<br/>
+        Phone: ${escapeHtml((order === null || order === void 0 ? void 0 : order.customerPhone) || 'N/A')}${(order === null || order === void 0 ? void 0 : order.customerAltPhone) ? `<br/>Alt Phone: ${escapeHtml(order.customerAltPhone)}` : ''}
+      </p>
+      <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#b89a5f;">Delivery Address</p>
+      <p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#d5c6a1;">${escapeHtml(address || 'N/A')}</p>
+      <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#b89a5f;">Order Items</p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0">${itemRows || '<tr><td style="color:#d5c6a1;">No items.</td></tr>'}</table>
+      <p style="margin:12px 0 0;font-size:14px;line-height:1.7;color:#efe4cb;">
+        Subtotal: ${escapeHtml(formatNaira(order === null || order === void 0 ? void 0 : order.subtotal))}<br/>
+        Shipping: ${escapeHtml(formatNaira(order === null || order === void 0 ? void 0 : order.shippingFee))}<br/>
+        <strong style="color:#f6e6bf;">Total: ${escapeHtml(formatNaira(order === null || order === void 0 ? void 0 : order.total))}</strong><br/>
+        Payment: ${escapeHtml(String((order === null || order === void 0 ? void 0 : order.paymentStatus) || 'unpaid'))} · Status: ${escapeHtml(String((order === null || order === void 0 ? void 0 : order.status) || 'pending_payment'))}<br/>
+        Created: ${escapeHtml(formatOrderCreatedAt(order === null || order === void 0 ? void 0 : order.createdAt))}
+      </p>
+      ${(order === null || order === void 0 ? void 0 : order.notes) ? `<p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:#d5c6a1;"><strong style="color:#f6e6bf;">Customer Note:</strong> ${escapeHtml(order.notes)}</p>` : ''}
+    </div>
+  `;
 }
 async function sendTransactionalEmail(args) {
     const { brevoApiKey, from, to, subject, html } = args;
@@ -791,6 +891,50 @@ exports.onOrderUpdated = (0, firestore_1.onDocumentUpdated)({ region: 'europe-we
                 });
             }
         }
+    }
+    return null;
+});
+exports.onOrderCreated = (0, firestore_1.onDocumentCreated)({ region: 'europe-west1', document: 'orders/{orderId}' }, async (event) => {
+    var _a, _b, _c;
+    const order = (_a = event.data) === null || _a === void 0 ? void 0 : _a.data();
+    if (!order)
+        return null;
+    const brevoApiKey = getBrevoApiKey();
+    if (!brevoApiKey) {
+        logger_1.logger.warn('No transactional email provider configured (set BREVO_API_KEY)');
+        return null;
+    }
+    const orderId = String(((_b = event.params) === null || _b === void 0 ? void 0 : _b.orderId) || '');
+    const adminEmail = getAdminEmail();
+    const mailFrom = `${getMailFromName()} <${getMailFromEmail()}>`;
+    const adminOrderUrl = getAdminOrderUrl(orderId);
+    try {
+        await sendTransactionalEmail({
+            brevoApiKey,
+            from: mailFrom,
+            to: adminEmail,
+            subject: `NEW ORDER RECEIVED - ${order.orderNumber || orderId}`,
+            html: buildEmailHtml({
+                heading: 'New order received',
+                greetingName: 'Admin',
+                bodyLines: [
+                    'A new customer order has been placed and is awaiting your review.',
+                    'Use the button below to open this exact order in the admin dashboard.',
+                ],
+                orderNumber: order.orderNumber || orderId,
+                detailsHtml: buildAdminOrderDetailsHtml(order),
+                ctaLabel: 'Open Order in Admin Dashboard',
+                ctaUrl: adminOrderUrl,
+            }),
+        });
+    }
+    catch (err) {
+        logger_1.logger.error('Failed to send new-order admin notification email', {
+            orderId,
+            to: adminEmail,
+            error: (err === null || err === void 0 ? void 0 : err.message) || 'unknown',
+            providerResponse: ((_c = err === null || err === void 0 ? void 0 : err.response) === null || _c === void 0 ? void 0 : _c.data) || null,
+        });
     }
     return null;
 });

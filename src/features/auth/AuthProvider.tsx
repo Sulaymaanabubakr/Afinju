@@ -4,6 +4,7 @@ import { auth } from '@/lib/firebase'
 import { getUserProfile, createUserProfile } from '@/lib/db'
 import { useAuthStore } from '@/store/auth'
 import type { UserProfile } from '@/types'
+import { clearAdminAccess } from './adminSession'
 
 const AuthContext = createContext<null>(null)
 
@@ -15,6 +16,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true)
 
       if (!firebaseUser) {
+        clearAdminAccess()
         setUser(null)
         setLoading(false)
         return
@@ -51,11 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (claimRole) {
           profile = { ...profile, role: claimRole }
         }
+        if (profile.role !== 'admin' && profile.role !== 'staff') {
+          clearAdminAccess()
+        }
 
         setUser(profile)
       } catch (err) {
         console.error('Auth error:', err)
         // Keep authenticated UX working even if profile read/write fails transiently.
+        clearAdminAccess()
         setUser(fallbackProfile)
       } finally {
         setLoading(false)

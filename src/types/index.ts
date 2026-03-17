@@ -157,6 +157,9 @@ export interface StoreSettings {
   paystackPublicKey: string
   instagramUrl?: string
   twitterUrl?: string
+  facebookUrl?: string
+  tiktokUrl?: string
+  whatsappUrl?: string
 }
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {

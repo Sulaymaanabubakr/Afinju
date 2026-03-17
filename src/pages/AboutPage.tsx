@@ -10,7 +10,7 @@ export default function AboutPage() {
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
             <p className="section-label text-gold/70 mb-6">Our Story</p>
             <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl leading-tight mb-8">
-              Built for the Man Who <span className="italic text-gold">Knows</span>.
+              Crafted For Men With Unmistakable Presence!
             </h1>
             <div className="gold-rule mx-auto" />
           </motion.div>

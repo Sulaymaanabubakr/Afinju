@@ -6,6 +6,7 @@ import {
   setDoc,
   updateDoc,
   addDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -144,6 +145,19 @@ export async function getProductById(id: string): Promise<Product | null> {
   return docToProduct(snap.id, snap.data())
 }
 
+export async function getAdminProducts(): Promise<Product[]> {
+  const snap = await getDocs(collection(db, 'products'))
+  const products = snap.docs.map((d) => docToProduct(d.id, d.data()))
+
+  return products.sort((a, b) => {
+    const aTime = (a.createdAt instanceof Date ? a.createdAt.getTime() : 0)
+      || (a.updatedAt instanceof Date ? a.updatedAt.getTime() : 0)
+    const bTime = (b.createdAt instanceof Date ? b.createdAt.getTime() : 0)
+      || (b.updatedAt instanceof Date ? b.updatedAt.getTime() : 0)
+    return bTime - aTime
+  })
+}
+
 export async function upsertProduct(product: Partial<Product> & { id?: string }): Promise<string> {
   const now = serverTimestamp()
   if (product.id) {
@@ -159,6 +173,10 @@ export async function upsertProduct(product: Partial<Product> & { id?: string })
     updatedAt: now,
   })
   return ref.id
+}
+
+export async function deleteProduct(productId: string): Promise<void> {
+  await deleteDoc(doc(db, 'products', productId))
 }
 
 // ─── ORDERS ───────────────────────────────────────────────────────────────────

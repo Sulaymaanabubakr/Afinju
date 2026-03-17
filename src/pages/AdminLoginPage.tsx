@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
+import { grantAdminAccess } from '@/features/auth/adminSession'
 import { Eye, EyeOff, Shield } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -39,6 +40,7 @@ export default function AdminLoginPage() {
         return
       }
 
+      grantAdminAccess(cred.user.uid)
       toast.success('Admin access granted.')
       navigate(returnTo)
     } catch (err: any) {

@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth'
 import type { ReactNode } from 'react'
+import { hasFreshAdminAccess } from './adminSession'
 
 interface GuardProps {
   children: ReactNode
@@ -60,6 +61,9 @@ export function RequireStaff({ children }: GuardProps) {
 
   if (!user) return <Navigate to={`/admin/login?return=${encodeURIComponent(location.pathname)}`} replace />
   if (!isStaff()) return <Navigate to={`/admin/login?return=${encodeURIComponent(location.pathname)}`} replace />
+  if (!hasFreshAdminAccess(user.uid)) {
+    return <Navigate to={`/admin/login?return=${encodeURIComponent(location.pathname)}`} replace />
+  }
 
   return <>{children}</>
 }
@@ -75,12 +79,9 @@ export function RedirectIfAuth({ children }: GuardProps) {
 }
 
 export function RedirectIfAdminAuth({ children }: GuardProps) {
-  const { user, loading, isStaff } = useAuthStore()
+  const { loading } = useAuthStore()
 
   if (loading) return <LoadingScreen />
-
-  // Let signed-in non-staff users open /admin/login so they can switch account.
-  if (user && isStaff()) return <Navigate to="/admin" replace />
 
   return <>{children}</>
 }

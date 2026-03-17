@@ -6,7 +6,7 @@ import { getProducts } from '@/lib/db'
 import ScarcityCounter from '@/components/shared/ScarcityCounter'
 
 const PACKAGE_ITEMS = [
-  { name: 'Pure Skin Leather Half Shoe', desc: '(Black, Brown, Red and Blue)' },
+  { name: 'Pure Skin Leather/Suede Half Shoe', desc: '(Black, Brown, Red and Blue)' },
   { name: 'Matching Premium Leather Purse', desc: '(Black, Brown, Red and Blue)' },
   { name: 'Matching Gobi Cap', desc: '(Black, Brown, Red and Blue)' },
   { name: 'Signature Oil Perfume', desc: 'A scent that announces your arrival before you speak' },
@@ -73,7 +73,7 @@ export default function LaunchEditionPage() {
             </h1>
             <div className="gold-rule mx-auto mb-8" />
             <p className="font-body text-afinju-cream/60 text-xl mb-12 max-w-xl mx-auto">
-              If you find yourself in any of these six categories, Afínjú is probably not for you.
+              If You Fall Into Any Of These 6 Categories, AFINJU is absolutely NOT FOR YOU!
             </p>
             {product && (
               <div className="flex flex-wrap items-center gap-6 justify-center">
@@ -140,7 +140,7 @@ export default function LaunchEditionPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <p className="section-label text-gold/60">The Filter</p>
-            <h2 className="font-heading text-4xl md:text-5xl text-afinju-cream">6 reasons not to buy</h2>
+            <h2 className="font-heading text-4xl md:text-5xl text-afinju-cream">PLEASE KEEP YOUR MONEY!</h2>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-12">
             {AUTHORITY_COPY.map((section, i) => (

@@ -1,20 +1,97 @@
 import { useQuery } from '@tanstack/react-query'
 import { getAllUsers } from '@/lib/db'
 import { format } from 'date-fns'
-import { Phone, MessageCircle } from 'lucide-react'
+import { ChevronDown, Download, MessageCircle, Phone } from 'lucide-react'
 import { whatsappLink } from '@/lib/utils'
+import { useMemo, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
+import { exportDatasetAs, type ExportFormat } from '@/lib/adminExport'
+import { useDismissiblePanel } from '@/hooks/useDismissiblePanel'
 
 export default function AdminCustomersPage() {
+  const [exportOpen, setExportOpen] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const exportMenuRef = useRef<HTMLDivElement | null>(null)
+  useDismissiblePanel(exportMenuRef, exportOpen, () => setExportOpen(false))
   const { data: users, isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: getAllUsers,
   })
+  const exportRows = useMemo(
+    () =>
+      (users || []).map((u) => [
+        u.displayName || '—',
+        u.email || '—',
+        u.phone || '—',
+        u.role,
+        format(u.createdAt, 'yyyy-MM-dd'),
+      ]),
+    [users]
+  )
+
+  const runExport = async (formatType: ExportFormat) => {
+    if (!users?.length) {
+      toast.error('No customers to export.')
+      return
+    }
+    setExporting(true)
+    setExportOpen(false)
+    try {
+      await exportDatasetAs(formatType, {
+        fileBase: `afinju-customers-${Date.now()}`,
+        title: 'AFINJU Customers Report',
+        headers: ['Name', 'Email', 'Phone', 'Role', 'Joined'],
+        rows: exportRows,
+      })
+      toast.success(`${formatType.toUpperCase()} exported.`)
+    } catch (err) {
+      console.error(err)
+      toast.error('Export failed. Please try again.')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-heading text-2xl">Customers</h1>
-        <p className="font-sans text-sm text-afinju-black/40">{users?.length || 0} registered accounts</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-heading text-2xl">Customers</h1>
+          <p className="font-sans text-sm text-afinju-black/40">{users?.length || 0} registered accounts</p>
+        </div>
+        <div className="relative" ref={exportMenuRef}>
+          <button
+            type="button"
+            onClick={() => setExportOpen((v) => !v)}
+            disabled={exporting}
+            className="flex items-center gap-2 font-sans text-xs tracking-wider uppercase border border-black/20 px-4 py-2 hover:border-gold transition-colors disabled:opacity-50"
+          >
+            <Download size={13} strokeWidth={1.5} />
+            {exporting ? 'Exporting...' : 'Export'}
+            <ChevronDown size={12} strokeWidth={1.8} />
+          </button>
+          {exportOpen && (
+            <div className="absolute right-0 mt-2 w-44 bg-white border border-black/10 shadow-lg z-20">
+              {[
+                ['pdf', 'Export as PDF'],
+                ['excel', 'Export as Excel'],
+                ['doc', 'Export as DOC'],
+                ['csv', 'Export as CSV'],
+                ['png', 'Export as PNG'],
+                ['jpg', 'Export as JPG'],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => runExport(value as ExportFormat)}
+                  className="w-full text-left px-3 py-2 text-xs font-sans tracking-wide hover:bg-black/5 transition-colors"
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="bg-white border border-black/8 overflow-x-auto">

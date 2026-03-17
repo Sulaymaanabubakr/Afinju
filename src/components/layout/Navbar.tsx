@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingBag, Menu, X, User, LogOut } from 'lucide-react'
@@ -7,12 +7,14 @@ import { auth } from '@/lib/firebase'
 import { useCartStore } from '@/lib/store'
 import { useAuthStore } from '@/store/auth'
 import { cn } from '@/lib/utils'
+import { useDismissiblePanel } from '@/hooks/useDismissiblePanel'
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const menuShellRef = useRef<HTMLDivElement | null>(null)
   const { itemCount, openCart } = useCartStore()
-  const { user, isAdmin, isStaff } = useAuthStore()
+  const { user } = useAuthStore()
   const location = useLocation()
   const count = itemCount()
 
@@ -23,6 +25,7 @@ export function Navbar() {
   }, [])
 
   useEffect(() => { setMenuOpen(false) }, [location.pathname])
+  useDismissiblePanel(menuShellRef, menuOpen, () => setMenuOpen(false))
 
   const navLinks = [
     { to: '/shop', label: 'Shop' },
@@ -44,11 +47,12 @@ export function Navbar() {
         </div>
       </div>
 
-      <header className={cn(
-        'sticky top-0 z-50 transition-all duration-300 border-b border-black/5',
-        scrolled ? 'bg-afinju-offwhite/95 backdrop-blur-md shadow-sm' : 'bg-afinju-offwhite'
-      )}>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 h-20 flex items-center justify-between">
+      <div ref={menuShellRef}>
+        <header className={cn(
+          'sticky top-0 z-50 transition-all duration-300 border-b border-black/5',
+          scrolled ? 'bg-afinju-offwhite/95 backdrop-blur-md shadow-sm' : 'bg-afinju-offwhite'
+        )}>
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 lg:hidden">
             <button onClick={() => setMenuOpen(v => !v)} className="text-afinju-black">
               {menuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
@@ -81,16 +85,13 @@ export function Navbar() {
           <div className="hidden lg:flex items-center gap-5">
             {user ? (
               <div className="flex items-center gap-4">
-                {isStaff() && (
-                  <Link to="/admin" className="font-sans text-xs tracking-[0.18em] uppercase text-gold hover:text-gold-dark transition-colors">
-                    Admin Portal
-                  </Link>
-                )}
-                {!isStaff() && (
-                  <Link to="/account" className="text-afinju-black/70 hover:text-afinju-black transition-colors">
-                    <User size={18} strokeWidth={1.5} />
-                  </Link>
-                )}
+                <Link
+                  to="/account"
+                  className="text-afinju-black/70 hover:text-afinju-black transition-colors"
+                  aria-label="My account"
+                >
+                  <User size={18} strokeWidth={1.5} />
+                </Link>
                 <button onClick={() => signOut(auth)} className="text-afinju-black/40 hover:text-afinju-black/70 transition-colors">
                   <LogOut size={16} strokeWidth={1.5} />
                 </button>
@@ -113,23 +114,13 @@ export function Navbar() {
 
           <div className="flex items-center gap-3 lg:hidden">
             {user ? (
-              isStaff() ? (
-                <Link
-                  to="/admin"
-                  className="inline-flex h-10 w-10 items-center justify-center text-afinju-black hover:text-gold transition-colors"
-                  aria-label="Admin portal"
-                >
-                  <User size={20} strokeWidth={1.5} />
-                </Link>
-              ) : (
-                <Link
-                  to="/account"
-                  className="inline-flex h-10 w-10 items-center justify-center text-afinju-black hover:text-gold transition-colors"
-                  aria-label="My account"
-                >
-                  <User size={20} strokeWidth={1.5} />
-                </Link>
-              )
+              <Link
+                to="/account"
+                className="inline-flex h-10 w-10 items-center justify-center text-afinju-black hover:text-gold transition-colors"
+                aria-label="My account"
+              >
+                <User size={20} strokeWidth={1.5} />
+              </Link>
             ) : (
               <Link
                 to="/login"
@@ -149,42 +140,42 @@ export function Navbar() {
               )}
             </button>
           </div>
-        </div>
-      </header>
+          </div>
+        </header>
 
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-            className="lg:hidden fixed inset-x-0 top-[84px] z-40 bg-afinju-offwhite border-b border-black/10 shadow-xl"
-          >
-            <nav className="flex flex-col px-6 py-8 gap-6">
-              {navLinks.map(({ to, label }) => (
-                <NavLink key={to} to={to}
-                  className={({ isActive }) => cn(
-                    'font-sans text-sm tracking-[0.2em] uppercase pb-3 border-b border-black/8',
-                    isActive ? 'text-gold' : 'text-afinju-black'
-                  )}
-                >
-                  {label}
-                </NavLink>
-              ))}
-              {user ? (
-                <>
-                  {!isStaff() && <Link to="/account" className="font-sans text-sm tracking-[0.2em] uppercase text-afinju-black/70">My Account</Link>}
-                  {isStaff() && <Link to="/admin" className="font-sans text-sm tracking-[0.2em] uppercase text-gold">Admin Portal</Link>}
-                  <button onClick={() => signOut(auth)} className="font-sans text-sm tracking-[0.2em] uppercase text-left text-afinju-black/40">Sign Out</button>
-                </>
-              ) : (
-                <Link to="/login" className="font-sans text-sm tracking-[0.2em] uppercase text-afinju-black">Sign In / Register</Link>
-              )}
-            </nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="lg:hidden fixed inset-x-0 top-[84px] z-40 bg-afinju-offwhite border-b border-black/10 shadow-xl"
+            >
+              <nav className="flex flex-col px-6 py-8 gap-6">
+                {navLinks.map(({ to, label }) => (
+                  <NavLink key={to} to={to}
+                    className={({ isActive }) => cn(
+                      'font-sans text-sm tracking-[0.2em] uppercase pb-3 border-b border-black/8',
+                      isActive ? 'text-gold' : 'text-afinju-black'
+                    )}
+                  >
+                    {label}
+                  </NavLink>
+                ))}
+                {user ? (
+                  <>
+                    <Link to="/account" className="font-sans text-sm tracking-[0.2em] uppercase text-afinju-black/70">My Account</Link>
+                    <button onClick={() => signOut(auth)} className="font-sans text-sm tracking-[0.2em] uppercase text-left text-afinju-black/40">Sign Out</button>
+                  </>
+                ) : (
+                  <Link to="/login" className="font-sans text-sm tracking-[0.2em] uppercase text-afinju-black">Sign In / Register</Link>
+                )}
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </>
   )
 }

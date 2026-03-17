@@ -13,7 +13,7 @@ const HERO_IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1605812860427-402
 const FEATURE_IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800&q=90'
 
 const PACKAGE_ITEMS = [
-  { name: 'Pure Skin Leather Half Shoe', desc: '(Black, Brown, Red and Blue)' },
+  { name: 'Pure Skin Leather/Suede Half Shoe', desc: '(Black, Brown, Red and Blue)' },
   { name: 'Matching Premium Leather Purse', desc: '(Black, Brown, Red and Blue)' },
   { name: 'Matching Gobi Cap', desc: '(Black, Brown, Red and Blue)' },
   { name: 'Signature Oil Perfume', desc: 'A scent that announces your arrival' },
@@ -166,7 +166,7 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="mt-5 text-base md:text-xl font-body text-ivory/60 leading-relaxed max-w-xl mx-auto"
             >
-              The complete Nigerian authority set. Six precision-crafted pieces. One undeniable statement.
+              The complete Nigerian authority set. Five precision-crafted pieces. One undeniable statement.
             </motion.p>
 
             {/* Scarcity bar */}
@@ -305,10 +305,10 @@ export default function HomePage() {
             className="text-center mb-20"
           >
             <h2 className="font-display text-3xl md:text-6xl font-bold text-ivory">
-              6 reasons not to buy
+              PLEASE KEEP YOUR MONEY!
             </h2>
             <p className="mt-4 font-body text-ivory/40 text-base md:text-lg max-w-2xl mx-auto">
-              If you fall into any of these categories, please keep your money. Afínjú is absolutely not for you.
+              If You Fall Into Any Of These 6 Categories, AFINJU is absolutely NOT FOR YOU!
             </p>
           </motion.div>
 

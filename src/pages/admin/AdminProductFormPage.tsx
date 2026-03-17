@@ -84,6 +84,7 @@ export default function AdminProductFormPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['products'] })
+      qc.invalidateQueries({ queryKey: ['admin-products'] })
       toast.success(isEdit ? 'Product updated.' : 'Product created.')
       navigate('/admin/products')
     },

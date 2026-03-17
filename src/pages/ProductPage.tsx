@@ -11,6 +11,33 @@ import ScarcityCounter from '@/components/shared/ScarcityCounter'
 import { SHOE_SIZES, HEAD_SIZES, PRODUCT_COLORS, type ProductColor } from '@/types'
 import { helpWhatsappLink } from '@/lib/utils'
 import toast from 'react-hot-toast'
+
+const SHOE_SIZE_META: Record<string, { cm: string; inches: string }> = {
+  '38': { cm: '24.0', inches: '9.45' },
+  '39': { cm: '24.6', inches: '9.69' },
+  '40': { cm: '25.3', inches: '9.96' },
+  '41': { cm: '25.9', inches: '10.20' },
+  '42': { cm: '26.6', inches: '10.47' },
+  '43': { cm: '27.3', inches: '10.75' },
+  '44': { cm: '27.9', inches: '10.98' },
+  '45': { cm: '28.6', inches: '11.26' },
+  '46': { cm: '29.3', inches: '11.54' },
+  '47': { cm: '30.0', inches: '11.81' },
+}
+
+const HEAD_SIZE_META: Record<string, { cm: string; inches: string }> = {
+  '54cm': { cm: '54', inches: '21 1/4' },
+  '55cm': { cm: '55', inches: '21 5/8' },
+  '56cm': { cm: '56', inches: '22' },
+  '57cm': { cm: '57', inches: '22 1/2' },
+  '58cm': { cm: '58', inches: '22 7/8' },
+  '59cm': { cm: '59', inches: '23 1/4' },
+  '60cm': { cm: '60', inches: '23 5/8' },
+  '61cm': { cm: '61', inches: '24' },
+  '62cm': { cm: '62', inches: '24 3/8' },
+  '63cm': { cm: '63', inches: '24 3/4' },
+}
+
 export default function ProductPage() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
@@ -264,7 +291,7 @@ export default function ProductPage() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <label className="font-sans text-xs tracking-[0.15em] uppercase">
-                  Shoe Size (EU)
+                  Shoe Size (in / cm / size)
                   {errors.shoeSize && (
                     <span className="ml-2 text-destructive text-[10px]">{errors.shoeSize}</span>
                   )}
@@ -278,17 +305,35 @@ export default function ProductPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {SHOE_SIZES.map((size) => (
+                  size === 'Not sure' ? (
                   <button
                     type="button"
                     key={size}
                     onClick={() => { setShoeSize(size); setErrors(e => ({ ...e, shoeSize: '' })) }}
-                    className={`${size === 'Not sure' ? 'px-3 h-12' : 'w-12 h-12'} border font-sans text-sm transition-all duration-150 ${shoeSize === size
+                    className="px-3 h-12 border font-sans text-sm transition-all duration-150 border-black/20 hover:border-afinju-black data-[active=true]:bg-afinju-black data-[active=true]:text-afinju-cream data-[active=true]:border-afinju-black"
+                    data-active={shoeSize === size}
+                  >
+                    {size}
+                  </button>
+                  ) : (
+                  <button
+                    type="button"
+                    key={size}
+                    onClick={() => { setShoeSize(size); setErrors(e => ({ ...e, shoeSize: '' })) }}
+                    className={`w-[84px] min-h-[62px] border px-2 py-2 font-sans transition-all duration-150 ${shoeSize === size
                         ? 'bg-afinju-black text-afinju-cream border-afinju-black'
                         : 'border-black/20 hover:border-afinju-black'
                       }`}
                   >
-                    {size}
+                    <span className="block text-sm font-medium">{SHOE_SIZE_META[size]?.inches} in</span>
+                    <span className={`mt-1 block text-[9px] leading-tight ${shoeSize === size ? 'text-afinju-cream/75' : 'text-afinju-black/45'}`}>
+                      {SHOE_SIZE_META[size]?.cm} cm
+                    </span>
+                    <span className={`block text-[9px] leading-tight ${shoeSize === size ? 'text-afinju-cream/75' : 'text-afinju-black/45'}`}>
+                      Size {size}
+                    </span>
                   </button>
+                  )
                 ))}
               </div>
             </div>
@@ -297,7 +342,7 @@ export default function ProductPage() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <label className="font-sans text-xs tracking-[0.15em] uppercase">
-                  Head Size
+                  Head Size (in / cm)
                   {errors.headSize && (
                     <span className="ml-2 text-destructive text-[10px]">{errors.headSize}</span>
                   )}
@@ -311,6 +356,7 @@ export default function ProductPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {HEAD_SIZES.map((size) => (
+                  size === 'Not sure' ? (
                   <button
                     type="button"
                     key={size}
@@ -322,6 +368,22 @@ export default function ProductPage() {
                   >
                     {size}
                   </button>
+                  ) : (
+                  <button
+                    type="button"
+                    key={size}
+                    onClick={() => { setHeadSize(size); setErrors(e => ({ ...e, headSize: '' })) }}
+                    className={`min-h-[58px] min-w-[96px] border px-2 py-2 font-sans transition-all duration-150 ${headSize === size
+                        ? 'bg-afinju-black text-afinju-cream border-afinju-black'
+                        : 'border-black/20 hover:border-afinju-black'
+                      }`}
+                  >
+                    <span className="block text-[11px] font-medium">{HEAD_SIZE_META[size]?.inches} in</span>
+                    <span className={`mt-1 block text-[10px] leading-tight ${headSize === size ? 'text-afinju-cream/75' : 'text-afinju-black/45'}`}>
+                      {HEAD_SIZE_META[size]?.cm} cm
+                    </span>
+                  </button>
+                  )
                 ))}
               </div>
             </div>

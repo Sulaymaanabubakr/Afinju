@@ -1,8 +1,7 @@
 import { useAuthStore } from '@/store/auth'
 import { Link } from 'react-router-dom'
 import { Package, User, ChevronRight } from 'lucide-react'
-import { signOut } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { supabase } from '@/lib/supabase'
 
 export default function AccountPage() {
   const { user } = useAuthStore()
@@ -48,7 +47,7 @@ export default function AccountPage() {
         </div>
 
         <button
-          onClick={() => signOut(auth)}
+          onClick={() => supabase.auth.signOut()}
           className="mt-12 font-sans text-xs tracking-[0.18em] uppercase text-afinju-black/30 hover:text-afinju-black transition-colors"
         >
           Sign Out

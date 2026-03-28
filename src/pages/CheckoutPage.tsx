@@ -8,11 +8,10 @@ import { Lock, ChevronDown } from 'lucide-react'
 import { useCartStore } from '@/lib/store'
 import { useAuthStore } from '@/store/auth'
 import { createOrder, getRemainingUnits, getStoreSettings } from '@/lib/db'
-import { openPaystackPopup, generateReference } from '@/lib/paystack'
+import { openFlutterwaveModal, generateReference } from '@/lib/flutterwave'
 import { formatPrice, BRAND_WHATSAPP } from '@/lib/utils'
 import { cloudinaryUrl } from '@/lib/cloudinary'
-import { httpsCallable } from 'firebase/functions'
-import { functions, auth } from '@/lib/firebase'
+import { supabase } from '@/lib/supabase'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { PRODUCT_COLORS, SHOE_SIZES, HEAD_SIZES, type ProductColor } from '@/types'
@@ -86,7 +85,8 @@ export default function CheckoutPage() {
   const onSubmit = async (data: FormData) => {
     if (!user) { toast.error('Please sign in to continue'); return }
     if (processing) return
-    if (!auth.currentUser) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
       toast.error('Your session expired. Please sign in again.')
       navigate('/login?return=%2Fcheckout')
       return
@@ -108,8 +108,7 @@ export default function CheckoutPage() {
     let orderId: string
     let serverTotal: number
     try {
-      // Ensure callable has a fresh ID token
-      await auth.currentUser.getIdToken(true)
+      // JWT is automatically attached by Supabase client in invoke requests
 
       const result = await createOrder({
         customerName: data.fullName,
@@ -162,30 +161,27 @@ export default function CheckoutPage() {
       return
     }
 
-    // Open Paystack
-    openPaystackPopup({
+    // Open Flutterwave
+    openFlutterwaveModal({
       email: data.email || `${data.phone}@afinju.guest`,
       amount: serverTotal,
       currency: 'NGN',
-      reference,
+      txRef: reference,
+      customerName: data.fullName,
+      customerPhone: data.phone,
       metadata: {
         orderId,
         userId: user.uid,
-        custom_fields: [
-          { display_name: 'Order ID', variable_name: 'order_id', value: orderId },
-          { display_name: 'Customer', variable_name: 'customer', value: data.fullName },
-        ],
       },
-      onSuccess: async (ref) => {
+      onSuccess: async (transactionId, txRef) => {
         try {
           // Verify payment server-side
-          const verifyPayment = httpsCallable(functions, 'verifyPayment')
-          await verifyPayment({ reference: ref, orderId })
+          await supabase.functions.invoke('verify-payment', { body: { transactionId, txRef, orderId } })
           clearCart()
           toast.success('Payment confirmed! Your order is placed.')
           navigate(`/order-confirmation/${orderId}`)
         } catch (err) {
-          toast.error('Payment verification failed. Contact support with your reference: ' + ref)
+          toast.error('Payment verification failed. Contact support with your reference: ' + txRef)
           navigate(`/order-confirmation/${orderId}`)
         }
       },
@@ -363,7 +359,7 @@ export default function CheckoutPage() {
                 <div className="flex items-center gap-2 pt-2">
                   <Lock size={12} className="text-gold" strokeWidth={2} />
                   <p className="font-sans text-xs text-afinju-black/50">
-                    Secured by Paystack. Card, Bank, USSD available.
+                    Secured by Flutterwave. Card, Bank Transfer, USSD available.
                   </p>
                 </div>
               </div>

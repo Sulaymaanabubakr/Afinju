@@ -1,6 +1,5 @@
-import { createContext, useContext, useEffect, type ReactNode } from 'react'
-import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { createContext, useEffect, type ReactNode } from 'react'
+import { supabase } from '@/lib/supabase'
 import { getUserProfile, createUserProfile } from '@/lib/db'
 import { useAuthStore } from '@/store/auth'
 import type { UserProfile } from '@/types'
@@ -12,28 +11,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { setUser, setLoading } = useAuthStore()
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      setLoading(true)
+    let mounted = true
 
-      if (!firebaseUser) {
-        clearAdminAccess()
-        setUser(null)
-        setLoading(false)
+    async function handleUser(sessionUser: any | null) {
+      if (!sessionUser) {
+        if (mounted) {
+          clearAdminAccess()
+          setUser(null)
+          setLoading(false)
+        }
         return
       }
 
       const fallbackProfile: UserProfile = {
-        uid: firebaseUser.uid,
-        email: firebaseUser.email || undefined,
-        phone: firebaseUser.phoneNumber || undefined,
-        displayName: firebaseUser.displayName || undefined,
+        uid: sessionUser.id,
+        email: sessionUser.email || undefined,
+        phone: sessionUser.phone || undefined,
+        displayName: sessionUser.user_metadata?.full_name || undefined,
         role: 'customer',
         createdAt: new Date(),
       }
 
       try {
-        // Get or create user profile
-        let profile = await getUserProfile(firebaseUser.uid)
+        let profile = await getUserProfile(sessionUser.id)
 
         if (!profile) {
           const newProfile: Omit<UserProfile, 'createdAt'> = {
@@ -47,28 +47,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           profile = { ...newProfile, createdAt: new Date() }
         }
 
-        // Force-refresh token once so newly assigned admin/staff claims are picked up immediately.
-        const tokenResult = await firebaseUser.getIdTokenResult(true)
-        const claimRole = tokenResult.claims.role as UserProfile['role'] | undefined
-        if (claimRole) {
-          profile = { ...profile, role: claimRole }
-        }
+        // Handle role from custom claims if they were using that in metadata
+        // With Supabase it's safer to rely on the Postgres users table row which we just fetched
         if (profile.role !== 'admin' && profile.role !== 'staff') {
           clearAdminAccess()
         }
 
-        setUser(profile)
+        if (mounted) {
+          setUser(profile)
+        }
       } catch (err) {
         console.error('Auth error:', err)
-        // Keep authenticated UX working even if profile read/write fails transiently.
-        clearAdminAccess()
-        setUser(fallbackProfile)
+        if (mounted) {
+          clearAdminAccess()
+          setUser(fallbackProfile)
+        }
       } finally {
-        setLoading(false)
+        if (mounted) setLoading(false)
       }
+    }
+
+    // Initial check
+    setLoading(true)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleUser(session?.user || null)
     })
 
-    return unsubscribe
+    // Listen for changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setLoading(true)
+      handleUser(session?.user || null)
+    })
+
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [setUser, setLoading])
 
   return <AuthContext.Provider value={null}>{children}</AuthContext.Provider>

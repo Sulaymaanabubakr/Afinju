@@ -7,8 +7,8 @@
  *   npx tsx scripts/upload-and-seed.ts
  */
 
-import { initializeApp, cert } from 'firebase-admin/app'
-import { getFirestore, Timestamp } from 'firebase-admin/firestore'
+import { createClient } from '@supabase/supabase-js'
+import 'dotenv/config'
 import { v2 as cloudinary } from 'cloudinary'
 import path from 'path'
 import fs from 'fs'
@@ -23,14 +23,13 @@ function requireEnv(name: string): string {
   return value
 }
 
-// ── Config ──────────────────────────────────────────────────────────────────────
-const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH
-  ? path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT_PATH)
-  : path.join(projectRoot, 'service-account.json')
-const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf-8'))
-
-initializeApp({ credential: cert(serviceAccount) })
-const db = getFirestore()
+// ── Supabase Config ──────────────────────────────────────────────────────────────────────
+const supabaseUrl = process.env.VITE_SUPABASE_URL || ''
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+}
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 cloudinary.config({
   cloud_name: requireEnv('CLOUDINARY_CLOUD_NAME'),
@@ -311,60 +310,68 @@ async function main() {
     },
   ]
 
-  // ── Seed Firestore ────────────────────────────────────────────────────────
-  console.log('📝  Seeding Firestore products...\n')
+  // ── Seed Supabase ────────────────────────────────────────────────────────
+  console.log('📝  Waiting for schema cache to refresh...')
+  await new Promise(resolve => setTimeout(resolve, 3000))
+  console.log('📝  Seeding Supabase products...\n')
 
   for (const product of products) {
-    await db.collection('products').doc(product.id).set({
-      ...product,
+    const { id, compareAtPrice, ...productData } = product
+    const { error } = await supabase.from('products').upsert({
+      ...productData,
+      compare_at_price: compareAtPrice,
       seo: {
         title: `${product.name} | Premium Nigerian Craftsmanship`,
         description: product.description,
       },
       status: 'active',
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    })
-    console.log(`  ✅  ${product.name}`)
+    }, { onConflict: 'slug' })
+    
+    if (error) console.error(`  ❌  Failed: ${product.name}`, error)
+    else console.log(`  ✅  ${product.name}`)
   }
 
   // ── Seed Homepage Content ─────────────────────────────────────────────────
   console.log('\n📝  Seeding homepage content...\n')
 
-  await db.collection('config').doc('content').set({
-    announcementBar: {
-      enabled: true,
-      text: 'Only Ten Men Will Own This Launch Edition · Once It Is Closed, It Is Closed · AFINJU — Authority Set · Launch Price ₦200,000',
-    },
-    hero: {
-      headline: 'AFINJU is not for you if you cannot handle attention.',
-      subheadline:
-        'The authority set for the man who has decided that his standard is non-negotiable. Six pieces. One statement. Ten men.',
-      ctaText: 'Secure Your Position',
-      imageUrl: img('afinju_black_lifestyle_1773322925749.png'),
-    },
-    scarcityBanner: {
-      enabled: true,
-      text: 'Only 10 men will own this launch edition. Once it is closed, it is closed.',
-    },
-    updatedAt: Timestamp.now(),
-  })
+  await supabase.from('config').upsert({
+    id: 'content',
+    data: {
+      announcementBar: {
+        enabled: true,
+        text: 'Only Ten Men Will Own This Launch Edition · Once It Is Closed, It Is Closed · AFINJU — Authority Set · Launch Price ₦200,000',
+      },
+      hero: {
+        headline: 'AFINJU is not for you if you cannot handle attention.',
+        subheadline:
+          'The authority set for the man who has decided that his standard is non-negotiable. Six pieces. One statement. Ten men.',
+        ctaText: 'Secure Your Position',
+        imageUrl: img('afinju_black_lifestyle_1773322925749.png'),
+      },
+      scarcityBanner: {
+        enabled: true,
+        text: 'Only 10 men will own this launch edition. Once it is closed, it is closed.',
+      },
+    }
+  }, { onConflict: 'id' })
   console.log('  ✅  Homepage content')
 
   // ── Store Settings ────────────────────────────────────────────────────────
-  await db.collection('config').doc('settings').set({
-    storeName: 'AFINJU',
-    whatsappNumber: '2347071861932',
-    supportEmail: 'hello@afinju.com',
-    shippingFee: 5000,
-    paystackPublicKey: process.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_placeholder',
-    instagramUrl: 'https://instagram.com/afinju',
-    twitterUrl: '',
-    updatedAt: Timestamp.now(),
-  })
+  await supabase.from('config').upsert({
+    id: 'settings',
+    data: {
+      storeName: 'AFINJU',
+      whatsappNumber: '2347071861932',
+      supportEmail: 'hello@afinju.com',
+      shippingFee: 5000,
+      paystackPublicKey: process.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_placeholder',
+      instagramUrl: 'https://instagram.com/afinju',
+      twitterUrl: '',
+    }
+  }, { onConflict: 'id' })
   console.log('  ✅  Store settings')
 
-  console.log('\n🚀  Done! All images uploaded to Cloudinary and Firestore seeded with 11 products.\n')
+  console.log('\n🚀  Done! All images uploaded to Cloudinary and Supabase seeded with 11 products.\n')
 }
 
 main().catch((err) => {

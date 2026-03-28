@@ -9,7 +9,7 @@ export function TermsPage() {
         All prices are displayed in Nigerian Naira (₦). Prices are subject to change without notice. The launch edition pricing applies only to the first 10 units of the Afínjú Authority Set. Subsequent editions will be priced at a higher standard rate.
       </Section>
       <Section title="3. Orders and Payment">
-        Orders are confirmed only upon receipt of successful payment verification via Paystack. We reserve the right to cancel any order in the event of inventory errors or payment fraud. You will be notified and fully refunded in such cases.
+        Orders are confirmed only upon receipt of successful payment verification via Flutterwave. We reserve the right to cancel any order in the event of inventory errors or payment fraud. You will be notified and fully refunded in such cases.
       </Section>
       <Section title="4. Custom Orders">
         Because each Afínjú set is made to your specified colour, shoe size, and head size, cancellations are not accepted once an order has been confirmed. Please review your selections carefully before completing checkout.
@@ -38,7 +38,7 @@ export function PrivacyPage() {
         Your information is used to fulfil your order, update you on delivery status, and provide customer support. With your consent, we may contact you about future Afínjú collections. We do not sell, rent, or share your personal data with third parties for marketing purposes.
       </Section>
       <Section title="Payment Data">
-        Afínjú does not store payment card details. All payment transactions are processed securely by Paystack, which is PCI-DSS compliant. Please refer to Paystack's privacy policy for details on how they handle payment data.
+        Afínjú does not store payment card details. All payment transactions are processed securely by Flutterwave, which is PCI-DSS compliant. Please refer to Flutterwave's privacy policy for details on how they handle payment data.
       </Section>
       <Section title="Data Security">
         Your data is stored on Firebase (Google Cloud), which maintains enterprise-grade security infrastructure. Access to customer data is restricted to authorised Afínjú staff only.

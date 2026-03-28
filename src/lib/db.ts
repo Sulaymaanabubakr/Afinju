@@ -1,23 +1,4 @@
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  updateDoc,
-  addDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  serverTimestamp,
-  Timestamp,
-  onSnapshot,
-  type DocumentData,
-} from 'firebase/firestore'
-import { httpsCallable } from 'firebase/functions'
-import { db, functions } from './firebase'
+import { supabase } from './supabase'
 import type {
   Product,
   Order,
@@ -27,13 +8,11 @@ import type {
   SiteContent,
   StoreSettings,
 } from '@/types'
-import { generateOrderNumber } from './utils'
 
 // ─── CONVERTERS ───────────────────────────────────────────────────────────────
 function tsToDate(ts: any): Date {
-  if (ts instanceof Timestamp) return ts.toDate()
-  if (ts instanceof Date) return ts
-  return new Date()
+  if (!ts) return new Date()
+  return new Date(ts)
 }
 
 function removeUndefined<T extends Record<string, any>>(obj: T): T {
@@ -42,22 +21,34 @@ function removeUndefined<T extends Record<string, any>>(obj: T): T {
   ) as T
 }
 
-function docToProduct(id: string, data: DocumentData): Product {
+function rowToProduct(data: any): Product {
   return {
     ...data,
-    id,
-    createdAt: tsToDate(data.createdAt),
-    updatedAt: tsToDate(data.updatedAt),
+    inventory: typeof data.inventory === 'string' ? JSON.parse(data.inventory) : data.inventory,
+    images: typeof data.images === 'string' ? JSON.parse(data.images) : data.images,
+    createdAt: tsToDate(data.created_at),
+    updatedAt: tsToDate(data.updated_at),
   } as Product
 }
 
-function docToOrder(id: string, data: DocumentData): Order {
+function rowToOrder(data: any): Order {
+  const statusTimeline = typeof data.status_timeline === 'string' ? JSON.parse(data.status_timeline) : (data.status_timeline || [])
   return {
     ...data,
-    id,
-    createdAt: tsToDate(data.createdAt),
-    updatedAt: tsToDate(data.updatedAt),
-    statusTimeline: (data.statusTimeline || []).map((e: any) => ({
+    orderNumber: data.order_number,
+    userId: data.user_id,
+    customerName: data.customer_name,
+    customerPhone: data.customer_phone,
+    customerAltPhone: data.customer_alt_phone,
+    customerEmail: data.customer_email,
+    deliveryAddress: typeof data.delivery_address === 'string' ? JSON.parse(data.delivery_address) : data.delivery_address,
+    items: typeof data.items === 'string' ? JSON.parse(data.items) : data.items,
+    shippingFee: Number(data.shipping_fee),
+    paymentStatus: data.payment_status,
+    paymentReference: data.payment_reference,
+    createdAt: tsToDate(data.created_at),
+    updatedAt: tsToDate(data.updated_at),
+    statusTimeline: statusTimeline.map((e: any) => ({
       ...e,
       timestamp: tsToDate(e.timestamp),
     })),
@@ -71,31 +62,14 @@ function isPublicProductStatus(status: unknown): boolean {
 
 // ─── PRODUCTS ─────────────────────────────────────────────────────────────────
 export async function getProducts(): Promise<Product[]> {
-  const orderedQuery = query(
-    collection(db, 'products'),
-    where('status', '==', 'active'),
-    orderBy('createdAt', 'desc')
-  )
-  const orderedSnap = await getDocs(orderedQuery)
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
 
-  // Older manually inserted product docs may not have createdAt.
-  // Firestore excludes those docs when orderBy(createdAt) is used.
-  if (!orderedSnap.empty) {
-    return orderedSnap.docs.map((d) => docToProduct(d.id, d.data()))
-  }
-
-  // Final fallback: fetch all publicly readable products.
-  // Firestore rules still block drafts for anonymous users.
-  const fallbackSnap = await getDocs(collection(db, 'products'))
-  const products = fallbackSnap.docs.map((d) => docToProduct(d.id, d.data()))
-
-  return products.sort((a, b) => {
-    const aTime = (a.createdAt instanceof Date ? a.createdAt.getTime() : 0)
-      || (a.updatedAt instanceof Date ? a.updatedAt.getTime() : 0)
-    const bTime = (b.createdAt instanceof Date ? b.createdAt.getTime() : 0)
-      || (b.updatedAt instanceof Date ? b.updatedAt.getTime() : 0)
-    return bTime - aTime
-  })
+  if (error) throw error
+  return (data || []).map(rowToProduct)
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
@@ -107,76 +81,82 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   const candidates = Array.from(new Set([slug, ...(legacySlugAliases[slug] || [])]))
 
   for (const candidate of candidates) {
-    const q = query(
-      collection(db, 'products'),
-      where('slug', '==', candidate),
-      where('status', '==', 'active'),
-      limit(1)
-    )
-    const snap = await getDocs(q)
-    if (!snap.empty) {
-      const d = snap.docs[0]
-      return docToProduct(d.id, d.data())
-    }
+    const { data } = await supabase
+      .from('products')
+      .select('*')
+      .eq('slug', candidate)
+      .eq('status', 'active')
+      .limit(1)
 
-    // Legacy fallback: slug match without status filter.
-    const legacyQ = query(
-      collection(db, 'products'),
-      where('slug', '==', candidate),
-      limit(1)
-    )
-    const legacySnap = await getDocs(legacyQ)
-    if (!legacySnap.empty) {
-      const d = legacySnap.docs[0]
-      return docToProduct(d.id, d.data())
-    }
+    if (data && data.length > 0) return rowToProduct(data[0])
+
+    const { data: legacyData } = await supabase
+      .from('products')
+      .select('*')
+      .eq('slug', candidate)
+      .limit(1)
+
+    if (legacyData && legacyData.length > 0) return rowToProduct(legacyData[0])
   }
 
-  // Backward-compatible fallback for links using product ID in the URL
   const byId = await getProductById(slug)
-  if (byId && isPublicProductStatus((byId as unknown as { status?: unknown }).status)) return byId
+  if (byId && isPublicProductStatus((byId as any).status)) return byId
 
   return null
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
-  const snap = await getDoc(doc(db, 'products', id))
-  if (!snap.exists()) return null
-  return docToProduct(snap.id, snap.data())
+  // UUID validation check before query
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null
+  const { data, error } = await supabase.from('products').select('*').eq('id', id).single()
+  if (error || !data) return null
+  return rowToProduct(data)
 }
 
 export async function getAdminProducts(): Promise<Product[]> {
-  const snap = await getDocs(collection(db, 'products'))
-  const products = snap.docs.map((d) => docToProduct(d.id, d.data()))
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false })
 
-  return products.sort((a, b) => {
-    const aTime = (a.createdAt instanceof Date ? a.createdAt.getTime() : 0)
-      || (a.updatedAt instanceof Date ? a.updatedAt.getTime() : 0)
-    const bTime = (b.createdAt instanceof Date ? b.createdAt.getTime() : 0)
-      || (b.updatedAt instanceof Date ? b.updatedAt.getTime() : 0)
-    return bTime - aTime
-  })
+  if (error) throw error
+  return (data || []).map(rowToProduct)
 }
 
 export async function upsertProduct(product: Partial<Product> & { id?: string }): Promise<string> {
-  const now = serverTimestamp()
+  const payload = {
+    ...product,
+    updated_at: new Date().toISOString(),
+  }
+  
+  // Transform camelCase keys to snake_case if necessary. 
+  // In Supabase we use snake_case for built-ins, but Product has camelCase.
+  // We should map properly:
+  const dbPayload: any = {
+    name: payload.name,
+    slug: payload.slug,
+    description: payload.description,
+    price: payload.price,
+    status: payload.status,
+    inventory: payload.inventory,
+    images: payload.images,
+    updated_at: payload.updated_at,
+  }
+
   if (product.id) {
-    await updateDoc(doc(db, 'products', product.id), {
-      ...product,
-      updatedAt: now,
-    })
+    const { error } = await supabase.from('products').update(removeUndefined(dbPayload)).eq('id', product.id)
+    if (error) throw error
     return product.id
   }
-  const ref = await addDoc(collection(db, 'products'), {
-    ...product,
-    createdAt: now,
-    updatedAt: now,
-  })
-  return ref.id
+  
+  const { data, error } = await supabase.from('products').insert(removeUndefined(dbPayload)).select('id').single()
+  if (error) throw error
+  return data.id
 }
 
 export async function deleteProduct(productId: string): Promise<void> {
-  await deleteDoc(doc(db, 'products', productId))
+  const { error } = await supabase.from('products').delete().eq('id', productId)
+  if (error) throw error
 }
 
 // ─── ORDERS ───────────────────────────────────────────────────────────────────
@@ -189,47 +169,42 @@ export async function createOrder(data: {
   deliveryAddress: any
   notes?: string
 }): Promise<{ orderId: string; orderNumber: string; total: number }> {
-  const createOrderCallable = httpsCallable<{
-    items: any[]
-    customerName: string
-    customerPhone: string
-    customerAltPhone?: string
-    customerEmail?: string
-    deliveryAddress: any
-    notes?: string
-  }, { orderId: string; orderNumber: string; total: number }>(functions, 'createOrder')
-
-  const result = await createOrderCallable(data)
-  return result.data
+  const { data: response, error } = await supabase.functions.invoke('create-order', {
+    body: data,
+  })
+  
+  if (error) throw new Error(error.message)
+  return response
 }
 
 export async function getOrderById(id: string): Promise<Order | null> {
-  const snap = await getDoc(doc(db, 'orders', id))
-  if (!snap.exists()) return null
-  return docToOrder(snap.id, snap.data())
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null
+  const { data, error } = await supabase.from('orders').select('*').eq('id', id).single()
+  if (error || !data) return null
+  return rowToOrder(data)
 }
 
 export async function getUserOrders(userId: string): Promise<Order[]> {
-  const q = query(
-    collection(db, 'orders'),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc')
-  )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => docToOrder(d.id, d.data()))
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return (data || []).map(rowToOrder)
 }
 
 export async function getAllOrders(statusFilter?: OrderStatus): Promise<Order[]> {
-  let q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'))
-  if (statusFilter) {
-    q = query(
-      collection(db, 'orders'),
-      where('status', '==', statusFilter),
-      orderBy('createdAt', 'desc')
-    )
+  let query = supabase.from('orders').select('*').order('created_at', { ascending: false })
+  
+  if (statusFilter && statusFilter !== 'all' as any) {
+    query = query.eq('status', statusFilter)
   }
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => docToOrder(d.id, d.data()))
+  
+  const { data, error } = await query
+  if (error) throw error
+  return (data || []).map(rowToOrder)
 }
 
 export async function updateOrderStatus(
@@ -238,87 +213,126 @@ export async function updateOrderStatus(
   note?: string,
   internalNote?: string
 ): Promise<void> {
-  const orderRef = doc(db, 'orders', orderId)
-  const snap = await getDoc(orderRef)
-  if (!snap.exists()) throw new Error('Order not found')
+  const { data: order, error: fetchError } = await supabase.from('orders').select('status_timeline').eq('id', orderId).single()
+  if (fetchError || !order) throw new Error('Order not found')
 
-  const data = snap.data()
+  const statusTimeline = typeof order.status_timeline === 'string' ? JSON.parse(order.status_timeline) : (order.status_timeline || [])
   const newEntry: OrderStatusEntry = {
     status,
-    timestamp: new Date(),
+    timestamp: new Date() as any, // saved as ISO string via postgres JSON serialization
     ...(note ? { note } : {}),
     ...(internalNote ? { internalNote } : {}),
   }
 
-  await updateDoc(orderRef, {
+  const { error } = await supabase.from('orders').update({
     status,
-    statusTimeline: [...(data.statusTimeline || []), newEntry],
-    updatedAt: serverTimestamp(),
-  })
+    status_timeline: [...statusTimeline, newEntry],
+    updated_at: new Date().toISOString(),
+  }).eq('id', orderId)
+
+  if (error) throw error
 }
 
 export async function markOrderPaid(orderId: string, paymentReference: string): Promise<void> {
-  await updateDoc(doc(db, 'orders', orderId), {
-    paymentStatus: 'paid',
-    paymentReference,
+  const { data: order, error: fetchError } = await supabase.from('orders').select('status_timeline').eq('id', orderId).single()
+  if (fetchError || !order) throw fetchError
+
+  const statusTimeline = typeof order.status_timeline === 'string' ? JSON.parse(order.status_timeline) : (order.status_timeline || [])
+
+  const { error } = await supabase.from('orders').update({
+    payment_status: 'paid',
+    payment_reference: paymentReference,
     status: 'paid',
-    statusTimeline: [
-      { status: 'paid', timestamp: new Date(), note: 'Payment confirmed via Paystack' },
+    status_timeline: [
+      ...statusTimeline,
+      { status: 'paid', timestamp: new Date(), note: 'Payment confirmed via Flutterwave' },
     ],
-    updatedAt: serverTimestamp(),
-  })
+    updated_at: new Date().toISOString(),
+  }).eq('id', orderId)
+
+  if (error) throw error
 }
 
 export function subscribeToOrder(orderId: string, callback: (order: Order | null) => void) {
-  return onSnapshot(doc(db, 'orders', orderId), (snap) => {
-    if (!snap.exists()) { callback(null); return }
-    callback(docToOrder(snap.id, snap.data()))
-  })
+  const channel = supabase.channel(`order-${orderId}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `id=eq.${orderId}` }, async (payload) => {
+      if (payload.new) {
+        callback(rowToOrder(payload.new))
+      } else {
+        callback(null)
+      }
+    })
+    .subscribe()
+    
+  return () => {
+    supabase.removeChannel(channel)
+  }
 }
 
 // ─── USERS ────────────────────────────────────────────────────────────────────
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
-  const snap = await getDoc(doc(db, 'users', uid))
-  if (!snap.exists()) return null
-  const data = snap.data()
-  return { ...data, uid, createdAt: tsToDate(data.createdAt) } as UserProfile
+  const { data, error } = await supabase.from('users').select('*').eq('id', uid).single()
+  if (error || !data) return null
+  return {
+    uid: data.id,
+    email: data.email,
+    displayName: data.display_name,
+    phone: data.phone,
+    role: data.role,
+    createdAt: tsToDate(data.created_at),
+  } as UserProfile
 }
 
 export async function createUserProfile(profile: Omit<UserProfile, 'createdAt'>): Promise<void> {
-  await setDoc(doc(db, 'users', profile.uid), {
-    ...removeUndefined(profile as Record<string, any>),
-    createdAt: serverTimestamp(),
+  const { error } = await supabase.from('users').insert({
+    id: profile.uid,
+    email: profile.email,
+    display_name: profile.displayName,
+    phone: profile.phone,
+    role: profile.role,
   })
+  if (error) throw error
 }
 
 export async function getAllUsers(): Promise<UserProfile[]> {
-  const snap = await getDocs(collection(db, 'users'))
-  return snap.docs.map((d) => {
-    const data = d.data()
-    return { ...data, uid: d.id, createdAt: tsToDate(data.createdAt) } as UserProfile
-  })
+  const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false })
+  if (error) throw error
+  return (data || []).map((data: any) => ({
+    uid: data.id,
+    email: data.email,
+    displayName: data.display_name,
+    phone: data.phone,
+    role: data.role,
+    createdAt: tsToDate(data.created_at),
+  }))
 }
 
 // ─── CONTENT ──────────────────────────────────────────────────────────────────
 export async function getSiteContent(): Promise<SiteContent | null> {
-  const snap = await getDoc(doc(db, 'config', 'content'))
-  if (!snap.exists()) return null
-  return snap.data() as SiteContent
+  const { data, error } = await supabase.from('config').select('data').eq('id', 'content').single()
+  if (error || !data) return null
+  return typeof data.data === 'string' ? JSON.parse(data.data) : data.data
 }
 
 export async function updateSiteContent(content: Partial<SiteContent>): Promise<void> {
-  await setDoc(doc(db, 'config', 'content'), content, { merge: true })
+  const existing = await getSiteContent() || {}
+  const merged = { ...existing, ...content }
+  const { error } = await supabase.from('config').upsert({ id: 'content', data: merged, updated_at: new Date().toISOString() })
+  if (error) throw error
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
 export async function getStoreSettings(): Promise<StoreSettings | null> {
-  const snap = await getDoc(doc(db, 'config', 'settings'))
-  if (!snap.exists()) return null
-  return snap.data() as StoreSettings
+  const { data, error } = await supabase.from('config').select('data').eq('id', 'settings').single()
+  if (error || !data) return null
+  return typeof data.data === 'string' ? JSON.parse(data.data) : data.data
 }
 
 export async function updateStoreSettings(settings: Partial<StoreSettings>): Promise<void> {
-  await setDoc(doc(db, 'config', 'settings'), settings, { merge: true })
+  const existing = await getStoreSettings() || {}
+  const merged = { ...existing, ...settings }
+  const { error } = await supabase.from('config').upsert({ id: 'settings', data: merged, updated_at: new Date().toISOString() })
+  if (error) throw error
 }
 
 // ─── INVENTORY CHECK ─────────────────────────────────────────────────────────
@@ -330,10 +344,7 @@ export async function getRemainingUnits(productId: string): Promise<number> {
 
 // ─── UPLOADS ─────────────────────────────────────────────────────────────────
 export async function getCloudinaryUploadSignature() {
-  const getSignature = httpsCallable<void, { timestamp: number; signature: string; apiKey: string; cloudName: string }>(
-    functions,
-    'getCloudinarySignature'
-  )
-  const result = await getSignature()
-  return result.data
+  const { data, error } = await supabase.functions.invoke('cloudinary-sign')
+  if (error) throw new Error(error.message)
+  return data
 }

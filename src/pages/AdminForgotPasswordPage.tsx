@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { sendPasswordResetEmail } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { supabase } from '@/lib/supabase'
 import { CheckCircle2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -15,7 +14,8 @@ export default function AdminForgotPasswordPage() {
     if (!email) return
     setLoading(true)
     try {
-      await sendPasswordResetEmail(auth, email)
+      const { error } = await supabase.auth.resetPasswordForEmail(email)
+      if (error) throw error
       setSent(true)
     } catch {
       toast.error('Failed to send reset email. Check the address and try again.')

@@ -7,8 +7,8 @@ const FAQS = [
   {
     category: 'Ordering',
     items: [
-      { q: 'How do I order the Afínjú Authority Set?', a: 'Click "Secure Your Position" on the product page. Select your colour, shoe size, and head size. All three are required before you can add to cart. Complete checkout with Paystack (card, bank transfer, or USSD). You will receive an order confirmation immediately.' },
-      { q: 'Can I place an order via WhatsApp?', a: 'WhatsApp is available for size consultations and enquiries, but all purchases are processed through our secure checkout powered by Paystack. This ensures your payment is protected and your order is properly tracked.' },
+      { q: 'How do I order the Afínjú Authority Set?', a: 'Click "Secure Your Position" on the product page. Select your colour, shoe size, and head size. All three are required before you can add to cart. Complete checkout with Flutterwave (card, bank transfer, or USSD). You will receive an order confirmation immediately.' },
+      { q: 'Can I place an order via WhatsApp?', a: 'WhatsApp is available for size consultations and enquiries, but all purchases are processed through our secure checkout powered by Flutterwave. This ensures your payment is protected and your order is properly tracked.' },
       { q: 'Is the launch price permanent?', a: 'No. The current launch price is exclusive to this first edition of 10 units. Once all 10 launch units are claimed, pricing will increase for any future editions, if there are any.' },
     ],
   },
@@ -33,7 +33,7 @@ const FAQS = [
     items: [
       { q: 'What is your returns policy?', a: 'Because each Afínjú set is custom-made to your specifications (colour, shoe size, head size), we do not accept returns based on change of mind. If your item arrives damaged or does not match your order specifications, contact us within 48 hours of delivery and we will resolve it immediately.' },
       { q: 'How do I know my Afínjú set is authentic?', a: 'Every Afínjú Authority Set comes in a sealed luxury black box with an authentication card and order number. Your order will always be traceable from purchase through to delivery in your account dashboard. If you have concerns about an item\'s authenticity, contact us immediately.' },
-      { q: 'What if my payment was deducted but I received no confirmation?', a: 'Do not panic. All payments are verified server-side through Paystack. If your payment cleared but you received no confirmation, log into your account to check your order status, or contact us via WhatsApp with your payment reference number and we will resolve it within 1 hour.' },
+      { q: 'What if my payment was deducted but I received no confirmation?', a: 'Do not panic. All payments are verified server-side through Flutterwave. If your payment cleared but you received no confirmation, log into your account to check your order status, or contact us via WhatsApp with your payment reference number and we will resolve it within 1 hour.' },
     ],
   },
 ]

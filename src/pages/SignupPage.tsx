@@ -3,8 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { supabase } from '@/lib/supabase'
 import { Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -32,14 +31,16 @@ export default function SignupPage() {
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     try {
-      const cred = await createUserWithEmailAndPassword(auth, data.email, data.password)
-      await updateProfile(cred.user, { displayName: data.displayName })
+      const { error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: { data: { full_name: data.displayName } }
+      })
+      if (error) throw error
       toast.success('Account created. Welcome to Afínjú.')
       navigate('/account')
     } catch (err: any) {
-      const msg = err.code === 'auth/email-already-in-use'
-        ? 'Email already in use. Try signing in.'
-        : 'Registration failed. Please try again.'
+      const msg = err.message || 'Registration failed. Please try again.'
       toast.error(msg)
     } finally {
       setLoading(false)

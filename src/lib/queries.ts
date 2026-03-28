@@ -1,20 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { supabase } from './supabase'
 import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  addDoc,
-  updateDoc,
-  serverTimestamp,
-  arrayUnion,
-  onSnapshot,
-  limit,
-} from 'firebase/firestore'
-import { db } from './firebase'
+  getProducts,
+  getProductBySlug,
+  getUserOrders,
+  getOrderById,
+  getAllOrders,
+  getAdminProducts,
+  getAllUsers,
+  updateOrderStatus as updateOrderStatusDb
+} from './db'
 import type { Product, Order, HomepageContent, StatusEvent } from '@/types'
 import { useEffect, useState } from 'react'
 
@@ -23,14 +18,7 @@ import { useEffect, useState } from 'react'
 export function useProducts() {
   return useQuery({
     queryKey: ['products'],
-    queryFn: async () => {
-      const q = query(
-        collection(db, 'products'),
-        where('status', '==', 'active')
-      )
-      const snap = await getDocs(q)
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Product))
-    },
+    queryFn: getProducts,
   })
 }
 
@@ -38,11 +26,9 @@ export function useProduct(slug: string) {
   return useQuery({
     queryKey: ['product', slug],
     queryFn: async () => {
-      const q = query(collection(db, 'products'), where('slug', '==', slug), limit(1))
-      const snap = await getDocs(q)
-      if (snap.empty) throw new Error('Product not found')
-      const d = snap.docs[0]
-      return { id: d.id, ...d.data() } as Product
+      const product = await getProductBySlug(slug)
+      if (!product) throw new Error('Product not found')
+      return product
     },
     enabled: !!slug,
   })
@@ -55,11 +41,26 @@ export function useLiveInventory(productId: string) {
 
   useEffect(() => {
     if (!productId) return
-    const unsub = onSnapshot(doc(db, 'products', productId), (snap) => {
-      const data = snap.data()
-      if (data) setSoldCount(data.inventory?.soldCount ?? 0)
+
+    // Fetch initial state
+    supabase.from('products').select('inventory').eq('id', productId).single().then(({ data }) => {
+      if (data && data.inventory) {
+        setSoldCount(data.inventory.soldCount ?? 0)
+      }
     })
-    return unsub
+
+    const channel = supabase.channel(`product-${productId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'products', filter: `id=eq.${productId}` }, (payload) => {
+        if (payload.new && payload.new.inventory) {
+          const inventory = typeof payload.new.inventory === 'string' ? JSON.parse(payload.new.inventory) : payload.new.inventory
+          setSoldCount(inventory.soldCount ?? 0)
+        }
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [productId])
 
   return soldCount
@@ -70,16 +71,7 @@ export function useLiveInventory(productId: string) {
 export function useMyOrders(userId: string | null) {
   return useQuery({
     queryKey: ['orders', userId],
-    queryFn: async () => {
-      if (!userId) return []
-      const q = query(
-        collection(db, 'orders'),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
-      )
-      const snap = await getDocs(q)
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Order))
-    },
+    queryFn: () => getUserOrders(userId!),
     enabled: !!userId,
   })
 }
@@ -88,9 +80,9 @@ export function useOrder(orderId: string) {
   return useQuery({
     queryKey: ['order', orderId],
     queryFn: async () => {
-      const snap = await getDoc(doc(db, 'orders', orderId))
-      if (!snap.exists()) throw new Error('Order not found')
-      return { id: snap.id, ...snap.data() } as Order
+      const order = await getOrderById(orderId)
+      if (!order) throw new Error('Order not found')
+      return order
     },
     enabled: !!orderId,
   })
@@ -100,18 +92,7 @@ export function useOrder(orderId: string) {
 export function useAllOrders(statusFilter?: string) {
   return useQuery({
     queryKey: ['admin-orders', statusFilter],
-    queryFn: async () => {
-      let q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'))
-      if (statusFilter && statusFilter !== 'all') {
-        q = query(
-          collection(db, 'orders'),
-          where('status', '==', statusFilter),
-          orderBy('createdAt', 'desc')
-        )
-      }
-      const snap = await getDocs(q)
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Order))
-    },
+    queryFn: () => getAllOrders(statusFilter as any),
   })
 }
 
@@ -129,17 +110,7 @@ export function useUpdateOrderStatus() {
       note?: string
       adminNote?: string
     }) => {
-      const event: StatusEvent = {
-        status: status as Order['status'],
-        timestamp: new Date(),
-        note,
-        internalNote: adminNote,
-      }
-      await updateDoc(doc(db, 'orders', orderId), {
-        status,
-        statusTimeline: arrayUnion(event),
-        updatedAt: serverTimestamp(),
-      })
+      await updateOrderStatusDb(orderId, status as Order['status'], note, adminNote)
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-orders'] })
@@ -149,14 +120,15 @@ export function useUpdateOrderStatus() {
 }
 
 // ─── Homepage Content ─────────────────────────────────────────────────────────
+// (Assuming getHomepageContent exists or is replaced by getSiteContent)
+import { getSiteContent } from './db'
 
 export function useHomepageContent() {
   return useQuery({
     queryKey: ['homepage-content'],
     queryFn: async () => {
-      const snap = await getDoc(doc(db, 'config', 'content'))
-      if (!snap.exists()) return null
-      return snap.data() as HomepageContent
+      const content = await getSiteContent()
+      return content as HomepageContent | null
     },
     staleTime: 1000 * 60 * 10,
   })
@@ -167,21 +139,13 @@ export function useHomepageContent() {
 export function useAllProducts() {
   return useQuery({
     queryKey: ['admin-products'],
-    queryFn: async () => {
-      const snap = await getDocs(collection(db, 'products'))
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Product))
-    },
+    queryFn: getAdminProducts,
   })
 }
 
 export function useAllCustomers() {
   return useQuery({
     queryKey: ['admin-customers'],
-    queryFn: async () => {
-      const snap = await getDocs(
-        query(collection(db, 'users'), orderBy('createdAt', 'desc'))
-      )
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-    },
+    queryFn: getAllUsers,
   })
 }

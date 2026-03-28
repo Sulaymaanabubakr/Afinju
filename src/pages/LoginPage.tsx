@@ -3,8 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { supabase } from '@/lib/supabase'
 import { Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -30,12 +29,18 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     try {
-      const cred = await signInWithEmailAndPassword(auth, data.email, data.password)
-      const tokenResult = await cred.user.getIdTokenResult(true)
-      const role = tokenResult.claims.role as string | undefined
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      })
+      if (authError || !authData.user) throw authError || new Error('Sign in failed')
+
+      // Fetch role from users table
+      const { data: profile } = await supabase.from('users').select('role').eq('id', authData.user.id).single()
+      const role = profile?.role
 
       if (role === 'admin' || role === 'staff') {
-        await signOut(auth)
+        await supabase.auth.signOut()
         toast.error('Admin users must sign in through the admin portal.')
         navigate('/admin/login')
         return
@@ -44,7 +49,7 @@ export default function LoginPage() {
       toast.success('Welcome back.')
       navigate(returnTo, { replace: true })
     } catch (err: any) {
-      const msg = err.code === 'auth/invalid-credential'
+      const msg = err.message === 'Invalid login credentials'
         ? 'Invalid email or password.'
         : 'Sign in failed. Please try again.'
       toast.error(msg)

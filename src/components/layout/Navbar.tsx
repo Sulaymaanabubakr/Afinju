@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingBag, Menu, X, User, LogOut } from 'lucide-react'
-import { signOut } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { supabase } from '@/lib/supabase'
 import { useCartStore } from '@/lib/store'
 import { useAuthStore } from '@/store/auth'
 import { cn } from '@/lib/utils'
@@ -92,7 +91,7 @@ export function Navbar() {
                 >
                   <User size={18} strokeWidth={1.5} />
                 </Link>
-                <button onClick={() => signOut(auth)} className="text-afinju-black/40 hover:text-afinju-black/70 transition-colors">
+                <button onClick={() => supabase.auth.signOut()} className="text-afinju-black/40 hover:text-afinju-black/70 transition-colors">
                   <LogOut size={16} strokeWidth={1.5} />
                 </button>
               </div>
@@ -166,7 +165,7 @@ export function Navbar() {
                 {user ? (
                   <>
                     <Link to="/account" className="font-sans text-sm tracking-[0.2em] uppercase text-afinju-black/70">My Account</Link>
-                    <button onClick={() => signOut(auth)} className="font-sans text-sm tracking-[0.2em] uppercase text-left text-afinju-black/40">Sign Out</button>
+                    <button onClick={() => supabase.auth.signOut()} className="font-sans text-sm tracking-[0.2em] uppercase text-left text-afinju-black/40">Sign Out</button>
                   </>
                 ) : (
                   <Link to="/login" className="font-sans text-sm tracking-[0.2em] uppercase text-afinju-black">Sign In / Register</Link>

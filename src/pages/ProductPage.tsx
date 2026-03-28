@@ -447,7 +447,7 @@ export default function ProductPage() {
           {/* Trust */}
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-black/8">
             {[
-              { icon: ShieldCheck, text: 'Secure Paystack Payment' },
+              { icon: ShieldCheck, text: 'Secure Flutterwave Payment' },
               { icon: Truck, text: 'Nationwide Delivery' },
             ].map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-2">

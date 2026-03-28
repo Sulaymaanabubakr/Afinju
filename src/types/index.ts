@@ -154,7 +154,7 @@ export interface StoreSettings {
   supportEmail: string
   shippingFee: number
   freeShippingThreshold?: number
-  paystackPublicKey: string
+  flutterwavePublicKey: string
   instagramUrl?: string
   twitterUrl?: string
   facebookUrl?: string

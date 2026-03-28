@@ -8,7 +8,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { CartDrawer } from '@/features/cart/CartDrawer'
 import { WhatsAppFAB } from '@/components/shared/WhatsAppFAB'
-import { PaystackScript } from '@/components/shared/PaystackScript'
+import { FlutterwaveScript } from '@/components/shared/FlutterwaveScript'
 
 // Public pages
 import HomePage from '@/pages/HomePage'
@@ -92,7 +92,7 @@ export default function App() {
     <MotionConfig reducedMotion="never">
       <AuthProvider>
         <ScrollToTop />
-        <PaystackScript />
+        <FlutterwaveScript />
         <Toaster
           position="top-right"
           toastOptions={{

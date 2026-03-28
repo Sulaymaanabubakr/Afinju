@@ -4,8 +4,7 @@ import {
   LayoutDashboard, ShoppingBag, Package, Users,
   Settings, Layout, BarChart3, Menu, X, LogOut
 } from 'lucide-react'
-import { signOut } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth'
 import { cn } from '@/lib/utils'
 
@@ -78,7 +77,7 @@ export default function AdminLayout() {
             </div>
           </div>
           <button
-            onClick={() => signOut(auth)}
+            onClick={() => supabase.auth.signOut()}
             className="flex items-center gap-2 font-sans text-xs text-white/30 hover:text-white/60 transition-colors w-full"
           >
             <LogOut size={12} strokeWidth={1.5} />

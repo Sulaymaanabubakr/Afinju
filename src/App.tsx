@@ -45,6 +45,7 @@ import AdminOverviewPage from '@/pages/admin/AdminOverviewPage'
 import AdminOrdersPage from '@/pages/admin/AdminOrdersPage'
 import AdminOrderDetailPage from '@/pages/admin/AdminOrderDetailPage'
 import AdminProductsPage from '@/pages/admin/AdminProductsPage'
+import AdminInventoryPage from '@/pages/admin/AdminInventoryPage'
 import AdminProductFormPage from '@/pages/admin/AdminProductFormPage'
 import AdminCustomersPage from '@/pages/admin/AdminCustomersPage'
 import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
@@ -151,6 +152,7 @@ export default function App() {
               <Route path="orders" element={<AdminOrdersPage />} />
               <Route path="orders/:id" element={<AdminOrderDetailPage />} />
               <Route path="products" element={<AdminProductsPage />} />
+              <Route path="inventory" element={<AdminInventoryPage />} />
               <Route path="products/new" element={<AdminProductFormPage />} />
               <Route path="products/:id/edit" element={<AdminProductFormPage />} />
               <Route path="customers" element={<AdminCustomersPage />} />

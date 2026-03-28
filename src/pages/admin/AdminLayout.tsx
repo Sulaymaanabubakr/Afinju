@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { to: '/admin', label: 'Overview', icon: LayoutDashboard, end: true },
   { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { to: '/admin/products', label: 'Products', icon: Package },
+  { to: '/admin/inventory', label: 'Inventory', icon: Package },
   { to: '/admin/customers', label: 'Customers', icon: Users },
   { to: '/admin/content', label: 'Content', icon: Layout },
   { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },

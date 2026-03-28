@@ -243,6 +243,11 @@ export async function updateOrderStatus(
   }).eq('id', orderId)
 
   if (error) throw error
+
+  // Trigger customer notification (Fire and forget, don't block the UI)
+  supabase.functions.invoke('order-status-notification', {
+    body: { orderId, status, note },
+  }).catch(err => console.error('Failed to trigger order status notification:', err))
 }
 
 export async function markOrderPaid(orderId: string, paymentReference: string): Promise<void> {

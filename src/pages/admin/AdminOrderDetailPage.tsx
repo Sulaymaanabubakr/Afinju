@@ -232,13 +232,17 @@ export default function AdminOrderDetailPage() {
                 className="w-full border border-black/10 px-3 py-2 font-sans text-sm resize-none focus:outline-none focus:border-gold transition-colors bg-yellow-50/50"
               />
 
-              <button
-                onClick={() => newStatus && updateMutation.mutate()}
-                disabled={!newStatus || updateMutation.isPending}
-                className="btn-luxury w-full text-xs py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
                 {updateMutation.isPending ? 'Updating...' : 'Update Status'}
               </button>
+              
+              <a
+                href={whatsappLink(order.customerPhone, `Hello ${order.customerName}, this is Afínjú. Your order #${order.orderNumber} has been updated to ${ORDER_STATUS_LABELS[newStatus as OrderStatus] || '...'} ${note ? `\n\n Note: ${note}` : ''}`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex items-center justify-center gap-2 border border-green-500 text-green-700 w-full text-xs py-3 uppercase tracking-widest font-sans hover:bg-green-600 hover:text-white transition-colors ${!newStatus ? 'opacity-20 pointer-events-none' : ''}`}
+              >
+                <MessageCircle size={14} strokeWidth={2} /> Send via WhatsApp
+              </a>
             </div>
           </div>
 

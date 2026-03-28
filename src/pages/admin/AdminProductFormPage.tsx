@@ -8,6 +8,17 @@ import { PRODUCT_COLORS } from '@/types'
 import { slugify } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
+function F({ label, children, className = "" }: { label: string; children: React.ReactNode, className?: string }) {
+  return (
+    <div className={`space-y-1.5 ${className}`}>
+      <label className="font-sans text-xs tracking-[0.12em] uppercase text-afinju-black/50">{label}</label>
+      {children}
+    </div>
+  )
+}
+
+const inputClass = "w-full border border-black/15 px-3 py-2.5 font-sans text-sm bg-white focus:outline-none focus:border-gold transition-colors"
+
 export default function AdminProductFormPage() {
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
@@ -108,15 +119,6 @@ export default function AdminProductFormPage() {
       setUploadingImg(false)
     }
   }
-
-  const F = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div className="space-y-1.5">
-      <label className="font-sans text-xs tracking-[0.12em] uppercase text-afinju-black/50">{label}</label>
-      {children}
-    </div>
-  )
-
-  const inputClass = "w-full border border-black/15 px-3 py-2.5 font-sans text-sm bg-white focus:outline-none focus:border-gold transition-colors"
 
   return (
     <div className="max-w-3xl space-y-8">

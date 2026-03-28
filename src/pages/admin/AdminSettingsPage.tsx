@@ -1,8 +1,8 @@
+import { getStoreSettings, updateStoreSettings, sendTestEmail } from '@/lib/db'
+import { Loader2, Mail } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getStoreSettings, updateStoreSettings } from '@/lib/db'
-import { Loader2 } from 'lucide-react'
-import toast from 'react-hot-toast'
 
 function SettingsField({ label, note, children }: { label: string; note?: string; children: React.ReactNode }) {
   return (
@@ -45,6 +45,12 @@ export default function AdminSettingsPage() {
     },
     onError: () => toast.error('Failed to save settings.'),
   })
+  
+  const testEmailMutation = useMutation({
+    mutationFn: sendTestEmail,
+    onSuccess: () => toast.success('Test notification sent to your email.'),
+    onError: (error: any) => toast.error(`Test failed: ${error.message}`),
+  })
 
   const inputClass = "w-full border border-black/15 px-3 py-2.5 font-sans text-sm bg-white focus:outline-none focus:border-gold transition-colors"
 
@@ -52,15 +58,26 @@ export default function AdminSettingsPage() {
     <div className="max-w-2xl space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl">Store Settings</h1>
-        <button
-          onClick={() => saveMutation.mutate()}
-          disabled={saveMutation.isPending}
-          className="btn-luxury text-xs py-2.5 px-6 disabled:opacity-50"
-        >
-          {saveMutation.isPending ? (
-            <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Saving...</span>
-          ) : 'Save Settings'}
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => testEmailMutation.mutate()}
+            disabled={testEmailMutation.isPending}
+            className="flex items-center gap-2 px-4 py-2.5 bg-black/5 hover:bg-black/10 border border-black/10 transition-colors font-sans text-xs uppercase tracking-widest text-afinju-black/60 disabled:opacity-50"
+          >
+            {testEmailMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+            Send Test Notif
+          </button>
+          
+          <button
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending}
+            className="btn-luxury text-xs py-2.5 px-6 disabled:opacity-50"
+          >
+            {saveMutation.isPending ? (
+              <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> Saving...</span>
+            ) : 'Save Settings'}
+          </button>
+        </div>
       </div>
 
       <div className="bg-white border border-black/8 p-8 space-y-6">

@@ -24,8 +24,13 @@ function removeUndefined<T extends Record<string, any>>(obj: T): T {
 function rowToProduct(data: any): Product {
   return {
     ...data,
-    inventory: typeof data.inventory === 'string' ? JSON.parse(data.inventory) : data.inventory,
-    images: typeof data.images === 'string' ? JSON.parse(data.images) : data.images,
+    isLimitedEdition: data.is_limited_edition,
+    compareAtPrice: data.compare_at_price,
+    inventory: typeof data.inventory === 'string' ? JSON.parse(data.inventory) : (data.inventory || { launchEditionLimit: 10, soldCount: 0 }),
+    images: typeof data.images === 'string' ? JSON.parse(data.images) : (data.images || []),
+    features: typeof data.features === 'string' ? JSON.parse(data.features) : (data.features || []),
+    items: typeof data.items === 'string' ? JSON.parse(data.items) : (data.items || []),
+    seo: typeof data.seo === 'string' ? JSON.parse(data.seo) : (data.seo || {}),
     createdAt: tsToDate(data.created_at),
     updatedAt: tsToDate(data.updated_at),
   } as Product
@@ -140,6 +145,13 @@ export async function upsertProduct(product: Partial<Product> & { id?: string })
     status: payload.status,
     inventory: payload.inventory,
     images: payload.images,
+    features: payload.features,
+    items: payload.items,
+    compare_at_price: payload.compareAtPrice,
+    currency: payload.currency,
+    colors: payload.colors,
+    seo: payload.seo,
+    is_limited_edition: payload.isLimitedEdition,
     updated_at: payload.updated_at,
   }
 
@@ -315,10 +327,19 @@ export async function getSiteContent(): Promise<SiteContent | null> {
 }
 
 export async function updateSiteContent(content: Partial<SiteContent>): Promise<void> {
-  const existing = await getSiteContent() || {}
-  const merged = { ...existing, ...content }
-  const { error } = await supabase.from('config').upsert({ id: 'content', data: merged, updated_at: new Date().toISOString() })
-  if (error) throw error
+  const existingData = await getSiteContent() || {}
+  const merged = { ...existingData, ...content }
+  
+  const { error } = await supabase.from('config').upsert({ 
+    id: 'content', 
+    data: merged, 
+    updated_at: new Date().toISOString() 
+  })
+  
+  if (error) {
+    console.error('Update Site Content Error:', error)
+    throw new Error(error.message)
+  }
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────────────
@@ -329,10 +350,19 @@ export async function getStoreSettings(): Promise<StoreSettings | null> {
 }
 
 export async function updateStoreSettings(settings: Partial<StoreSettings>): Promise<void> {
-  const existing = await getStoreSettings() || {}
-  const merged = { ...existing, ...settings }
-  const { error } = await supabase.from('config').upsert({ id: 'settings', data: merged, updated_at: new Date().toISOString() })
-  if (error) throw error
+  const existingData = await getStoreSettings() || {}
+  const merged = { ...existingData, ...settings }
+  
+  const { error } = await supabase.from('config').upsert({ 
+    id: 'settings', 
+    data: merged, 
+    updated_at: new Date().toISOString() 
+  })
+  
+  if (error) {
+    console.error('Update Store Settings Error:', error)
+    throw new Error(error.message)
+  }
 }
 
 // ─── INVENTORY CHECK ─────────────────────────────────────────────────────────
@@ -345,6 +375,13 @@ export async function getRemainingUnits(productId: string): Promise<number> {
 // ─── UPLOADS ─────────────────────────────────────────────────────────────────
 export async function getCloudinaryUploadSignature() {
   const { data, error } = await supabase.functions.invoke('cloudinary-sign')
+  if (error) throw new Error(error.message)
+  return data
+}
+
+// ─── TEST SYSTEM ─────────────────────────────────────────────────────────────
+export async function sendTestEmail() {
+  const { data, error } = await supabase.functions.invoke('test-email')
   if (error) throw new Error(error.message)
   return data
 }

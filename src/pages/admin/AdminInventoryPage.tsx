@@ -79,7 +79,14 @@ export default function AdminInventoryPage() {
                         <img src={product.images[0]?.url} alt="" className="w-full h-full object-cover" />
                       </div>
                       <div>
-                        <p className="font-sans text-sm font-medium">{product.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-sans text-sm font-medium">{product.name}</p>
+                          {product.isLimitedEdition && (
+                            <span className="bg-gold/10 text-gold text-[8px] px-1.5 py-0.5 uppercase tracking-widest font-bold border border-gold/20">
+                              Limited
+                            </span>
+                          )}
+                        </div>
                         <p className="font-sans text-[10px] text-afinju-black/40 mt-0.5 tracking-wider uppercase">/{product.slug}</p>
                       </div>
                     </div>

@@ -32,12 +32,19 @@ export default function AdminOverviewPage() {
   const paidOrders = orders?.filter(o => o.paymentStatus === 'paid') || []
   const revenue = paidOrders.reduce((s, o) => s + o.total, 0)
   
-  // Calculate total inventory across all products
-  const totalLimit = products?.reduce((sum, p) => sum + (p.inventory.launchEditionLimit || 0), 0) || 0
-  const totalSold = products?.reduce((sum, p) => sum + (p.inventory.soldCount || 0), 0) || 0
-  const totalRemaining = Math.max(0, totalLimit - totalSold)
+  // Calculate inventory - split between Limited and Standard
+  const limitedProducts = products?.filter(p => p.isLimitedEdition) || []
+  const standardProducts = products?.filter(p => !p.isLimitedEdition) || []
+
+  const limitedLimit = limitedProducts.reduce((sum, p) => sum + (p.inventory.launchEditionLimit || 0), 0)
+  const limitedSold = limitedProducts.reduce((sum, p) => sum + (p.inventory.soldCount || 0), 0)
+  const limitedRemaining = Math.max(0, limitedLimit - limitedSold)
+
+  const standardLimit = standardProducts.reduce((sum, p) => sum + (p.inventory.launchEditionLimit || 0), 0)
+  const standardSold = standardProducts.reduce((sum, p) => sum + (p.inventory.soldCount || 0), 0)
+  const standardRemaining = Math.max(0, standardLimit - standardSold)
   
-  // Specifically find the Launch Edition set if it exists for the progress section
+  // For the specific progress bar, still target the primary Launch Edition product
   const launchProduct = products?.find(p => p.slug.includes('launch-edition')) || products?.[0]
   const launchLimit = launchProduct?.inventory.launchEditionLimit || 10
   const launchSold = launchProduct?.inventory.soldCount || 0
@@ -55,11 +62,18 @@ export default function AdminOverviewPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          label="Total Revenue"
-          value={formatPrice(revenue)}
-          icon={TrendingUp}
-          sub={`${paidOrders.length} paid orders`}
-          href="/admin/orders"
+          label="Limited Units"
+          value={`${limitedRemaining} / ${limitedLimit}`}
+          icon={Package}
+          sub="Exclusive Collections"
+          href="/admin/inventory"
+        />
+        <StatCard
+          label="Standard Units"
+          value={`${standardRemaining} / ${standardLimit}`}
+          icon={Package}
+          sub="Regular Collection"
+          href="/admin/inventory"
         />
         <StatCard
           label="Total Orders"
@@ -67,13 +81,6 @@ export default function AdminOverviewPage() {
           icon={ShoppingBag}
           sub="All time"
           href="/admin/orders"
-        />
-        <StatCard
-          label="Units Remaining"
-          value={`${totalRemaining} / ${totalLimit}`}
-          icon={Package}
-          sub="Across all products"
-          href="/admin/inventory"
         />
         <StatCard
           label="Customers"

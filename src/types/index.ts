@@ -35,6 +35,7 @@ export interface Product {
   inventory: ProductInventory
   seo: ProductSEO
   status: ProductStatus
+  isLimitedEdition: boolean
   createdAt: Date
   updatedAt: Date
 }

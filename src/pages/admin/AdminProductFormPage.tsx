@@ -30,6 +30,7 @@ export default function AdminProductFormPage() {
     compareAtPrice: 250000,
     colors: PRODUCT_COLORS as string[],
     status: 'active' as 'active' | 'draft',
+    isLimitedEdition: false,
     launchEditionLimit: 10,
     soldCount: 0,
   })
@@ -48,6 +49,7 @@ export default function AdminProductFormPage() {
         compareAtPrice: product.compareAtPrice,
         colors: product.colors as string[],
         status: product.status,
+        isLimitedEdition: !!product.isLimitedEdition,
         launchEditionLimit: product.inventory.launchEditionLimit,
         soldCount: product.inventory.soldCount,
       })
@@ -75,6 +77,7 @@ export default function AdminProductFormPage() {
           allowBackorder: false,
         },
         status: form.status,
+        isLimitedEdition: form.isLimitedEdition,
         seo: {
           title: form.name + ' — Afínjú Authority Set',
           description: form.description.slice(0, 160),
@@ -218,6 +221,18 @@ export default function AdminProductFormPage() {
             <option value="draft">Draft</option>
           </select>
         </F>
+        <div className="flex items-center gap-2 pt-2">
+          <input
+            type="checkbox"
+            id="isLimitedEdition"
+            checked={form.isLimitedEdition}
+            onChange={e => setForm(f => ({ ...f, isLimitedEdition: e.target.checked }))}
+            className="w-4 h-4 accent-gold"
+          />
+          <label htmlFor="isLimitedEdition" className="font-sans text-xs uppercase tracking-widest text-afinju-black hover:text-gold cursor-pointer transition-colors">
+            Mark as Limited Edition Product
+          </label>
+        </div>
       </div>
 
       {/* What's Included */}

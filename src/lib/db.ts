@@ -236,11 +236,18 @@ export async function updateOrderStatus(
     ...(internalNote ? { internalNote } : {}),
   }
 
-  const { error } = await supabase.from('orders').update({
+  const updateData: any = {
     status,
     status_timeline: [...statusTimeline, newEntry],
     updated_at: new Date().toISOString(),
-  }).eq('id', orderId)
+  }
+
+  // If manually marking as paid, sync the payment_status column too
+  if (status === 'paid') {
+    updateData.payment_status = 'paid'
+  }
+
+  const { error } = await supabase.from('orders').update(updateData).eq('id', orderId)
 
   if (error) throw error
 

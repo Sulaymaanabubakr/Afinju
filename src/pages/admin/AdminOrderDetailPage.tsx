@@ -232,6 +232,11 @@ export default function AdminOrderDetailPage() {
                 className="w-full border border-black/10 px-3 py-2 font-sans text-sm resize-none focus:outline-none focus:border-gold transition-colors bg-yellow-50/50"
               />
 
+              <button
+                onClick={() => newStatus && updateMutation.mutate()}
+                disabled={!newStatus || updateMutation.isPending}
+                className="btn-luxury w-full text-xs py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 {updateMutation.isPending ? 'Updating...' : 'Update Status'}
               </button>
               

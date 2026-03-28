@@ -32,12 +32,16 @@ export default function AdminOverviewPage() {
   const paidOrders = orders?.filter(o => o.paymentStatus === 'paid') || []
   const revenue = paidOrders.reduce((s, o) => s + o.total, 0)
   
-  // Specifically find the Launch Edition set if it exists, otherwise use the first product
-  const launchProduct = products?.find(p => p.slug.includes('launch-edition')) || products?.[0]
+  // Calculate total inventory across all products
+  const totalLimit = products?.reduce((sum, p) => sum + (p.inventory.launchEditionLimit || 0), 0) || 0
+  const totalSold = products?.reduce((sum, p) => sum + (p.inventory.soldCount || 0), 0) || 0
+  const totalRemaining = Math.max(0, totalLimit - totalSold)
   
-  const limitValue = launchProduct?.inventory.launchEditionLimit || 10
-  const soldValue = launchProduct?.inventory.soldCount || 0
-  const remaining = Math.max(0, limitValue - soldValue)
+  // Specifically find the Launch Edition set if it exists for the progress section
+  const launchProduct = products?.find(p => p.slug.includes('launch-edition')) || products?.[0]
+  const launchLimit = launchProduct?.inventory.launchEditionLimit || 10
+  const launchSold = launchProduct?.inventory.soldCount || 0
+  const launchRemaining = Math.max(0, launchLimit - launchSold)
 
   const recentOrders = (orders || []).slice(0, 5)
 
@@ -66,10 +70,10 @@ export default function AdminOverviewPage() {
         />
         <StatCard
           label="Units Remaining"
-          value={`${remaining} / ${limitValue}`}
+          value={`${totalRemaining} / ${totalLimit}`}
           icon={Package}
-          sub={launchProduct ? launchProduct.name.split('—')[0].trim() : "Launch edition"}
-          href="/admin/products"
+          sub="Across all products"
+          href="/admin/inventory"
         />
         <StatCard
           label="Customers"
@@ -85,17 +89,17 @@ export default function AdminOverviewPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-heading text-lg">Launch Edition Progress</h2>
           <span className="font-sans text-xs text-afinju-black/40">
-            {soldValue} / {limitValue} claimed
+            {launchSold} / {launchLimit} claimed
           </span>
         </div>
         <div className="h-2 bg-black/5 rounded-full overflow-hidden">
           <div
             className="h-full bg-gold transition-all duration-700"
-            style={{ width: `${(soldValue / limitValue) * 100}%` }}
+            style={{ width: `${(launchSold / launchLimit) * 100}%` }}
           />
         </div>
         <p className="font-sans text-xs text-afinju-black/40 mt-2">
-          {remaining} position{remaining !== 1 ? 's' : ''} remaining
+          {launchRemaining} position{launchRemaining !== 1 ? 's' : ''} remaining
         </p>
       </div>
 

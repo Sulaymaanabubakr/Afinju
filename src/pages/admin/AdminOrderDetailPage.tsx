@@ -33,6 +33,10 @@ export default function AdminOrderDetailPage() {
     enabled: !!id,
   })
 
+  useEffect(() => {
+    if (order) setNewStatus(order.status)
+  }, [order])
+
   const updateMutation = useMutation({
     mutationFn: () => updateOrderStatus(
       id!,

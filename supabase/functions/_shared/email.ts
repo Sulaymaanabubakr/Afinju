@@ -54,22 +54,106 @@ export function buildEmailHtml({
   ctaUrl?: string
   detailsHtml?: string
 }) {
+  const gold = '#c5a059'
+  const offWhite = '#fdfbf7'
+  const dark = '#1a1a1a'
+
   return `
-    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1a1a1a; line-height: 1.6;">
-      <h1 style="color: #c5a059; font-size: 24px; margin-bottom: 30px; letter-spacing: 0.1em; text-transform: uppercase;">${heading}</h1>
-      ${greetingName ? `<p style="font-size: 16px; margin-bottom: 20px;">Hello ${greetingName},</p>` : ''}
-      <div style="margin-bottom: 30px;">
-        ${bodyLines.map(line => `<p style="font-size: 15px; margin-bottom: 10px;">${line}</p>`).join('')}
-      </div>
-      ${orderNumber ? `<p style="font-size: 14px; color: #666; margin-bottom: 10px;">Order: <strong>${orderNumber}</strong></p>` : ''}
-      ${detailsHtml ? `<div style="background: #f9f9f9; padding: 20px; border-radius: 4px; margin: 30px 0;">${detailsHtml}</div>` : ''}
-      ${ctaLabel && ctaUrl ? `
-        <div style="margin: 40px 0;">
-          <a href="${ctaUrl}" style="background: #c5a059; color: #000; padding: 16px 32px; text-decoration: none; font-size: 13px; font-weight: bold; letter-spacing: 0.2em; text-transform: uppercase;">${ctaLabel}</a>
-        </div>
-      ` : ''}
-      <hr style="border: 0; border-top: 1px solid #eee; margin: 40px 0;" />
-      <p style="font-size: 12px; color: #999;">© 2026 AFÍNJÚ. All rights reserved.</p>
-    </div>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;600&display=swap');
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: ${offWhite}; font-family: 'Inter', system-ui, -apple-system, sans-serif;">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: ${offWhite};">
+        <tr>
+          <td align="center" style="padding: 40px 20px;">
+            <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border: 1px solid #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+              <!-- Header / Logo -->
+              <tr>
+                <td align="center" style="padding: 40px 0 20px 0;">
+                  <div style="font-family: 'DM Serif Display', serif; font-size: 32px; color: ${dark}; letter-spacing: 0.15em; text-transform: uppercase; border-bottom: 2px solid ${gold}; display: inline-block; padding-bottom: 5px;">
+                    AFÍNJÚ
+                  </div>
+                  <div style="font-size: 10px; color: ${gold}; letter-spacing: 0.4em; margin-top: 10px; text-transform: uppercase;">
+                    The Authority Set
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Hero Heading -->
+              <tr>
+                <td align="center" style="padding: 40px 40px 20px 40px;">
+                  <h1 style="font-family: 'DM Serif Display', serif; color: ${dark}; font-size: 28px; margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">
+                    ${heading}
+                  </h1>
+                </td>
+              </tr>
+
+              <!-- Greeting & Body -->
+              <tr>
+                <td style="padding: 20px 60px;">
+                  ${greetingName ? `<p style="font-size: 16px; color: ${dark}; margin-bottom: 24px; font-weight: 500;">Hello ${greetingName},</p>` : ''}
+                  <div style="font-size: 15px; color: #444; line-height: 1.8;">
+                    ${bodyLines.map(line => `<p style="margin-bottom: 16px;">${line}</p>`).join('')}
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Order Number -->
+              ${orderNumber ? `
+              <tr>
+                <td align="center" style="padding: 0 60px 40px 60px;">
+                  <div style="padding: 15px; border: 1px dashed ${gold}; background-color: #fcfaf5; display: inline-block;">
+                    <span style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 4px;">Order Ref</span>
+                    <strong style="font-size: 18px; color: ${dark}; letter-spacing: 0.05em;">#${orderNumber}</strong>
+                  </div>
+                </td>
+              </tr>
+              ` : ''}
+
+              <!-- Details Section -->
+              ${detailsHtml ? `
+              <tr>
+                <td style="padding: 0 60px 40px 60px;">
+                  <div style="background-color: #fafafa; padding: 30px; border-radius: 4px;">
+                    ${detailsHtml}
+                  </div>
+                </td>
+              </tr>
+              ` : ''}
+
+              <!-- CTA Button -->
+              ${ctaLabel && ctaUrl ? `
+              <tr>
+                <td align="center" style="padding: 0 60px 60px 60px;">
+                  <a href="${ctaUrl}" style="background-color: ${dark}; color: #ffffff; padding: 20px 40px; text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.25em; text-transform: uppercase; display: inline-block; transition: background 0.3s;">
+                    ${ctaLabel}
+                  </a>
+                </td>
+              </tr>
+              ` : ''}
+
+              <!-- Footer -->
+              <tr>
+                <td align="center" style="padding: 40px; background-color: #fdfdfd; border-top: 1px solid #f5f5f5;">
+                  <p style="font-size: 11px; color: #999; margin: 0; letter-spacing: 0.1em; text-transform: uppercase;">
+                    © 2026 AFÍNJÚ LUXURY. All rights reserved.
+                  </p>
+                  <p style="font-size: 10px; color: #bbb; margin-top: 10px; line-height: 1.6;">
+                    You are receiving this because you placed an order at afinju247.com.<br>
+                    Please do not reply directly to this email.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
   `
 }

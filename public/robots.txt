@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://afinju247.com/sitemap.xml

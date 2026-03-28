@@ -56,7 +56,7 @@ export function openFlutterwaveModal(config: FlutterwaveConfig): void {
     customizations: {
       title: 'AFÍNJÚ',
       description: 'Premium Nigerian Craftsmanship',
-      logo: 'https://afinju247.com/favicon.svg',
+      logo: 'https://afinju247.com/logo.png',
     },
     callback: (response: { transaction_id: number; tx_ref: string; status: string }) => {
       if (response.status === 'successful' || response.status === 'completed') {

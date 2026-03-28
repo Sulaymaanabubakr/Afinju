@@ -35,3 +35,6 @@ service-account*.json
 
 # Misc
 *.tsbuildinfo
+
+# Supabase CLI temp files
+supabase/.temp/

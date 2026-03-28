@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import { ShoppingBag, Menu, X, User, LogOut } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useCartStore } from '@/lib/store'
 import { useAuthStore } from '@/store/auth'
 import { cn } from '@/lib/utils'
 import { useDismissiblePanel } from '@/hooks/useDismissiblePanel'
+import { getStoreSettings } from '@/lib/db'
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -16,6 +18,7 @@ export function Navbar() {
   const { user } = useAuthStore()
   const location = useLocation()
   const count = itemCount()
+  const { data: settings } = useQuery({ queryKey: ['store-settings'], queryFn: getStoreSettings })
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20)
@@ -33,18 +36,26 @@ export function Navbar() {
     { to: '/size-guide', label: 'Size Guide' },
   ]
 
+  const announcementEnabled = settings?.announcementEnabled ?? true
+  const announcementText = settings?.announcementText || 'Only Ten Men Will Own This Launch Edition · Once It Is Closed, It Is Closed · Afínjú - Authority Set'
+
   return (
     <>
       {/* Announcement Bar */}
-      <div className="bg-afinju-black text-afinju-cream overflow-hidden py-2.5">
-        <div className="flex marquee-track">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <span key={i} className="flex-shrink-0 px-12 font-sans text-xs tracking-[0.25em] uppercase">
-              Only Ten Men Will Own This Launch Edition &nbsp;·&nbsp; Once It Is Closed, It Is Closed &nbsp;·&nbsp; Afínjú - Authority Set &nbsp;·&nbsp;
-            </span>
-          ))}
+      {announcementEnabled && (
+        <div className="bg-afinju-black text-afinju-cream overflow-hidden py-2.5">
+          <div className="flex marquee-track">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <span
+                key={i}
+                className="flex min-w-full flex-shrink-0 items-center justify-center px-8 text-center font-sans text-xs tracking-[0.25em] uppercase"
+              >
+                {announcementText}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div ref={menuShellRef}>
         <header className={cn(

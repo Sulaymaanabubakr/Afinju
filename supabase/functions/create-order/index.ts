@@ -1,7 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
-import { sendEmail, buildEmailHtml } from '../_shared/email.ts'
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -97,34 +96,6 @@ serve(async (req) => {
       .single()
 
     if (insertError) throw insertError
-
-    // Notify Admin via Brevo
-    const brevoApiKey = Deno.env.get('BREVO_API_KEY')
-    const adminEmail = Deno.env.get('ADMIN_EMAIL')
-    if (brevoApiKey && adminEmail) {
-      try {
-        await sendEmail({
-          to: adminEmail,
-          subject: `NEW ORDER RECEIVED - ${orderNumber}`,
-          fromEmail: 'noreply@afinju247.com',
-          fromName: 'AFINJU',
-          brevoApiKey,
-          htmlContent: buildEmailHtml({
-            heading: 'New order received',
-            greetingName: 'Admin',
-            bodyLines: [
-              'A new customer order has been placed and is awaiting your review.',
-              'You can view this order in the admin dashboard.',
-            ],
-            orderNumber: orderNumber,
-            ctaLabel: 'Open Admin Dashboard',
-            ctaUrl: 'https://afinju247.com/admin',
-          }),
-        })
-      } catch (err) {
-        console.error('Failed to send admin notification:', err)
-      }
-    }
 
     return new Response(
       JSON.stringify({ success: true, orderId: order.id, orderNumber, total }),

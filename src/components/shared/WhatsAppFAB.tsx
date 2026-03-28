@@ -1,10 +1,22 @@
 import { motion } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
+import { getStoreSettings } from '@/lib/db'
 import { getWhatsAppUrl, BRAND_WHATSAPP } from '@/lib/utils'
 
 export function WhatsAppFAB() {
+  const { data: settings } = useQuery({
+    queryKey: ['store-settings'],
+    queryFn: getStoreSettings,
+  })
+
+  const cleanWhatsAppNumber = (settings?.whatsappNumber || BRAND_WHATSAPP).replace(/[^\d]/g, '')
+  const whatsappHref =
+    settings?.whatsappUrl ||
+    getWhatsAppUrl(cleanWhatsAppNumber, 'Hello Afínjú, I\'m interested in the Launch Edition. Can you help me?')
+
   return (
     <motion.a
-      href={getWhatsAppUrl(BRAND_WHATSAPP, 'Hello Afínjú, I\'m interested in the Launch Edition. Can you help me?')}
+      href={whatsappHref}
       target="_blank"
       rel="noopener noreferrer"
       initial={{ scale: 0, opacity: 0 }}

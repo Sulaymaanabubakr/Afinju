@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { ShoppingBag, Users, TrendingUp, Package } from 'lucide-react'
-import { getAllOrders, getProducts, getAllUsers } from '@/lib/db'
+import { ShoppingBag, Users, Package } from 'lucide-react'
+import { getAdminProducts, getAllOrders, getAllUsers } from '@/lib/db'
 import { formatPrice } from '@/lib/utils'
 
 function StatCard({ label, value, icon: Icon, sub, href }: {
@@ -25,13 +25,15 @@ function StatCard({ label, value, icon: Icon, sub, href }: {
 }
 
 export default function AdminOverviewPage() {
-  const { data: orders } = useQuery({ queryKey: ['admin-orders'], queryFn: () => getAllOrders() })
-  const { data: products } = useQuery({ queryKey: ['products'], queryFn: getProducts })
-  const { data: users } = useQuery({ queryKey: ['admin-users'], queryFn: getAllUsers })
+  const queryOptions = {
+    refetchOnWindowFocus: true,
+  } as const
+
+  const { data: orders } = useQuery({ queryKey: ['admin-orders'], queryFn: () => getAllOrders(), ...queryOptions })
+  const { data: products } = useQuery({ queryKey: ['admin-products'], queryFn: getAdminProducts, ...queryOptions })
+  const { data: users } = useQuery({ queryKey: ['admin-users'], queryFn: getAllUsers, ...queryOptions })
 
   const paidOrders = orders?.filter(o => o.paymentStatus === 'paid') || []
-  const revenue = paidOrders.reduce((s, o) => s + o.total, 0)
-  
   // Calculate inventory - split between Limited and Standard
   const limitedProducts = products?.filter(p => p.isLimitedEdition) || []
   const standardProducts = products?.filter(p => !p.isLimitedEdition) || []
@@ -43,6 +45,8 @@ export default function AdminOverviewPage() {
   const standardLimit = standardProducts.reduce((sum, p) => sum + (p.inventory.launchEditionLimit || 0), 0)
   const standardSold = standardProducts.reduce((sum, p) => sum + (p.inventory.soldCount || 0), 0)
   const standardRemaining = Math.max(0, standardLimit - standardSold)
+  const totalStock = limitedLimit + standardLimit
+  const totalRemaining = limitedRemaining + standardRemaining
   
   // For the specific progress bar, still target the primary Launch Edition product
   const launchProduct = products?.find(p => p.slug.includes('launch-edition')) || products?.[0]
@@ -62,24 +66,24 @@ export default function AdminOverviewPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          label="Limited Units"
+          label="Stock Left"
+          value={`${totalRemaining} / ${totalStock}`}
+          icon={Package}
+          sub="All products available now"
+          href="/admin/inventory"
+        />
+        <StatCard
+          label="Launch Edition Left"
           value={`${limitedRemaining} / ${limitedLimit}`}
           icon={Package}
-          sub="Exclusive Collections"
+          sub="Limited edition stock"
           href="/admin/inventory"
         />
         <StatCard
-          label="Standard Units"
-          value={`${standardRemaining} / ${standardLimit}`}
-          icon={Package}
-          sub="Regular Collection"
-          href="/admin/inventory"
-        />
-        <StatCard
-          label="Total Orders"
-          value={orders?.length || 0}
+          label="Paid Orders"
+          value={paidOrders.length}
           icon={ShoppingBag}
-          sub="All time"
+          sub={`${orders?.length || 0} total orders`}
           href="/admin/orders"
         />
         <StatCard

@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion } from 'framer-motion'
-import { Lock, ChevronDown } from 'lucide-react'
+import { Lock } from 'lucide-react'
 import { useCartStore } from '@/lib/store'
 import { useAuthStore } from '@/store/auth'
 import { createOrder, getRemainingUnits, getStoreSettings } from '@/lib/db'
@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { PRODUCT_COLORS, SHOE_SIZES, HEAD_SIZES, type ProductColor } from '@/types'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/form-elements'
 
 const STATES = [
   'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue',
@@ -61,6 +62,7 @@ export default function CheckoutPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -247,13 +249,24 @@ export default function CheckoutPage() {
                       <input {...register('city')} placeholder="e.g. Lagos" className="input-luxury" />
                     </Field>
                     <Field label="State *" error={errors.state?.message}>
-                      <div className="relative">
-                        <select {...register('state')} className="input-luxury appearance-none cursor-pointer">
-                          <option value="">Select state</option>
-                          {STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                        <ChevronDown size={14} className="absolute right-0 bottom-3 text-afinju-black/40 pointer-events-none" />
-                      </div>
+                      <Controller
+                        control={control}
+                        name="state"
+                        render={({ field }) => (
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger className="input-luxury h-auto justify-between px-0 py-3 text-left font-sans text-sm border-x-0 border-t-0 rounded-none shadow-none focus:ring-0 focus:border-gold bg-transparent">
+                              <SelectValue placeholder="Select state" />
+                            </SelectTrigger>
+                            <SelectContent className="border-black/10 bg-white">
+                              {STATES.map((state) => (
+                                <SelectItem key={state} value={state} className="font-sans text-sm">
+                                  {state}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
                     </Field>
                   </div>
                   <Field label="Landmark / Nearest Bus Stop (Optional)">

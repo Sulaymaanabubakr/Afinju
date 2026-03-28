@@ -8,6 +8,7 @@ import { ORDER_STATUS_LABELS, type Order, type OrderStatus } from '@/types'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import { useDismissiblePanel } from '@/hooks/useDismissiblePanel'
+import { exportDatasetAs, type ExportFormat } from '@/lib/adminExport'
 
 const STATUSES: { value: '' | OrderStatus; label: string }[] = [
   { value: '', label: 'All Orders' },
@@ -35,19 +36,6 @@ const paymentBadge = (status: string) => {
   if (status === 'paid') return 'bg-green-50 text-green-700'
   if (status === 'refunded') return 'bg-red-50 text-red-700'
   return 'bg-yellow-50 text-yellow-700'
-}
-
-function exportCSV(orders: any[]) {
-  const rows = buildExportRows(orders)
-  const headers = ['Order Number', 'Customer', 'Phone', 'Email', 'Items', 'Delivery Address', 'Total (NGN)', 'Payment', 'Status', 'Date']
-  const csv = [headers, ...rows.map((r) => [r.orderNumber, r.customer, r.phone, r.email, r.items, r.delivery, r.total, r.payment, r.status, r.date])]
-    .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
-    .join('\n')
-  const blob = new Blob([csv], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url; a.download = `afinju-orders-${Date.now()}.csv`
-  a.click()
 }
 
 type ExportRow = {
@@ -78,58 +66,6 @@ function buildExportRows(orders: Order[]): ExportRow[] {
   }))
 }
 
-function buildExportTableHtml(rows: ExportRow[]): string {
-  const tableRows = rows
-    .map(
-      (r) => `<tr>
-        <td>${escapeHtml(r.orderNumber)}</td>
-        <td>${escapeHtml(r.customer)}</td>
-        <td>${escapeHtml(r.phone)}</td>
-        <td>${escapeHtml(r.email)}</td>
-        <td>${escapeHtml(r.items)}</td>
-        <td>${escapeHtml(r.delivery)}</td>
-        <td>${escapeHtml(r.total.toLocaleString())}</td>
-        <td>${escapeHtml(r.payment)}</td>
-        <td>${escapeHtml(r.status)}</td>
-        <td>${escapeHtml(r.date)}</td>
-      </tr>`
-    )
-    .join('')
-
-  return `
-    <style>
-      .export-wrap{font-family:Arial,sans-serif;padding:24px;color:#111}
-      h1{font-size:20px;margin:0 0 12px}
-      p{font-size:12px;color:#555;margin:0 0 14px}
-      table{border-collapse:collapse;width:100%;font-size:11px}
-      th,td{border:1px solid #d8d8d8;padding:6px 8px;text-align:left;vertical-align:top}
-      th{background:#f3f3f3;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
-      tr:nth-child(even) td{background:#fafafa}
-    </style>
-    <div class="export-wrap">
-      <h1>AFINJU Orders Report</h1>
-      <p>Generated ${format(new Date(), 'yyyy-MM-dd HH:mm')}</p>
-      <table>
-        <thead>
-          <tr>
-            <th>Order</th><th>Customer</th><th>Phone</th><th>Email</th><th>Items</th><th>Delivery</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th>
-          </tr>
-        </thead>
-        <tbody>${tableRows}</tbody>
-      </table>
-    </div>
-  `
-}
-
-function escapeHtml(value: string): string {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
-
 export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState<'' | OrderStatus>('')
   const [search, setSearch] = useState('')
@@ -142,6 +78,7 @@ export default function AdminOrdersPage() {
   const { data: orders, isLoading } = useQuery({
     queryKey: ['admin-orders', statusFilter],
     queryFn: () => getAllOrders(statusFilter || undefined),
+    refetchOnWindowFocus: true,
   })
 
   const filtered = (orders || []).filter((o) => {
@@ -152,8 +89,25 @@ export default function AdminOrdersPage() {
       o.customerPhone.includes(s)
   })
   const exportRows = useMemo(() => buildExportRows(filtered as Order[]), [filtered])
+  const exportHeaders = ['Order Number', 'Customer', 'Phone', 'Email', 'Items', 'Delivery Address', 'Total (NGN)', 'Payment', 'Status', 'Date']
+  const exportDatasetRows = useMemo(
+    () =>
+      exportRows.map((r) => [
+        r.orderNumber,
+        r.customer,
+        r.phone,
+        r.email,
+        r.items,
+        r.delivery,
+        r.total,
+        r.payment,
+        r.status,
+        r.date,
+      ]),
+    [exportRows]
+  )
 
-  const runExport = async (formatType: 'csv' | 'excel' | 'pdf' | 'doc' | 'png' | 'jpg') => {
+  const runExport = async (formatType: ExportFormat) => {
     if (!filtered.length) {
       toast.error('No orders to export.')
       return
@@ -161,89 +115,13 @@ export default function AdminOrdersPage() {
     setExporting(true)
     setExportOpen(false)
     try {
-      const fileBase = `afinju-orders-${format(new Date(), 'yyyyMMdd-HHmm')}`
-
-      if (formatType === 'csv') {
-        exportCSV(filtered)
-        toast.success('CSV exported.')
-        return
-      }
-
-      if (formatType === 'excel') {
-        const XLSX = await import('xlsx')
-        const worksheet = XLSX.utils.json_to_sheet(exportRows)
-        const workbook = XLSX.utils.book_new()
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Orders')
-        XLSX.writeFile(workbook, `${fileBase}.xlsx`)
-        toast.success('Excel exported.')
-        return
-      }
-
-      if (formatType === 'pdf') {
-        const jsPDFMod = await import('jspdf')
-        const autoTableMod = await import('jspdf-autotable')
-        const jsPDF = jsPDFMod.default
-        const autoTable = (autoTableMod as any).default || autoTableMod
-
-        const doc = new jsPDF({ orientation: 'landscape' })
-        doc.setFontSize(14)
-        doc.text('AFINJU Orders Report', 14, 14)
-        doc.setFontSize(9)
-        doc.text(`Generated ${format(new Date(), 'yyyy-MM-dd HH:mm')}`, 14, 20)
-        autoTable(doc, {
-          startY: 24,
-          head: [['Order', 'Customer', 'Phone', 'Email', 'Items', 'Delivery', 'Total', 'Payment', 'Status', 'Date']],
-          body: exportRows.map((r) => [
-            r.orderNumber,
-            r.customer,
-            r.phone,
-            r.email,
-            r.items,
-            r.delivery,
-            r.total.toLocaleString(),
-            r.payment,
-            r.status,
-            r.date,
-          ]),
-          styles: { fontSize: 7, cellPadding: 2 },
-          headStyles: { fillColor: [20, 20, 20] },
-        })
-        doc.save(`${fileBase}.pdf`)
-        toast.success('PDF exported.')
-        return
-      }
-
-      if (formatType === 'doc') {
-        const html = buildExportTableHtml(exportRows)
-        const blob = new Blob([`<html><body>${html}</body></html>`], { type: 'application/msword' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `${fileBase}.doc`
-        a.click()
-        URL.revokeObjectURL(url)
-        toast.success('DOC exported.')
-        return
-      }
-
-      const html2canvas = (await import('html2canvas')).default
-      const container = document.createElement('div')
-      container.style.position = 'fixed'
-      container.style.left = '-99999px'
-      container.style.top = '0'
-      container.style.width = '1800px'
-      container.style.background = '#fff'
-      container.innerHTML = buildExportTableHtml(exportRows)
-      document.body.appendChild(container)
-      const canvas = await html2canvas(container, { scale: 2, backgroundColor: '#ffffff' })
-      document.body.removeChild(container)
-      const mime = formatType === 'png' ? 'image/png' : 'image/jpeg'
-      const ext = formatType === 'png' ? 'png' : 'jpg'
-      const link = document.createElement('a')
-      link.href = canvas.toDataURL(mime, 0.95)
-      link.download = `${fileBase}.${ext}`
-      link.click()
-      toast.success(`${ext.toUpperCase()} exported.`)
+      await exportDatasetAs(formatType, {
+        fileBase: `afinju-orders-${format(new Date(), 'yyyyMMdd-HHmm')}`,
+        title: 'AFINJU Orders Report',
+        headers: exportHeaders,
+        rows: exportDatasetRows,
+      })
+      toast.success(`${formatType.toUpperCase()} exported.`)
     } catch (err) {
       console.error(err)
       toast.error('Export failed. Please try again.')
@@ -346,13 +224,13 @@ export default function AdminOrdersPage() {
                 ['csv', 'Export as CSV'],
                 ['png', 'Export as PNG'],
                 ['jpg', 'Export as JPG'],
-              ].map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => runExport(value as 'csv' | 'excel' | 'pdf' | 'doc' | 'png' | 'jpg')}
-                  className="w-full text-left px-3 py-2 text-xs font-sans tracking-wide hover:bg-black/5 transition-colors"
-                >
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => runExport(value as ExportFormat)}
+                    className="w-full text-left px-3 py-2 text-xs font-sans tracking-wide hover:bg-black/5 transition-colors"
+                  >
                   {label}
                 </button>
               ))}

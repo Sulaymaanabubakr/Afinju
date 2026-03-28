@@ -1,5 +1,5 @@
-import { getStoreSettings, updateStoreSettings, sendTestEmail } from '@/lib/db'
-import { Loader2, Mail } from 'lucide-react'
+import { getStoreSettings, updateStoreSettings } from '@/lib/db'
+import { Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -22,10 +22,11 @@ export default function AdminSettingsPage() {
   })
 
   const [form, setForm] = useState({
-    storeName: 'Afínjú',
     whatsappNumber: '2347071861932',
     supportEmail: '',
     shippingFee: 5000,
+    announcementEnabled: true,
+    announcementText: 'Only Ten Men Will Own This Launch Edition · Once It Is Closed, It Is Closed · Afínjú - Authority Set',
     instagramUrl: '',
     twitterUrl: '',
     facebookUrl: '',
@@ -45,12 +46,6 @@ export default function AdminSettingsPage() {
     },
     onError: () => toast.error('Failed to save settings.'),
   })
-  
-  const testEmailMutation = useMutation({
-    mutationFn: sendTestEmail,
-    onSuccess: () => toast.success('Test notification sent to your email.'),
-    onError: (error: any) => toast.error(`Test failed: ${error.message}`),
-  })
 
   const inputClass = "w-full border border-black/15 px-3 py-2.5 font-sans text-sm bg-white focus:outline-none focus:border-gold transition-colors"
 
@@ -59,15 +54,6 @@ export default function AdminSettingsPage() {
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl">Store Settings</h1>
         <div className="flex gap-3">
-          <button
-            onClick={() => testEmailMutation.mutate()}
-            disabled={testEmailMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2.5 bg-black/5 hover:bg-black/10 border border-black/10 transition-colors font-sans text-xs uppercase tracking-widest text-afinju-black/60 disabled:opacity-50"
-          >
-            {testEmailMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
-            Send Test Notif
-          </button>
-          
           <button
             onClick={() => saveMutation.mutate()}
             disabled={saveMutation.isPending}
@@ -82,17 +68,33 @@ export default function AdminSettingsPage() {
 
       <div className="bg-white border border-black/8 p-8 space-y-6">
         <h2 className="font-display text-xs tracking-[0.2em]">GENERAL</h2>
-        <SettingsField label="Store Name">
-          <input value={form.storeName} onChange={e => setForm(f => ({ ...f, storeName: e.target.value }))} className={inputClass} />
-        </SettingsField>
         <SettingsField label="Support Email">
           <input value={form.supportEmail} onChange={e => setForm(f => ({ ...f, supportEmail: e.target.value }))} className={inputClass} />
         </SettingsField>
-        <SettingsField label="WhatsApp Number" note="Include country code, no plus sign. e.g. 2347071861932">
+        <SettingsField label="WhatsApp Number">
           <input value={form.whatsappNumber} onChange={e => setForm(f => ({ ...f, whatsappNumber: e.target.value }))} className={inputClass} />
         </SettingsField>
         <SettingsField label="Flat Shipping Fee (₦)">
           <input type="number" value={form.shippingFee} onChange={e => setForm(f => ({ ...f, shippingFee: Number(e.target.value) }))} className={inputClass} />
+        </SettingsField>
+        <SettingsField label="Scrolling Banner">
+          <label className="flex items-center gap-3 font-sans text-sm text-afinju-black/70">
+            <input
+              type="checkbox"
+              checked={form.announcementEnabled}
+              onChange={e => setForm(f => ({ ...f, announcementEnabled: e.target.checked }))}
+              className="h-4 w-4 accent-black"
+            />
+            Show announcement banner
+          </label>
+        </SettingsField>
+        <SettingsField label="Banner Text">
+          <textarea
+            value={form.announcementText}
+            onChange={e => setForm(f => ({ ...f, announcementText: e.target.value }))}
+            rows={3}
+            className={inputClass}
+          />
         </SettingsField>
       </div>
 

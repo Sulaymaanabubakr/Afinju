@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { sendEmail, buildEmailHtml } from '../_shared/email.ts'
+import { getMailSender } from '../_shared/config.ts'
 
 serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 })
@@ -11,8 +12,7 @@ serve(async (req) => {
     const brevoApiKey = Deno.env.get('BREVO_API_KEY')
     if (!brevoApiKey) throw new Error('BREVO_API_KEY not found')
 
-    const fromEmail = 'noreply@afinju247.com'
-    const fromName = 'AFINJU'
+    const { fromEmail, fromName } = getMailSender()
     
     let subject = ''
     let heading = ''

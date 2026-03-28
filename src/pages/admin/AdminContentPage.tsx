@@ -69,6 +69,7 @@ export default function AdminContentPage() {
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['site-content'] })
+      qc.invalidateQueries({ queryKey: ['homepage-content'] })
       toast.success('Content updated.')
     },
     onError: () => toast.error('Failed to save content.'),

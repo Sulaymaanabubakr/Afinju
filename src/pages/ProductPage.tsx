@@ -61,6 +61,8 @@ export default function ProductPage() {
   const remaining = product
     ? product.inventory.launchEditionLimit - product.inventory.soldCount
     : 0
+  const availableColors = product?.colors?.length ? product.colors : PRODUCT_COLORS
+  const isLimitedEdition = product?.isLimitedEdition ?? false
 
   const validate = () => {
     const e: Record<string, string> = {}
@@ -190,9 +192,15 @@ export default function ProductPage() {
         <div className="px-8 py-16 lg:px-14 xl:px-20 space-y-10">
           {/* Header */}
           <div>
-            <div className="scarcity-pill mb-4">
-              Launch Edition - {remaining > 0 ? `${remaining} Remaining` : 'Sold Out'}
-            </div>
+            {isLimitedEdition ? (
+              <div className="scarcity-pill mb-4">
+                Launch Edition - {remaining > 0 ? `${remaining} Remaining` : 'Sold Out'}
+              </div>
+            ) : (
+              <div className="scarcity-pill mb-4">
+                Available Now
+              </div>
+            )}
             <h1 className="font-heading text-3xl md:text-4xl leading-tight mb-4">{product.name}</h1>
             <div className="flex items-center gap-4">
               <span className="font-sans text-2xl font-medium">{formatPrice(product.price)}</span>
@@ -256,7 +264,7 @@ export default function ProductPage() {
                 </label>
               </div>
               <div className="flex flex-wrap gap-3">
-                {PRODUCT_COLORS.map((color) => {
+                {availableColors.map((color) => {
                   const colorMap: Record<string, string> = {
                     Blue: '#1E3A8A',
                     Red: '#991B1B',

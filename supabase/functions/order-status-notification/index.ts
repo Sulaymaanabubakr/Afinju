@@ -1,7 +1,8 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 import { sendEmail, buildEmailHtml } from '../_shared/email.ts'
+import { requireStaffUser } from '../_shared/auth.ts'
+import { getMailSender, getSiteBaseUrl } from '../_shared/config.ts'
 
 const ORDER_STATUS_MESSAGES: Record<string, string> = {
   paid: 'Your commitment to the Afínjú brand has been recognized. Your payment has been successfully confirmed, and your Authority Set is now entering our artisanal workflow.',
@@ -20,10 +21,11 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    if (req.method !== 'POST') {
+      return new Response('Method Not Allowed', { status: 405, headers: corsHeaders })
+    }
+
+    const { supabaseAdmin } = await requireStaffUser(req)
 
     const { orderId, status, note } = await req.json()
     if (!orderId || !status) throw new Error('orderId and status required')
@@ -46,12 +48,13 @@ serve(async (req) => {
     if (!brevoApiKey) throw new Error('BREVO_API_KEY missing')
 
     const statusMessage = ORDER_STATUS_MESSAGES[status] || `Your order status has been updated to ${status.replace('_', ' ')}.`
+    const { fromEmail, fromName } = getMailSender()
     
     await sendEmail({
       to: order.customer_email,
       subject: `Order Update: #${order.order_number} is now ${status.replace('_', ' ').toUpperCase()}`,
-      fromEmail: 'noreply@afinju247.com',
-      fromName: 'AFINJU',
+      fromEmail,
+      fromName,
       brevoApiKey,
       htmlContent: buildEmailHtml({
         heading: 'Order Update',
@@ -62,7 +65,7 @@ serve(async (req) => {
         ].filter(Boolean),
         orderNumber: order.order_number,
         ctaLabel: 'View Order Details',
-        ctaUrl: `https://afinju247.com/orders/${orderId}`,
+        ctaUrl: `${getSiteBaseUrl()}/account/orders/${orderId}`,
       }),
     })
 
@@ -71,9 +74,10 @@ serve(async (req) => {
       status: 200,
     })
   } catch (error: any) {
+    const status = error?.message === 'Unauthorized' ? 401 : error?.message === 'Forbidden' ? 403 : 400
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
+      status,
     })
   }
 })

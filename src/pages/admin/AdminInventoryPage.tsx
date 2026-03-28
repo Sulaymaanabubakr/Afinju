@@ -3,12 +3,15 @@ import { getAdminProducts, upsertProduct } from '@/lib/db'
 import { Package, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
+import { useConfirm } from '@/components/shared/ConfirmProvider'
 
 export default function AdminInventoryPage() {
   const qc = useQueryClient()
+  const confirm = useConfirm()
   const { data: products, isLoading } = useQuery({
     queryKey: ['admin-products-inventory'],
     queryFn: getAdminProducts,
+    refetchOnWindowFocus: true,
   })
 
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -142,7 +145,17 @@ export default function AdminInventoryPage() {
                           Cancel
                         </button>
                         <button
-                          onClick={() => updateMutation.mutate({ id: product.id, limit: editValues.limit, sold: editValues.sold })}
+                          onClick={async () => {
+                            const confirmed = await confirm({
+                              title: 'Save Inventory Update',
+                              message: `Apply the new stock values for ${product.name}?`,
+                              confirmText: 'Save Changes',
+                              variant: 'info',
+                            })
+                            if (confirmed) {
+                              updateMutation.mutate({ id: product.id, limit: editValues.limit, sold: editValues.sold })
+                            }
+                          }}
                           disabled={updateMutation.isPending}
                           className="btn-gold px-4 py-1.5 text-[10px] uppercase tracking-wider disabled:opacity-50"
                         >
@@ -171,10 +184,10 @@ export default function AdminInventoryPage() {
       <div className="bg-gold/5 border border-gold/20 p-6 flex gap-4 items-start">
         <Package className="text-gold mt-1" size={20} />
         <div>
-          <h3 className="font-heading text-base mb-1">Stock Calculation</h3>
+          <h3 className="font-heading text-base mb-1">How Stock Works</h3>
           <p className="font-sans text-sm text-afinju-black/60 max-w-2xl leading-relaxed">
-            The remaining stock is calculated as <strong>Total Limit - Units Sold</strong>. 
-            Units sold increments automatically when an order is paid, but you can manually adjust either value here to fix mistakes or reflect manual stock additions.
+            Available stock is based on your total stock minus how many have already been sold.
+            Paid orders update this automatically. Only change these numbers if you need to correct a mistake.
           </p>
         </div>
       </div>

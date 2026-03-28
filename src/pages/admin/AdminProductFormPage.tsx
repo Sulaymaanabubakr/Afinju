@@ -7,6 +7,7 @@ import { uploadToCloudinary } from '@/lib/cloudinary'
 import { PRODUCT_COLORS } from '@/types'
 import { slugify } from '@/lib/utils'
 import toast from 'react-hot-toast'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/form-elements'
 
 function F({ label, children, className = "" }: { label: string; children: React.ReactNode, className?: string }) {
   return (
@@ -190,13 +191,13 @@ export default function AdminProductFormPage() {
             </span>
           </div>
           <p className="font-sans text-[10px] text-afinju-black/40 leading-relaxed">
-            The remaining count is calculated as (Edition Limit - Units Sold). 
-            Units Sold increments automatically when customers pay, but you can override it here.
+            This shows what is left after sold units are removed from total stock.
+            Paid orders update sold units automatically.
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <F label="Edition Limit (Total Stock)">
+          <F label="Total Stock">
             <input
               type="number"
               value={form.launchEditionLimit}
@@ -204,7 +205,7 @@ export default function AdminProductFormPage() {
               className={inputClass}
             />
           </F>
-          <F label="Units Sold (Adjustment)">
+          <F label="Sold Units">
             <input
               type="number"
               value={form.soldCount}
@@ -214,14 +215,15 @@ export default function AdminProductFormPage() {
           </F>
         </div>
         <F label="Status">
-          <select
-            value={form.status}
-            onChange={e => setForm(f => ({ ...f, status: e.target.value as any }))}
-            className={inputClass}
-          >
-            <option value="active">Active</option>
-            <option value="draft">Draft</option>
-          </select>
+          <Select value={form.status} onValueChange={(value) => setForm(f => ({ ...f, status: value as 'active' | 'draft' }))}>
+            <SelectTrigger className={`${inputClass} justify-between rounded-none`}>
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent className="border-black/10 bg-white">
+              <SelectItem value="active" className="font-sans text-sm">Active</SelectItem>
+              <SelectItem value="draft" className="font-sans text-sm">Draft</SelectItem>
+            </SelectContent>
+          </Select>
         </F>
         <div className="flex items-center gap-2 pt-2">
           <input

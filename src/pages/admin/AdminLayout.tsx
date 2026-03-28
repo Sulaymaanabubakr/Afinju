@@ -2,7 +2,7 @@ import { Outlet, NavLink, Link } from 'react-router-dom'
 import { useState } from 'react'
 import {
   LayoutDashboard, ShoppingBag, Package, Users,
-  Settings, Layout, BarChart3, Menu, X, LogOut
+  Settings, BarChart3, Menu, X, LogOut
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth'
@@ -14,7 +14,6 @@ const NAV_ITEMS = [
   { to: '/admin/products', label: 'Products', icon: Package },
   { to: '/admin/inventory', label: 'Inventory', icon: Package },
   { to: '/admin/customers', label: 'Customers', icon: Users },
-  { to: '/admin/content', label: 'Content', icon: Layout },
   { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
 ]

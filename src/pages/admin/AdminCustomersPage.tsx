@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getAllUsers } from '@/lib/db'
 import { format } from 'date-fns'
-import { ChevronDown, Download, MessageCircle, Phone } from 'lucide-react'
-import { whatsappLink } from '@/lib/utils'
+import { ChevronDown, Download } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { exportDatasetAs, type ExportFormat } from '@/lib/adminExport'
@@ -16,6 +15,7 @@ export default function AdminCustomersPage() {
   const { data: users, isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: getAllUsers,
+    refetchOnWindowFocus: true,
   })
   const exportRows = useMemo(
     () =>
@@ -98,7 +98,7 @@ export default function AdminCustomersPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-black/5">
-              {['Name', 'Email', 'Phone', 'Role', 'Joined', 'Actions'].map(h => (
+              {['Name', 'Email', 'Phone', 'Role', 'Joined'].map(h => (
                 <th key={h} className="px-4 py-3 text-left font-sans text-[10px] tracking-[0.15em] uppercase text-afinju-black/40">{h}</th>
               ))}
             </tr>
@@ -118,20 +118,6 @@ export default function AdminCustomersPage() {
                 </td>
                 <td className="px-4 py-3 font-sans text-xs text-afinju-black/40">
                   {format(user.createdAt, 'MMM dd, yyyy')}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-2">
-                    {user.phone && (
-                      <>
-                        <a href={`tel:${user.phone}`} className="text-afinju-black/40 hover:text-afinju-black transition-colors">
-                          <Phone size={13} strokeWidth={1.5} />
-                        </a>
-                        <a href={whatsappLink(user.phone, `Hello ${user.displayName || ''}, this is Afínjú.`)} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:text-green-700 transition-colors">
-                          <MessageCircle size={13} strokeWidth={1.5} />
-                        </a>
-                      </>
-                    )}
-                  </div>
                 </td>
               </tr>
             ))}

@@ -32,7 +32,21 @@ export function whatsappLink(phone: string, message: string): string {
   return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`
 }
 
+export const BRAND_NAME = 'AFÍNJÚ'
 export const BRAND_WHATSAPP = '2347071861932'
+
+export function normalizeBrandName(value?: string | null): string {
+  if (!value) return BRAND_NAME
+
+  const normalized = value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z]/g, '')
+
+  if (normalized === 'afinju') return BRAND_NAME
+  return value
+}
 
 export function orderWhatsappLink(orderNumber: string): string {
   const message = `Hello Afínjú, I just placed order #${orderNumber}. I'm reaching out regarding my purchase.`

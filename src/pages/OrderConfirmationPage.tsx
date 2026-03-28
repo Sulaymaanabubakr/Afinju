@@ -15,7 +15,7 @@ export default function OrderConfirmationPage() {
     queryKey: ['order', id],
     queryFn: () => getOrderById(id!),
     enabled: !!id,
-    refetchInterval: 10000, // poll every 10s for status updates
+    refetchOnWindowFocus: true,
   })
 
   if (isLoading) {

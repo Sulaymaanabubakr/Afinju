@@ -1,6 +1,6 @@
 # AFINJU — Luxury E-Commerce Platform
 
-A world-class luxury e-commerce website for the AFINJU brand (Nigeria, NGN pricing). Built with React + TypeScript + Vite + Tailwind CSS + shadcn/ui, Firebase (Auth, Firestore, Cloud Functions), Cloudinary, and Paystack.
+A luxury e-commerce website for the AFINJU brand (Nigeria, NGN pricing). Built with React + TypeScript + Vite + Tailwind CSS, Supabase, Cloudinary, Brevo, and Flutterwave.
 
 ---
 
@@ -13,10 +13,10 @@ A world-class luxury e-commerce website for the AFINJU brand (Nigeria, NGN prici
 | State | Zustand (cart + auth) |
 | Data Fetching | TanStack Query v5 |
 | Animation | Framer Motion |
-| Backend | Firebase Auth, Firestore, Cloud Functions (Node 18 / TS) |
-| Payments | Paystack (inline + webhook verification) |
+| Backend | Supabase Auth, Postgres, Edge Functions |
+| Payments | Flutterwave (inline + webhook verification) |
 | Media | Cloudinary (signed admin uploads, optimised delivery) |
-| Deployment | Vercel (frontend) + Firebase (functions + hosting) |
+| Deployment | Vercel (frontend) + Supabase |
 
 ---
 

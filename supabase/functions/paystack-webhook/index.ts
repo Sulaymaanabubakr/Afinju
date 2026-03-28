@@ -2,6 +2,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import * as crypto from 'https://deno.land/std@0.168.0/crypto/mod.ts'
 import { sendEmail, buildEmailHtml } from '../_shared/email.ts'
+import { getAdminBaseUrl, getMailSender } from '../_shared/config.ts'
 
 serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 })
@@ -13,8 +14,23 @@ serve(async (req) => {
     const signature = req.headers.get('x-paystack-signature')
     if (!signature) return new Response('Invalid signature', { status: 400 })
 
-    // Minimal verification for Deno context (In production, use crypto subtle HMAC verification)
     const bodyText = await req.text()
+    const hmacKey = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(webhookSecret),
+      { name: 'HMAC', hash: 'SHA-512' },
+      false,
+      ['sign']
+    )
+    const signedBuffer = await crypto.subtle.sign('HMAC', hmacKey, new TextEncoder().encode(bodyText))
+    const expectedSignature = Array.from(new Uint8Array(signedBuffer))
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('')
+
+    if (signature !== expectedSignature) {
+      return new Response('Invalid signature', { status: 401 })
+    }
+
     const event = JSON.parse(bodyText)
 
     if (event.event === 'charge.success') {
@@ -42,8 +58,7 @@ serve(async (req) => {
           if (brevoApiKey) {
             const { data: fullOrder } = await supabaseAdmin.from('orders').select('*').eq('id', orderId).single()
             if (fullOrder) {
-              const fromEmail = 'noreply@afinju247.com'
-              const fromName = 'AFINJU'
+              const { fromEmail, fromName } = getMailSender()
 
               // Customer
               if (fullOrder.customer_email) {
@@ -73,7 +88,9 @@ serve(async (req) => {
                       heading: 'New Paid Order (Webhook)',
                       greetingName: 'Admin',
                       bodyLines: [`Order ${fullOrder.order_number} paid via Paystack webhook.`],
-                      orderNumber: fullOrder.order_number
+                      orderNumber: fullOrder.order_number,
+                      ctaLabel: 'View Order',
+                      ctaUrl: `${getAdminBaseUrl()}/orders/${orderId}`,
                     })
                   })
                 } catch (e) { console.error('Webhook admin email error:', e) }

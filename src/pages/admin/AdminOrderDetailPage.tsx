@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Phone, MessageCircle, Mail, ChevronDown } from 'lucide-react'
+import { Phone, MessageCircle, Mail } from 'lucide-react'
 import { getOrderById, updateOrderStatus } from '@/lib/db'
 import { formatPrice, whatsappLink, BRAND_WHATSAPP } from '@/lib/utils'
 import { ORDER_STATUS_LABELS, type OrderStatus } from '@/types'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+import { useConfirm } from '@/components/shared/ConfirmProvider'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/form-elements'
 
 const ALL_STATUSES: { value: OrderStatus; label: string }[] = [
   { value: 'pending_payment', label: 'Pending Payment' },
@@ -23,6 +25,7 @@ const ALL_STATUSES: { value: OrderStatus; label: string }[] = [
 export default function AdminOrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
+  const confirm = useConfirm()
   const [newStatus, setNewStatus] = useState<OrderStatus | ''>('')
   const [note, setNote] = useState('')
   const [internalNote, setInternalNote] = useState('')
@@ -31,6 +34,7 @@ export default function AdminOrderDetailPage() {
     queryKey: ['order', id],
     queryFn: () => getOrderById(id!),
     enabled: !!id,
+    refetchOnWindowFocus: true,
   })
 
   useEffect(() => {
@@ -74,6 +78,19 @@ export default function AdminOrderDetailPage() {
 
   const waGreeting = `Hello ${order.customerName}, this is Afínjú regarding your order #${order.orderNumber}.`
   const waLink = whatsappLink(order.customerPhone, waGreeting)
+
+  const handleStatusUpdate = async () => {
+    if (!newStatus || newStatus === order.status) return
+
+    const confirmed = await confirm({
+      title: 'Update Order Status',
+      message: `Change ${order.orderNumber} from ${ORDER_STATUS_LABELS[order.status]} to ${ORDER_STATUS_LABELS[newStatus]}?`,
+      confirmText: 'Update Status',
+      variant: 'info',
+    })
+
+    if (confirmed) updateMutation.mutate()
+  }
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -206,19 +223,18 @@ export default function AdminOrderDetailPage() {
           <div className="bg-white border border-black/8 p-6">
             <h2 className="font-display text-xs tracking-[0.2em] mb-4">UPDATE STATUS</h2>
             <div className="space-y-4">
-              <div className="relative">
-                <select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value as OrderStatus)}
-                  className="w-full border border-black/15 px-3 py-2 font-sans text-sm bg-white focus:outline-none focus:border-gold appearance-none"
-                >
-                  <option value="">Select new status...</option>
+              <Select value={newStatus} onValueChange={(value) => setNewStatus(value as OrderStatus)}>
+                <SelectTrigger className="w-full border border-black/15 px-3 py-2 h-auto rounded-none bg-white font-sans text-sm focus:ring-0 focus:border-gold">
+                  <SelectValue placeholder="Select new status..." />
+                </SelectTrigger>
+                <SelectContent className="border-black/10 bg-white">
                   {ALL_STATUSES.map(({ value, label }) => (
-                    <option key={value} value={value}>{label}</option>
+                    <SelectItem key={value} value={value} className="font-sans text-sm">
+                      {label}
+                    </SelectItem>
                   ))}
-                </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-afinju-black/40 pointer-events-none" />
-              </div>
+                </SelectContent>
+              </Select>
 
               <textarea
                 value={note}
@@ -237,8 +253,8 @@ export default function AdminOrderDetailPage() {
               />
 
               <button
-                onClick={() => newStatus && updateMutation.mutate()}
-                disabled={!newStatus || updateMutation.isPending}
+                onClick={handleStatusUpdate}
+                disabled={!newStatus || newStatus === order.status || updateMutation.isPending}
                 className="btn-luxury w-full text-xs py-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {updateMutation.isPending ? 'Updating...' : 'Update Status'}

@@ -79,7 +79,10 @@ export default function HomePage() {
   const { data: products } = useQuery({ queryKey: ['products'], queryFn: getProducts })
   // The backend product slug is likely different. Let's just grab the first product if the specific ID isn't found, 
   // or specifically look for the one with the slug 'afinju-authority-set-launch-edition' since that's what we just saved.
-  const product = products?.find(p => p.slug === 'afinju-authority-set-launch-edition') || products?.[0]
+  const product =
+    products?.find((p) => p.isLimitedEdition) ||
+    products?.find((p) => p.slug === 'afinju-authority-set-launch-edition') ||
+    products?.[0]
   const productLink = product ? `/product/${product.slug}` : '/shop'
   const catalogImages = (products ?? [])
     .flatMap((p) => (p.images ?? []).map((img) => img?.url).filter(Boolean))
@@ -176,7 +179,7 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.6 }}
               className="mt-6 flex justify-center"
             >
-              <ScarcityCounter sold={soldCount} total={totalLimit} compact />
+              <ScarcityCounter sold={soldCount} total={totalLimit} compact onDark />
             </motion.div>
 
             {/* CTA — no price reveal yet */}

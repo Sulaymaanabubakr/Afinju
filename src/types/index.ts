@@ -150,12 +150,13 @@ export interface SiteContent {
 
 // ─── STORE SETTINGS ─────────────────────────────────────────────────────────
 export interface StoreSettings {
-  storeName: string
   whatsappNumber: string
   supportEmail: string
   shippingFee: number
   freeShippingThreshold?: number
   flutterwavePublicKey: string
+  announcementEnabled?: boolean
+  announcementText?: string
   instagramUrl?: string
   twitterUrl?: string
   facebookUrl?: string

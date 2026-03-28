@@ -75,7 +75,7 @@ export default function ShopPage() {
                         loading="lazy"
                       />
                       {/* Launch Edition Badge */}
-                      {product.inventory.launchEditionLimit > 0 && (
+                      {product.isLimitedEdition && (
                         <div className="absolute top-3 left-3 md:top-4 md:left-4">
                           <span className="bg-afinju-black text-afinju-cream font-sans text-[9px] md:text-[10px] tracking-[0.18em] md:tracking-[0.2em] uppercase px-2.5 py-1.5 md:px-3">
                             Launch Edition

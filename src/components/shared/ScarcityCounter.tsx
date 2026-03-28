@@ -6,6 +6,7 @@ interface ScarcityCounterProps {
   total?: number  // legacy alias
   compact?: boolean
   large?: boolean
+  onDark?: boolean
   className?: string
 }
 
@@ -15,6 +16,7 @@ export default function ScarcityCounter({
   total,
   compact = false,
   large = false,
+  onDark = false,
   className = '',
 }: ScarcityCounterProps) {
   const cap = limit ?? total ?? 10
@@ -25,7 +27,7 @@ export default function ScarcityCounter({
   if (compact) {
     return (
       <div className={`flex items-center gap-2 ${className}`}>
-        <div className="w-16 h-1 bg-black/10 overflow-hidden">
+        <div className={`w-16 h-1 overflow-hidden ${onDark ? 'bg-white/15' : 'bg-black/10'}`}>
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${pct}%` }}
@@ -33,7 +35,7 @@ export default function ScarcityCounter({
             className="h-full bg-gold"
           />
         </div>
-        <span className={`font-sans text-[10px] tracking-[0.15em] uppercase ${urgent ? 'text-red-600' : 'text-afinju-black/40'}`}>
+        <span className={`font-sans text-[10px] tracking-[0.15em] uppercase ${urgent ? 'text-red-400' : onDark ? 'text-ivory/70' : 'text-afinju-black/40'}`}>
           {remaining > 0 ? `${remaining}/${cap} left` : 'Sold Out'}
         </span>
       </div>

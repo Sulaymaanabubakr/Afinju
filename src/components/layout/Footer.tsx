@@ -12,6 +12,8 @@ export function Footer() {
 
   const cleanWhatsAppNumber = (settings?.whatsappNumber || BRAND_WHATSAPP).replace(/[^\d]/g, '')
   const whatsappUrl = settings?.whatsappUrl || `https://wa.me/${cleanWhatsAppNumber}`
+  const supportEmail = settings?.supportEmail || ''
+  const footerTagline = 'The authority set for the man who has decided that his standard is non-negotiable.'
   const socialLinks = [
     { name: 'Instagram', href: settings?.instagramUrl || '', icon: 'instagram' },
     { name: 'X', href: settings?.twitterUrl || '', icon: 'x' },
@@ -52,8 +54,16 @@ export function Footer() {
               </span>
             </Link>
             <p className="font-body text-afinju-cream/45 text-base leading-relaxed max-w-xs mb-6">
-              The authority set for the man who has decided that his standard is non-negotiable.
+              {footerTagline}
             </p>
+            {supportEmail && (
+              <a
+                href={`mailto:${supportEmail}`}
+                className="mb-6 font-sans text-xs tracking-[0.18em] uppercase text-gold/70 hover:text-gold transition-colors"
+              >
+                {supportEmail}
+              </a>
+            )}
             <div className="flex items-center gap-3">
               {socialLinks.map((item) => (
                 item.href ? (

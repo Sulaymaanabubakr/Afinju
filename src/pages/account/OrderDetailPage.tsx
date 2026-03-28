@@ -13,7 +13,7 @@ export default function OrderDetailPage() {
     queryKey: ['order', id],
     queryFn: () => getOrderById(id!),
     enabled: !!id,
-    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
   })
 
   if (isLoading) {

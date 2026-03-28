@@ -50,7 +50,6 @@ import AdminInventoryPage from '@/pages/admin/AdminInventoryPage'
 import AdminProductFormPage from '@/pages/admin/AdminProductFormPage'
 import AdminCustomersPage from '@/pages/admin/AdminCustomersPage'
 import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
-import AdminContentPage from '@/pages/admin/AdminContentPage'
 import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage'
 
 import NotFoundPage from '@/pages/NotFoundPage'
@@ -159,7 +158,6 @@ export default function App() {
                 <Route path="products/:id/edit" element={<AdminProductFormPage />} />
                 <Route path="customers" element={<AdminCustomersPage />} />
                 <Route path="settings" element={<RequireAdmin><AdminSettingsPage /></RequireAdmin>} />
-                <Route path="content" element={<AdminContentPage />} />
                 <Route path="analytics" element={<AdminAnalyticsPage />} />
               </Route>
 

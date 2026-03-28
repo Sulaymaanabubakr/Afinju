@@ -1,7 +1,8 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
-import { sendEmail, buildEmailHtml } from '../_shared/email.ts'
+import { sendEmail, buildEmailHtml, buildOrderDetailsHtml } from '../_shared/email.ts'
+import { getAdminBaseUrl, getMailSender } from '../_shared/config.ts'
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -84,12 +85,18 @@ serve(async (req) => {
 
     if (updateError) throw updateError
 
+    const paidOrder = {
+      ...order,
+      payment_reference: txRef || String(transactionId),
+      payment_status: 'paid',
+      status: 'paid',
+    }
+
     // Send notifications
     const brevoApiKey = Deno.env.get('BREVO_API_KEY')
     const adminEmail = Deno.env.get('ADMIN_EMAIL')
     if (brevoApiKey) {
-      const fromEmail = 'noreply@afinju247.com'
-      const fromName = 'AFINJU'
+      const { fromEmail, fromName } = getMailSender()
 
       // Notify Customer
       if (order.customer_email) {
@@ -108,6 +115,7 @@ serve(async (req) => {
                 'Our team is now preparing your request.',
               ],
               orderNumber: order.order_number,
+              detailsHtml: buildOrderDetailsHtml(paidOrder),
             }),
           })
         } catch (err) {
@@ -132,8 +140,9 @@ serve(async (req) => {
                 `Total received: N${order.total.toLocaleString()}`,
               ],
               orderNumber: order.order_number,
+              detailsHtml: buildOrderDetailsHtml(paidOrder),
               ctaLabel: 'View Order',
-              ctaUrl: `https://afinju247.com/admin/orders/${orderId}`,
+              ctaUrl: `${getAdminBaseUrl()}/orders/${orderId}`,
             }),
           })
         } catch (err) {

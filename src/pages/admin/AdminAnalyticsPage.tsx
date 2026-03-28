@@ -48,7 +48,11 @@ export default function AdminAnalyticsPage() {
   const exportMenuRef = useRef<HTMLDivElement | null>(null)
   useDismissiblePanel(exportMenuRef, exportOpen, () => setExportOpen(false))
 
-  const { data: orders } = useQuery({ queryKey: ['admin-orders'], queryFn: () => getAllOrders() })
+  const { data: orders } = useQuery({
+    queryKey: ['admin-orders'],
+    queryFn: () => getAllOrders(),
+    refetchOnWindowFocus: true,
+  })
 
   const filteredOrders = useMemo(() => {
     const all = orders || []

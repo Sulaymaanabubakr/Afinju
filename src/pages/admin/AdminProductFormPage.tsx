@@ -177,8 +177,21 @@ export default function AdminProductFormPage() {
             />
           </F>
         </div>
+        <div className="bg-black/5 p-4 mb-2 space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="font-sans text-xs text-afinju-black/60 uppercase tracking-wider">Inventory Status</span>
+            <span className={`font-sans text-xs font-bold uppercase ${Math.max(0, form.launchEditionLimit - form.soldCount) <= 3 ? 'text-red-600' : 'text-gold-dark'}`}>
+              {Math.max(0, form.launchEditionLimit - form.soldCount)} Units Remaining
+            </span>
+          </div>
+          <p className="font-sans text-[10px] text-afinju-black/40 leading-relaxed">
+            The remaining count is calculated as (Edition Limit - Units Sold). 
+            Units Sold increments automatically when customers pay, but you can override it here.
+          </p>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
-          <F label="Edition Limit">
+          <F label="Edition Limit (Total Stock)">
             <input
               type="number"
               value={form.launchEditionLimit}
@@ -186,7 +199,7 @@ export default function AdminProductFormPage() {
               className={inputClass}
             />
           </F>
-          <F label="Units Sold">
+          <F label="Units Sold (Adjustment)">
             <input
               type="number"
               value={form.soldCount}

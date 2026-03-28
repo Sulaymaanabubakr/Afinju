@@ -31,10 +31,13 @@ export default function AdminOverviewPage() {
 
   const paidOrders = orders?.filter(o => o.paymentStatus === 'paid') || []
   const revenue = paidOrders.reduce((s, o) => s + o.total, 0)
-  const product = products?.[0]
-  const remaining = product
-    ? product.inventory.launchEditionLimit - product.inventory.soldCount
-    : 10
+  
+  // Specifically find the Launch Edition set if it exists, otherwise use the first product
+  const launchProduct = products?.find(p => p.slug.includes('launch-edition')) || products?.[0]
+  
+  const limitValue = launchProduct?.inventory.launchEditionLimit || 10
+  const soldValue = launchProduct?.inventory.soldCount || 0
+  const remaining = Math.max(0, limitValue - soldValue)
 
   const recentOrders = (orders || []).slice(0, 5)
 
@@ -63,9 +66,9 @@ export default function AdminOverviewPage() {
         />
         <StatCard
           label="Units Remaining"
-          value={`${remaining}/10`}
+          value={`${remaining} / ${limitValue}`}
           icon={Package}
-          sub="Launch edition"
+          sub={launchProduct ? launchProduct.name.split('—')[0].trim() : "Launch edition"}
           href="/admin/products"
         />
         <StatCard
@@ -82,13 +85,13 @@ export default function AdminOverviewPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-heading text-lg">Launch Edition Progress</h2>
           <span className="font-sans text-xs text-afinju-black/40">
-            {product?.inventory.soldCount || 0} / {product?.inventory.launchEditionLimit || 10} claimed
+            {soldValue} / {limitValue} claimed
           </span>
         </div>
         <div className="h-2 bg-black/5 rounded-full overflow-hidden">
           <div
             className="h-full bg-gold transition-all duration-700"
-            style={{ width: `${((product?.inventory.soldCount || 0) / (product?.inventory.launchEditionLimit || 10)) * 100}%` }}
+            style={{ width: `${(soldValue / limitValue) * 100}%` }}
           />
         </div>
         <p className="font-sans text-xs text-afinju-black/40 mt-2">

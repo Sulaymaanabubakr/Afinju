@@ -4,14 +4,14 @@ import { corsHeaders } from '../_shared/cors.ts'
 import { sendEmail, buildEmailHtml } from '../_shared/email.ts'
 
 const ORDER_STATUS_MESSAGES: Record<string, string> = {
-  paid: 'Your payment has been successfully confirmed. We are now processing your order.',
-  confirmed: 'Your order has been confirmed and is being prepared.',
-  packaging: 'We are currently packaging your authority set with care.',
-  dispatched: 'Your order has been dispatched! It is on its way to you.',
-  out_for_delivery: 'Our delivery partner is currently out with your package.',
-  delivered: 'Your Afínjú Authority Set has been delivered. Welcome to the club.',
-  cancelled: 'Your order has been cancelled.',
-  refunded: 'Your refund has been processed.',
+  paid: 'Your commitment to the Afínjú brand has been recognized. Your payment has been successfully confirmed, and your Authority Set is now entering our artisanal workflow.',
+  confirmed: 'Welcome to the club. Your order has been officially confirmed. Our team is now meticulously preparing your items for the next stage of our process.',
+  packaging: 'Our artisans are currently preparing your Authority Set with the utmost care. Every piece is being inspected and packaged in our signature luxury presentation to ensure it arrives in perfect condition.',
+  dispatched: 'Your Afínjú Authority Set has begun its journey. It has been securely dispatched and is currently in transit to your specified location. Prepare to command your space.',
+  out_for_delivery: 'The final leg of the journey has begun. Our delivery partner is currently on-route to your location. Your authority is about to arrive.',
+  delivered: 'The wait is over. Your Afínjú Authority Set has been delivered. We are honored to have you as a member of the elite who value true quality and style.',
+  cancelled: 'We regret to inform you that your order has been cancelled. If you believe this is a mistake or require further assistance, our concierge team is standing by.',
+  refunded: 'Your refund has been fully processed. The funds will be reflected in your original payment method within the standard banking timeframe.',
 }
 
 serve(async (req) => {

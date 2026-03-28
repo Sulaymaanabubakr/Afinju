@@ -9,8 +9,10 @@ import toast from 'react-hot-toast'
 import { useMemo, useRef, useState } from 'react'
 import { exportDatasetAs, type ExportFormat } from '@/lib/adminExport'
 import { useDismissiblePanel } from '@/hooks/useDismissiblePanel'
+import { useConfirm } from '@/components/shared/ConfirmProvider'
 
 export default function AdminProductsPage() {
+  const confirm = useConfirm()
   const [exportOpen, setExportOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
   const exportMenuRef = useRef<HTMLDivElement | null>(null)
@@ -137,9 +139,14 @@ export default function AdminProductsPage() {
                   </Link>
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!confirm(`Delete "${product.name}" permanently?`)) return
-                      deleteMutation.mutate(product.id)
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: 'Delete Product',
+                        message: `Are you sure you want to permanently delete "${product.name}"? This action cannot be undone.`,
+                        confirmText: 'Delete',
+                        variant: 'danger'
+                      })
+                      if (ok) deleteMutation.mutate(product.id)
                     }}
                     disabled={deleteMutation.isPending}
                     className="flex items-center gap-1.5 border border-red-200 text-red-700 px-3 py-2 font-sans text-xs hover:bg-red-50 transition-colors disabled:opacity-50"

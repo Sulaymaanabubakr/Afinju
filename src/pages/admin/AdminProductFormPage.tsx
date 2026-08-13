@@ -112,12 +112,14 @@ export default function AdminProductFormPage() {
     setUploadingImg(true)
     try {
       const { url } = await uploadToCloudinary(file, 'products')
-      setImages(prev => [...prev, { url, alt: form.name }])
-      toast.success('Image uploaded.')
-    } catch {
-      toast.error('Image upload failed.')
+      setImages(prev => [...prev, { url, alt: form.name || 'Product Image' }])
+      toast.success('Image added successfully.')
+    } catch (err: any) {
+      console.error('Image upload handler error:', err)
+      toast.error(err?.message || 'Image upload failed.')
     } finally {
       setUploadingImg(false)
+      e.target.value = ''
     }
   }
 

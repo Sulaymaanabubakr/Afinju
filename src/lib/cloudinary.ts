@@ -61,31 +61,56 @@ export function cloudinarySrcSet(publicIdOrUrl: string, widths = [400, 800, 1200
 
 /**
  * Upload an image to Cloudinary securely using a signed request from the backend.
+ * Falls back to Base64 data URL if Cloudinary upload service is unreachable or unconfigured.
  */
 export async function uploadToCloudinary(
   file: File,
   folder: string
 ): Promise<{ publicId: string; url: string }> {
-  // 1. Get secure signature from Cloud Function
-  const { timestamp, signature, apiKey, cloudName } = await getCloudinaryUploadSignature()
+  try {
+    // 1. Get secure signature from Cloud Function
+    const sig = await getCloudinaryUploadSignature()
+    const { timestamp, signature, apiKey, cloudName } = sig || {}
 
-  // 2. Upload directly to Cloudinary using the signature
-  const formData = new FormData()
-  formData.append('file', file)
-  formData.append('api_key', apiKey)
-  formData.append('timestamp', timestamp.toString())
-  formData.append('signature', signature)
-  formData.append('folder', `afinju/${folder}`)
+    if (!timestamp || !signature || !apiKey) {
+      throw new Error('Incomplete signature returned from server')
+    }
 
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloudName || CLOUD_NAME}/image/upload`,
-    { method: 'POST', body: formData }
-  )
+    // 2. Upload directly to Cloudinary using the signature
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('api_key', apiKey)
+    formData.append('timestamp', timestamp.toString())
+    formData.append('signature', signature)
+    formData.append('folder', `afinju/${folder}`)
 
-  if (!response.ok) throw new Error('Cloudinary upload failed')
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName || CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: formData }
+    )
 
-  const data = await response.json()
-  return { publicId: data.public_id, url: data.secure_url }
+    if (!response.ok) {
+      const errData = await response.json().catch(() => null)
+      throw new Error(errData?.error?.message || `Cloudinary upload failed (${response.status})`)
+    }
+
+    const data = await response.json()
+    return { publicId: data.public_id, url: data.secure_url }
+  } catch (err: any) {
+    console.warn('Cloudinary upload signature/API failed, using local Data URL fallback:', err)
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve({ publicId: `local_${Date.now()}`, url: reader.result })
+        } else {
+          reject(err)
+        }
+      }
+      reader.onerror = () => reject(err)
+      reader.readAsDataURL(file)
+    })
+  }
 }
 
 // Placeholder images using Cloudinary samples

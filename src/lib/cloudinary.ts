@@ -61,12 +61,15 @@ export function cloudinarySrcSet(publicIdOrUrl: string, widths = [400, 800, 1200
 
 /**
  * Upload an image to Cloudinary securely using a signed request from the backend.
- * Falls back to Base64 data URL if Cloudinary upload service is unreachable or unconfigured.
  */
 export async function uploadToCloudinary(
   file: File,
   folder: string
 ): Promise<{ publicId: string; url: string }> {
+  if (!file.type.startsWith('image/')) throw new Error('Please select an image file.')
+  if (file.size > 10 * 1024 * 1024) throw new Error('Image must be smaller than 10 MB.')
+  if (!CLOUD_NAME) throw new Error('Cloudinary is not configured for this deployment.')
+
   try {
     // 1. Get secure signature from Cloud Function
     const sig = await getCloudinaryUploadSignature()
@@ -97,24 +100,13 @@ export async function uploadToCloudinary(
     const data = await response.json()
     return { publicId: data.public_id, url: data.secure_url }
   } catch (err: any) {
-    console.warn('Cloudinary upload signature/API failed, using local Data URL fallback:', err)
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          resolve({ publicId: `local_${Date.now()}`, url: reader.result })
-        } else {
-          reject(err)
-        }
-      }
-      reader.onerror = () => reject(err)
-      reader.readAsDataURL(file)
-    })
+    console.error('Cloudinary upload failed:', err)
+    throw err instanceof Error ? err : new Error('Image upload failed.')
   }
 }
 
 // Placeholder images using Cloudinary samples
 export const PLACEHOLDER = {
-  product: 'https://res.cloudinary.com/demo/image/upload/w_800,h_1000,c_fill,q_auto,f_auto/sample',
-  banner: 'https://res.cloudinary.com/demo/image/upload/w_1600,h_900,c_fill,q_auto,f_auto/sample',
+  product: '/products/afinju-new-01.jpeg',
+  banner: '/products/afinju-new-02.jpeg',
 }

@@ -24,7 +24,7 @@ export default function AdminSettingsPage() {
   const [form, setForm] = useState({
     whatsappNumber: '2347071861932',
     supportEmail: '',
-    shippingFee: 5000,
+    shippingFee: '5000',
     announcementEnabled: true,
     announcementText: 'Only Ten Men Will Own This Launch Edition · Once It Is Closed, It Is Closed · Afínjú - Authority Set',
     instagramUrl: '',
@@ -35,11 +35,11 @@ export default function AdminSettingsPage() {
   })
 
   useEffect(() => {
-    if (settings) setForm(prev => ({ ...prev, ...settings }))
+    if (settings) setForm(prev => ({ ...prev, ...settings, shippingFee: String(settings.shippingFee ?? 5000) }))
   }, [settings])
 
   const saveMutation = useMutation({
-    mutationFn: () => updateStoreSettings(form),
+    mutationFn: () => updateStoreSettings({ ...form, shippingFee: Number(form.shippingFee) }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['store-settings'] })
       toast.success('Settings saved.')
@@ -75,7 +75,7 @@ export default function AdminSettingsPage() {
           <input value={form.whatsappNumber} onChange={e => setForm(f => ({ ...f, whatsappNumber: e.target.value }))} className={inputClass} />
         </SettingsField>
         <SettingsField label="Flat Shipping Fee (₦)">
-          <input type="number" value={form.shippingFee} onChange={e => setForm(f => ({ ...f, shippingFee: Number(e.target.value) }))} className={inputClass} />
+          <input type="number" value={form.shippingFee} onChange={e => setForm(f => ({ ...f, shippingFee: e.target.value }))} className={inputClass} />
         </SettingsField>
         <SettingsField label="Scrolling Banner">
           <label className="flex items-center gap-3 font-sans text-sm text-afinju-black/70">

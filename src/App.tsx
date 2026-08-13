@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion'
 import { Toaster } from 'react-hot-toast'
@@ -42,15 +42,15 @@ import OrderConfirmationPage from '@/pages/OrderConfirmationPage'
 
 // Admin pages
 import AdminLayout from '@/pages/admin/AdminLayout'
-import AdminOverviewPage from '@/pages/admin/AdminOverviewPage'
-import AdminOrdersPage from '@/pages/admin/AdminOrdersPage'
-import AdminOrderDetailPage from '@/pages/admin/AdminOrderDetailPage'
-import AdminProductsPage from '@/pages/admin/AdminProductsPage'
-import AdminInventoryPage from '@/pages/admin/AdminInventoryPage'
-import AdminProductFormPage from '@/pages/admin/AdminProductFormPage'
-import AdminCustomersPage from '@/pages/admin/AdminCustomersPage'
-import AdminSettingsPage from '@/pages/admin/AdminSettingsPage'
-import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage'
+const AdminOverviewPage = lazy(() => import('@/pages/admin/AdminOverviewPage'))
+const AdminOrdersPage = lazy(() => import('@/pages/admin/AdminOrdersPage'))
+const AdminOrderDetailPage = lazy(() => import('@/pages/admin/AdminOrderDetailPage'))
+const AdminProductsPage = lazy(() => import('@/pages/admin/AdminProductsPage'))
+const AdminInventoryPage = lazy(() => import('@/pages/admin/AdminInventoryPage'))
+const AdminProductFormPage = lazy(() => import('@/pages/admin/AdminProductFormPage'))
+const AdminCustomersPage = lazy(() => import('@/pages/admin/AdminCustomersPage'))
+const AdminSettingsPage = lazy(() => import('@/pages/admin/AdminSettingsPage'))
+const AdminAnalyticsPage = lazy(() => import('@/pages/admin/AdminAnalyticsPage'))
 
 import NotFoundPage from '@/pages/NotFoundPage'
 
@@ -88,36 +88,11 @@ function HeaderOnlyLayout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const location = useLocation()
+  const isAdminRoute = location.pathname.startsWith('/admin')
 
-  return (
-    <MotionConfig reducedMotion="never">
-      <AuthProvider>
-        <ConfirmProvider>
-          <ScrollToTop />
-          <FlutterwaveScript />
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              style: {
-                fontFamily: "'Outfit', sans-serif",
-                fontSize: '13px',
-                letterSpacing: '0.02em',
-                borderRadius: '2px',
-                background: '#0A0A0A',
-                color: '#F5F0E8',
-              },
-            }}
-          />
-
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <Routes location={location}>
+  const routes = (
+    <Suspense fallback={<div className="min-h-screen bg-[#F8F7F5]" aria-label="Loading page" />}>
+      <Routes location={location}>
               {/* Public */}
               <Route path="/" element={<PublicLayout><HomePage /></PublicLayout>} />
               <Route path="/shop" element={<PublicLayout><ShopPage /></PublicLayout>} />
@@ -162,9 +137,43 @@ export default function App() {
               </Route>
 
                 <Route path="*" element={<PublicLayout><NotFoundPage /></PublicLayout>} />
-              </Routes>
-            </motion.div>
-          </AnimatePresence>
+      </Routes>
+    </Suspense>
+  )
+
+  return (
+    <MotionConfig reducedMotion="never">
+      <AuthProvider>
+        <ConfirmProvider>
+          <ScrollToTop />
+          <FlutterwaveScript />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: '13px',
+                letterSpacing: '0.02em',
+                borderRadius: '2px',
+                background: '#0A0A0A',
+                color: '#F5F0E8',
+              },
+            }}
+          />
+
+          {isAdminRoute ? routes : (
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {routes}
+              </motion.div>
+            </AnimatePresence>
+          )}
         </ConfirmProvider>
       </AuthProvider>
     </MotionConfig>

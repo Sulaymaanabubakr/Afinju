@@ -55,7 +55,7 @@ async function main() {
   console.log('🌱  AFINJU Upload & Seed\n')
 
   const productsDir = path.join(projectRoot, 'public', 'products')
-  const files = fs.readdirSync(productsDir).filter(f => f.endsWith('.png'))
+  const files = fs.readdirSync(productsDir).filter(f => /^afinju-new-0[1-8]\.jpeg$/.test(f)).sort()
   console.log(`📁  Found ${files.length} images in public/products/\n`)
 
   // Upload all images and build a URL map
@@ -69,7 +69,23 @@ async function main() {
   console.log(`\n✅  All ${files.length} images uploaded to Cloudinary\n`)
 
   // ── Image URL helpers ─────────────────────────────────────────────────────
-  const img = (filename: string) => urlMap[filename] || `/products/${filename}`
+  const legacyImageMap: Record<string, string> = {
+    'afinju_red_hero_1773322751923.png': 'afinju-new-01.jpeg',
+    'afinju_red_detail_1773322771608.png': 'afinju-new-02.jpeg',
+    'afinju_red_lifestyle_1773322801188.png': 'afinju-new-03.jpeg',
+    'afinju_blue_hero_1773322816739.png': 'afinju-new-04.jpeg',
+    'afinju_blue_detail_1773322831998.png': 'afinju-new-05.jpeg',
+    'afinju_blue_lifestyle_1773322849784.png': 'afinju-new-06.jpeg',
+    'afinju_black_hero_1773322894522.png': 'afinju-new-07.jpeg',
+    'afinju_black_detail_1773322910632.png': 'afinju-new-08.jpeg',
+    'afinju_black_lifestyle_1773322925749.png': 'afinju-new-08.jpeg',
+    'afinju_brown_hero_1773322947363.png': 'afinju-new-01.jpeg',
+    'afinju_brown_detail_1773322964094.png': 'afinju-new-02.jpeg',
+  }
+  const img = (filename: string) => {
+    const replacement = legacyImageMap[filename] || filename
+    return urlMap[replacement] || `/products/${replacement}`
+  }
 
   // ── Products ──────────────────────────────────────────────────────────────
   const products = [
@@ -339,7 +355,7 @@ async function main() {
     data: {
       announcementBar: {
         enabled: true,
-        text: 'Only Ten Men Will Own This Launch Edition · Once It Is Closed, It Is Closed · AFINJU — Authority Set · Launch Price ₦299,000',
+        text: 'Only Ten Men Will Own This Launch Edition · Inaugural Launch Price ₦299,000 · Regular Price ₦349,000 · Once It Is Closed, It Is Closed · AFINJU — Authority Set',
       },
       hero: {
         headline: 'AFINJU is not for you if you cannot handle attention.',

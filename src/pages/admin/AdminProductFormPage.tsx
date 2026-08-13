@@ -1,13 +1,21 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Trash2, Upload, Loader2 } from 'lucide-react'
 import { getProductById, upsertProduct } from '@/lib/db'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 import { PRODUCT_COLORS } from '@/types'
-import { slugify } from '@/lib/utils'
+import { friendlyErrorMessage, slugify } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/form-elements'
+
+function parseNonNegativeNumber(value: string, label: string, allowZero = true): number {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || (!allowZero && parsed <= 0) || (allowZero && parsed < 0)) {
+    throw new Error(`${label} must be a valid ${allowZero ? 'non-negative' : 'positive'} number.`)
+  }
+  return parsed
+}
 
 function F({ label, children, className = "" }: { label: string; children: React.ReactNode, className?: string }) {
   return (
@@ -38,32 +46,36 @@ export default function AdminProductFormPage() {
     description: '',
     features: [''],
     items: [''],
-    price: 299000,
-    compareAtPrice: 349000,
+    price: '299000',
+    compareAtPrice: '349000',
     colors: PRODUCT_COLORS as string[],
     status: 'active' as 'active' | 'draft',
     isLimitedEdition: false,
-    launchEditionLimit: 10,
-    soldCount: 0,
+    launchEditionLimit: '10',
+    soldCount: '0',
   })
   const [images, setImages] = useState<Array<{ url: string; alt: string }>>([])
   const [uploadingImg, setUploadingImg] = useState(false)
+  const initializedProductId = useRef<string | null>(null)
 
   useEffect(() => {
-    if (product) {
+    // Do not rehydrate the form after an upload if React Query delivers the
+    // same product again while this page is open.
+    if (product && initializedProductId.current !== product.id) {
+      initializedProductId.current = product.id
       setForm({
         name: product.name,
         slug: product.slug,
         description: product.description,
         features: product.features?.length ? product.features : [''],
         items: product.items?.length ? product.items : [''],
-        price: product.price,
-        compareAtPrice: product.compareAtPrice,
+        price: String(product.price ?? ''),
+        compareAtPrice: String(product.compareAtPrice ?? ''),
         colors: product.colors as string[],
         status: product.status,
         isLimitedEdition: !!product.isLimitedEdition,
-        launchEditionLimit: product.inventory.launchEditionLimit,
-        soldCount: product.inventory.soldCount,
+        launchEditionLimit: String(product.inventory.launchEditionLimit ?? ''),
+        soldCount: String(product.inventory.soldCount ?? ''),
       })
       setImages(product.images)
     }
@@ -78,14 +90,14 @@ export default function AdminProductFormPage() {
         description: form.description,
         features: form.features.filter(Boolean),
         items: form.items.filter(Boolean),
-        price: form.price,
-        compareAtPrice: form.compareAtPrice,
+        price: parseNonNegativeNumber(form.price, 'Price', false),
+        compareAtPrice: parseNonNegativeNumber(form.compareAtPrice, 'Compare at price'),
         currency: 'NGN' as const,
         colors: form.colors.filter(Boolean) as any,
         images,
         inventory: {
-          launchEditionLimit: form.launchEditionLimit,
-          soldCount: form.soldCount,
+          launchEditionLimit: parseNonNegativeNumber(form.launchEditionLimit, 'Total stock'),
+          soldCount: parseNonNegativeNumber(form.soldCount, 'Sold units'),
           allowBackorder: false,
         },
         status: form.status,
@@ -103,20 +115,40 @@ export default function AdminProductFormPage() {
       toast.success(isEdit ? 'Product updated.' : 'Product created.')
       navigate('/admin/products')
     },
-    onError: () => toast.error('Failed to save product.'),
+    onError: (error: Error) => {
+      console.error('Product save failed:', error)
+      toast.error(friendlyErrorMessage(error, 'Failed to save product.'))
+    },
   })
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
     setUploadingImg(true)
     try {
-      const { url } = await uploadToCloudinary(file, 'products')
-      setImages(prev => [...prev, { url, alt: form.name || 'Product Image' }])
-      toast.success('Image added successfully.')
+      const uploaded: Array<{ url: string; publicId: string; alt: string }> = []
+      const failed: string[] = []
+
+      for (const file of files) {
+        try {
+          const { url, publicId } = await uploadToCloudinary(file, 'products')
+          uploaded.push({ url, publicId, alt: form.name || 'Product Image' })
+        } catch {
+          failed.push(file.name)
+        }
+      }
+
+      if (uploaded.length) setImages(prev => [...prev, ...uploaded])
+      if (uploaded.length && !failed.length) {
+        toast.success(`${uploaded.length} image${uploaded.length === 1 ? '' : 's'} added successfully.`)
+      } else if (uploaded.length) {
+        toast.success(`${uploaded.length} image${uploaded.length === 1 ? '' : 's'} added; ${failed.length} failed.`)
+      } else {
+        toast.error('No images could be uploaded.')
+      }
     } catch (err: any) {
       console.error('Image upload handler error:', err)
-      toast.error(err?.message || 'Image upload failed.')
+      toast.error(friendlyErrorMessage(err, 'Image upload failed.'))
     } finally {
       setUploadingImg(false)
       e.target.value = ''
@@ -172,7 +204,7 @@ export default function AdminProductFormPage() {
             <input
               type="number"
               value={form.price}
-              onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))}
+              onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
               className={inputClass}
             />
           </F>
@@ -180,7 +212,7 @@ export default function AdminProductFormPage() {
             <input
               type="number"
               value={form.compareAtPrice}
-              onChange={e => setForm(f => ({ ...f, compareAtPrice: Number(e.target.value) }))}
+              onChange={e => setForm(f => ({ ...f, compareAtPrice: e.target.value }))}
               className={inputClass}
             />
           </F>
@@ -188,8 +220,8 @@ export default function AdminProductFormPage() {
         <div className="bg-black/5 p-4 mb-2 space-y-2">
           <div className="flex justify-between items-center">
             <span className="font-sans text-xs text-afinju-black/60 uppercase tracking-wider">Inventory Status</span>
-            <span className={`font-sans text-xs font-bold uppercase ${Math.max(0, form.launchEditionLimit - form.soldCount) <= 3 ? 'text-red-600' : 'text-gold-dark'}`}>
-              {Math.max(0, form.launchEditionLimit - form.soldCount)} Units Remaining
+            <span className={`font-sans text-xs font-bold uppercase ${Math.max(0, Number(form.launchEditionLimit) - Number(form.soldCount)) <= 3 ? 'text-red-600' : 'text-gold-dark'}`}>
+              {Math.max(0, Number(form.launchEditionLimit) - Number(form.soldCount))} Units Remaining
             </span>
           </div>
           <p className="font-sans text-[10px] text-afinju-black/40 leading-relaxed">
@@ -203,7 +235,7 @@ export default function AdminProductFormPage() {
             <input
               type="number"
               value={form.launchEditionLimit}
-              onChange={e => setForm(f => ({ ...f, launchEditionLimit: Number(e.target.value) }))}
+              onChange={e => setForm(f => ({ ...f, launchEditionLimit: e.target.value }))}
               className={inputClass}
             />
           </F>
@@ -211,7 +243,7 @@ export default function AdminProductFormPage() {
             <input
               type="number"
               value={form.soldCount}
-              onChange={e => setForm(f => ({ ...f, soldCount: Number(e.target.value) }))}
+              onChange={e => setForm(f => ({ ...f, soldCount: e.target.value }))}
               className={inputClass}
             />
           </F>
@@ -353,7 +385,7 @@ export default function AdminProductFormPage() {
                 <p className="font-sans text-[10px] text-afinju-black/30 mt-2 tracking-wider">Upload</p>
               </>
             )}
-            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploadingImg} />
+            <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={uploadingImg} />
           </label>
         </div>
       </div>

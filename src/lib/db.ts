@@ -156,8 +156,14 @@ export async function upsertProduct(product: Partial<Product> & { id?: string })
   }
 
   if (product.id) {
-    const { error } = await supabase.from('products').update(removeUndefined(dbPayload)).eq('id', product.id)
+    const { data, error } = await supabase
+      .from('products')
+      .update(removeUndefined(dbPayload))
+      .eq('id', product.id)
+      .select('id, images')
+      .single()
     if (error) throw error
+    if (!data) throw new Error('Product was not saved. Please refresh and try again.')
     return product.id
   }
   
@@ -386,9 +392,29 @@ export async function getRemainingUnits(productId: string): Promise<number> {
 
 // ─── UPLOADS ─────────────────────────────────────────────────────────────────
 export async function getCloudinaryUploadSignature() {
-  const { data, error } = await supabase.functions.invoke('cloudinary-sign')
-  if (error) throw new Error(error.message)
-  return data
+  const invoke = () => supabase.functions.invoke('cloudinary-sign')
+  let result = await invoke()
+  const status = (result.error as any)?.context?.status
+
+  if (status === 401) {
+    const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession()
+    if (!refreshError && refreshed.session) result = await invoke()
+  }
+
+  if (result.error) {
+    const response = (result.error as any).context
+    let detail = ''
+    if (response?.clone) detail = await response.clone().text().catch(() => '')
+    try {
+      const parsed = detail ? JSON.parse(detail) : null
+      detail = parsed?.error || parsed?.message || detail
+    } catch {
+      // Keep the plain response text when it is not JSON.
+    }
+    const message = detail || result.error.message || 'Unable to obtain the Cloudinary upload signature.'
+    throw new Error(message)
+  }
+  return result.data
 }
 
 // ─── TEST SYSTEM ─────────────────────────────────────────────────────────────

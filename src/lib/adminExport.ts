@@ -45,6 +45,32 @@ function buildTableHtml(title: string, headers: string[], rows: Array<Array<stri
   `
 }
 
+function downloadText(fileName: string, content: string, type: string): void {
+  const blob = new Blob([content], { type })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
+function buildSpreadsheetXml(title: string, headers: string[], rows: Array<Array<string | number>>): string {
+  const cell = (value: string | number) => `<Cell><Data ss:Type="String">${escapeHtml(value)}</Data></Cell>`
+  const row = (values: Array<string | number>) => `<Row>${values.map(cell).join('')}</Row>`
+  return `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Worksheet ss:Name="Export">
+    <Table>
+      <Row><Cell><Data ss:Type="String">${escapeHtml(title)}</Data></Cell></Row>
+      ${row(headers)}
+      ${rows.map(row).join('')}
+    </Table>
+  </Worksheet>
+</Workbook>`
+}
+
 export async function exportDatasetAs(formatType: ExportFormat, args: DatasetExportArgs): Promise<void> {
   const { fileBase, title, headers, rows } = args
   const tableHtml = buildTableHtml(title, headers, rows)
@@ -64,12 +90,7 @@ export async function exportDatasetAs(formatType: ExportFormat, args: DatasetExp
   }
 
   if (formatType === 'excel') {
-    const XLSX = await import('xlsx')
-    const data = rows.map((r) => Object.fromEntries(headers.map((h, i) => [h, r[i] ?? ''])))
-    const worksheet = XLSX.utils.json_to_sheet(data)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Export')
-    XLSX.writeFile(workbook, `${fileBase}.xlsx`)
+    downloadText(`${fileBase}.xls`, buildSpreadsheetXml(title, headers, rows), 'application/vnd.ms-excel')
     return
   }
 
@@ -124,4 +145,3 @@ export async function exportDatasetAs(formatType: ExportFormat, args: DatasetExp
   link.download = `${fileBase}.${ext}`
   link.click()
 }
-

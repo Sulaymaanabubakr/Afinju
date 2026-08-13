@@ -63,6 +63,17 @@ export function truncate(text: string, maxLength: number): string {
   return text.slice(0, maxLength).trim() + '…'
 }
 
+export function friendlyErrorMessage(error: unknown, fallback = 'Something went wrong. Please try again.'): string {
+  const raw = error instanceof Error ? error.message : typeof error === 'string' ? error : ''
+  const normalized = raw.toLowerCase()
+  if (!raw) return fallback
+  if (normalized.includes('is_limited_edition') || normalized.includes('schema cache')) return 'Product service is updating. Please refresh and try again.'
+  if (normalized.includes('cloudinary') || normalized.includes('upload')) return 'Image upload failed. Please try again.'
+  if (normalized.includes('session') || normalized.includes('authorization') || normalized.includes('unauthorized')) return 'Your session expired. Please sign in again.'
+  if (normalized.includes('network') || normalized.includes('edge function') || normalized.includes('fetch')) return 'Service temporarily unavailable. Please refresh and try again.'
+  return fallback
+}
+
 // Alias for formatNGN — used across pages
 export const formatPrice = formatNGN
 

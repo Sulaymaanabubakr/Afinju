@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { supabase } from '@/lib/supabase'
+import { friendlyErrorMessage } from '@/lib/utils'
 import { Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -40,8 +41,8 @@ export default function SignupPage() {
       toast.success('Account created. Welcome to Afínjú.')
       navigate('/account')
     } catch (err: any) {
-      const msg = err.message || 'Registration failed. Please try again.'
-      toast.error(msg)
+      console.error('Registration failed:', err)
+      toast.error(friendlyErrorMessage(err, 'Registration failed. Please try again.'))
     } finally {
       setLoading(false)
     }

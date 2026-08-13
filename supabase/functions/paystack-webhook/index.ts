@@ -43,14 +43,33 @@ serve(async (req) => {
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         )
 
-        const { data: order } = await supabaseAdmin.from('orders').select('payment_status').eq('id', orderId).single()
+        const paystackSecret = Deno.env.get('PAYSTACK_SECRET_KEY')
+        if (!paystackSecret) return new Response('Server misconfigured', { status: 500 })
+        const verifyRes = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
+          headers: { Authorization: `Bearer ${paystackSecret}` },
+        })
+        const verifyData = await verifyRes.json()
+        if (!verifyRes.ok || verifyData.status !== true || verifyData.data?.status !== 'success') {
+          return new Response('Verification failed', { status: 400 })
+        }
+
+        const { data: order } = await supabaseAdmin.from('orders').select('*').eq('id', orderId).single()
         
         if (order && order.payment_status !== 'paid') {
-          await supabaseAdmin.from('orders').update({
-            payment_status: 'paid',
-            payment_reference: reference,
-            status: 'paid',
-          }).eq('id', orderId)
+          if (verifyData.data.metadata?.orderId && verifyData.data.metadata.orderId !== orderId) {
+            return new Response('Payment order mismatch', { status: 400 })
+          }
+          if (verifyData.data.currency !== 'NGN' || Number(verifyData.data.amount) !== Math.round(Number(order.total) * 100)) {
+            return new Response('Payment amount or currency mismatch', { status: 400 })
+          }
+
+          const { data: finalized, error: finalizeError } = await supabaseAdmin.rpc('finalize_paid_order', {
+            p_order_id: orderId,
+            p_reference: reference,
+            p_source: 'paystack_webhook',
+          })
+          if (finalizeError) throw finalizeError
+          if (!finalized) return new Response('OK', { status: 200 })
 
           // Send notifications
           const brevoApiKey = Deno.env.get('BREVO_API_KEY')

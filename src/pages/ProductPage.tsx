@@ -203,12 +203,13 @@ export default function ProductPage() {
             )}
             <h1 className="font-heading text-3xl md:text-4xl leading-tight mb-4">{product.name}</h1>
             <div className="flex items-center gap-4">
-              <span className="font-sans text-2xl font-medium">{formatPrice(product.price)}</span>
+              <span className="font-sans text-2xl font-medium" aria-label="Inaugural launch price">{formatPrice(product.price)}</span>
               {product.compareAtPrice > product.price && (
                 <>
                   <span className="font-sans text-lg text-afinju-black/40 line-through">
                     {formatPrice(product.compareAtPrice)}
                   </span>
+                  <span className="font-sans text-[10px] uppercase tracking-wider text-afinju-black/40">Regular Price</span>
                   <span className="bg-gold/10 text-gold-dark font-sans text-xs px-2 py-0.5 tracking-wider">
                     SAVE {formatPrice(product.compareAtPrice - product.price)}
                   </span>

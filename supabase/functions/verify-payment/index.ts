@@ -27,7 +27,7 @@ serve(async (req) => {
     const requestData = await req.json()
     const { transactionId, txRef, orderId } = requestData
 
-    if (!transactionId || !orderId) throw new Error('transactionId and orderId required')
+    if (!transactionId || !txRef || !orderId) throw new Error('transactionId, txRef and orderId required')
 
     const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
@@ -54,36 +54,26 @@ serve(async (req) => {
       throw new Error('Payment not successful')
     }
 
-    const paidAmount = verifyData.data.amount
-    if (Math.abs(paidAmount - order.total) > 1) {
+    const verified = verifyData.data
+    if (verified.tx_ref !== txRef) throw new Error('Payment reference mismatch')
+    if (verified.meta?.orderId && verified.meta.orderId !== orderId) throw new Error('Payment order mismatch')
+    if (verified.meta?.userId && verified.meta.userId !== user.id) throw new Error('Payment user mismatch')
+
+    const paidAmount = Number(verified.amount)
+    if (!Number.isFinite(paidAmount) || Math.abs(paidAmount - Number(order.total)) > 0.01) {
       throw new Error(`Payment amount mismatch. Expected ${order.total}, received ${paidAmount}.`)
     }
 
-    if (verifyData.data.currency !== 'NGN') {
-      throw new Error(`Currency mismatch. Expected NGN, received ${verifyData.data.currency}.`)
+    if (verified.currency !== 'NGN') {
+      throw new Error(`Currency mismatch. Expected NGN, received ${verified.currency}.`)
     }
 
-    // Update product inventory and order status
-    for (const item of order.items) {
-      const { data: product } = await supabaseAdmin.from('products').select('inventory').eq('id', item.productId).single()
-      if (product) {
-        const inventory = product.inventory || { soldCount: 0 }
-        inventory.soldCount = (inventory.soldCount || 0) + item.quantity
-        await supabaseAdmin.from('products').update({ inventory }).eq('id', item.productId)
-      }
-    }
-
-    const { error: updateError } = await supabaseAdmin.from('orders').update({
-      payment_status: 'paid',
-      payment_reference: txRef || String(transactionId),
-      status: 'paid',
-      status_timeline: [
-        ...(order.status_timeline || []),
-        { status: 'paid', timestamp: new Date().toISOString(), note: 'Payment confirmed via Flutterwave' }
-      ]
-    }).eq('id', orderId)
-
-    if (updateError) throw updateError
+    const { data: finalized, error: finalizeError } = await supabaseAdmin.rpc('finalize_paid_order', {
+      p_order_id: orderId,
+      p_reference: txRef,
+      p_source: 'flutterwave',
+    })
+    if (finalizeError) throw finalizeError
 
     const paidOrder = {
       ...order,
@@ -92,7 +82,13 @@ serve(async (req) => {
       status: 'paid',
     }
 
-    // Send notifications
+    if (!finalized) {
+      return new Response(JSON.stringify({ success: true, alreadyPaid: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Send notifications only after the atomic database finalization succeeds.
     const brevoApiKey = Deno.env.get('BREVO_API_KEY')
     const adminEmail = Deno.env.get('ADMIN_EMAIL')
     if (brevoApiKey) {

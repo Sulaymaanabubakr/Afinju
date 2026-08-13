@@ -161,6 +161,12 @@ export function buildEmailHtml({
   const gold = '#c5a059'
   const offWhite = '#fdfbf7'
   const dark = '#1a1a1a'
+  const safeHeading = escapeHtml(heading)
+  const safeGreetingName = escapeHtml(greetingName)
+  const safeBodyLines = bodyLines.map(line => escapeHtml(line))
+  const safeOrderNumber = escapeHtml(orderNumber)
+  const safeCtaLabel = escapeHtml(ctaLabel)
+  const safeCtaUrl = escapeHtml(ctaUrl)
 
   return `
     <!DOCTYPE html>
@@ -192,7 +198,7 @@ export function buildEmailHtml({
               <tr>
                 <td align="center" style="padding: 40px 40px 20px 40px;">
                   <h1 style="font-family: 'DM Serif Display', serif; color: ${dark}; font-size: 28px; margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">
-                    ${heading}
+                    ${safeHeading}
                   </h1>
                 </td>
               </tr>
@@ -200,9 +206,9 @@ export function buildEmailHtml({
               <!-- Greeting & Body -->
               <tr>
                 <td style="padding: 20px 60px;">
-                  ${greetingName ? `<p style="font-size: 16px; color: ${dark}; margin-bottom: 24px; font-weight: 500;">Hello ${greetingName},</p>` : ''}
+                  ${greetingName ? `<p style="font-size: 16px; color: ${dark}; margin-bottom: 24px; font-weight: 500;">Hello ${safeGreetingName},</p>` : ''}
                   <div style="font-size: 15px; color: #444; line-height: 1.8;">
-                    ${bodyLines.map(line => `<p style="margin-bottom: 16px;">${line}</p>`).join('')}
+                    ${safeBodyLines.map(line => `<p style="margin-bottom: 16px;">${line}</p>`).join('')}
                   </div>
                 </td>
               </tr>
@@ -213,7 +219,7 @@ export function buildEmailHtml({
                 <td align="center" style="padding: 0 60px 40px 60px;">
                   <div style="padding: 15px; border: 1px dashed ${gold}; background-color: #fcfaf5; display: inline-block;">
                     <span style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 4px;">Order Ref</span>
-                    <strong style="font-size: 18px; color: ${dark}; letter-spacing: 0.05em;">#${orderNumber}</strong>
+                    <strong style="font-size: 18px; color: ${dark}; letter-spacing: 0.05em;">#${safeOrderNumber}</strong>
                   </div>
                 </td>
               </tr>
@@ -234,8 +240,8 @@ export function buildEmailHtml({
               ${ctaLabel && ctaUrl ? `
               <tr>
                 <td align="center" style="padding: 0 60px 60px 60px;">
-                  <a href="${ctaUrl}" style="background-color: ${dark}; color: #ffffff; padding: 20px 40px; text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.25em; text-transform: uppercase; display: inline-block; transition: background 0.3s;">
-                    ${ctaLabel}
+                  <a href="${safeCtaUrl}" style="background-color: ${dark}; color: #ffffff; padding: 20px 40px; text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.25em; text-transform: uppercase; display: inline-block; transition: background 0.3s;">
+                    ${safeCtaLabel}
                   </a>
                 </td>
               </tr>

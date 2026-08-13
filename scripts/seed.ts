@@ -23,6 +23,11 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 async function seed() {
   console.log('🌱  Starting AFINJU seed...\n')
 
+  const siteImages = [1, 2, 3, 4, 5, 6, 7, 8].map((number) => ({
+    url: `/products/afinju-new-0${number}.jpeg`,
+    alt: `AFINJU Authority Set image ${number}`,
+  }))
+
   // ── Product ──────────────────────────────────────────────────────────────────
   const productId = 'afinju-authority-set-launch-v1'
   const { error: productError } = await supabase.from('products').upsert({
@@ -37,20 +42,7 @@ async function seed() {
       launchEditionLimit: 10,
       soldCount: 0,
     },
-    images: [
-      {
-        url: '/products/afinju_red_hero_1773322751923.png',
-        alt: 'AFINJU Authority Set — Launch Edition',
-      },
-      {
-        url: '/products/afinju_red_detail_1773322771608.png',
-        alt: 'AFINJU Authority Set — Leather Detail',
-      },
-      {
-        url: '/products/afinju_red_lifestyle_1773322801188.png',
-        alt: 'AFINJU Authority Set — Full Collection',
-      },
-    ],
+    images: siteImages,
     status: 'active',
   }, { onConflict: 'slug' })
   
@@ -63,14 +55,14 @@ async function seed() {
     data: {
       announcementBar: {
         enabled: true,
-        text: 'Only Ten Men Will Own This Launch Edition · Once It Is Closed, It Is Closed · AFINJU — Authority Set · Launch Price ₦299,000',
+        text: 'Only Ten Men Will Own This Launch Edition · Inaugural Launch Price ₦299,000 · Regular Price ₦349,000 · Once It Is Closed, It Is Closed · AFINJU — Authority Set',
       },
       hero: {
         headline: 'AFINJU is not for you if you cannot handle attention.',
         subheadline:
           'The authority set for the man who has decided that his standard is non-negotiable. Six pieces. One statement. Ten men.',
         ctaText: 'Secure Your Position',
-        imageUrl: '/products/afinju_black_lifestyle_1773322925749.png',
+        imageUrl: '/products/afinju-new-01.jpeg',
       },
     }
   })

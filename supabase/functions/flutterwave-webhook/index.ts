@@ -43,15 +43,17 @@ serve(async (req) => {
 
         // Double-verify with Flutterwave API
         const flwSecretKey = Deno.env.get('FLW_SECRET_KEY')
-        if (flwSecretKey) {
-          const verifyRes = await fetch(`https://api.flutterwave.com/v3/transactions/${transactionId}/verify`, {
-            headers: { Authorization: `Bearer ${flwSecretKey}` }
-          })
-          const verifyData = await verifyRes.json()
-          if (verifyData.status !== 'success' || verifyData.data.status !== 'successful') {
-            console.error('Webhook verification failed for transaction:', transactionId)
-            return new Response('Verification failed', { status: 400 })
-          }
+        if (!flwSecretKey) return new Response('Server misconfigured', { status: 500 })
+        const verifyRes = await fetch(`https://api.flutterwave.com/v3/transactions/${transactionId}/verify`, {
+          headers: { Authorization: `Bearer ${flwSecretKey}` }
+        })
+        const verifyData = await verifyRes.json()
+        if (!verifyRes.ok || verifyData.status !== 'success' || verifyData.data.status !== 'successful') {
+          console.error('Webhook verification failed for transaction:', transactionId)
+          return new Response('Verification failed', { status: 400 })
+        }
+        if (verifyData.data.tx_ref !== txRef || (verifyData.data.meta?.orderId && verifyData.data.meta.orderId !== orderId)) {
+          return new Response('Payment reference mismatch', { status: 400 })
         }
 
         const { data: order } = await supabaseAdmin
@@ -61,10 +63,10 @@ serve(async (req) => {
           .single()
         
         if (order && order.payment_status !== 'paid') {
-          const paidAmount = Number(event.data.amount)
-          const paidCurrency = event.data.currency
+          const paidAmount = Number(verifyData.data.amount)
+          const paidCurrency = verifyData.data.currency
 
-          if (Math.abs(paidAmount - Number(order.total)) > 1) {
+          if (!Number.isFinite(paidAmount) || Math.abs(paidAmount - Number(order.total)) > 0.01) {
             console.error('Flutterwave webhook amount mismatch:', { orderId, paidAmount, expected: order.total })
             return new Response('Amount mismatch', { status: 400 })
           }
@@ -74,30 +76,13 @@ serve(async (req) => {
             return new Response('Currency mismatch', { status: 400 })
           }
 
-          for (const item of order.items || []) {
-            const { data: product } = await supabaseAdmin
-              .from('products')
-              .select('inventory')
-              .eq('id', item.productId)
-              .single()
-
-            if (product) {
-              const inventory = product.inventory || { soldCount: 0 }
-              inventory.soldCount = (inventory.soldCount || 0) + item.quantity
-              await supabaseAdmin.from('products').update({ inventory }).eq('id', item.productId)
-            }
-          }
-
-          await supabaseAdmin.from('orders').update({
-            payment_status: 'paid',
-            payment_reference: txRef || String(transactionId),
-            status: 'paid',
-            status_timeline: [
-              ...normalizeStatusTimeline(order.status_timeline),
-              { status: 'paid', timestamp: new Date().toISOString(), note: 'Payment confirmed via Flutterwave webhook' },
-            ],
-            updated_at: new Date().toISOString(),
-          }).eq('id', orderId)
+          const { data: finalized, error: finalizeError } = await supabaseAdmin.rpc('finalize_paid_order', {
+            p_order_id: orderId,
+            p_reference: txRef || String(transactionId),
+            p_source: 'flutterwave_webhook',
+          })
+          if (finalizeError) throw finalizeError
+          if (!finalized) return new Response('OK', { status: 200 })
 
           const paidOrder = {
             ...order,

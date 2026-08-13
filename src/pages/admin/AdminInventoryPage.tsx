@@ -15,19 +15,25 @@ export default function AdminInventoryPage() {
   })
 
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [editValues, setEditValues] = useState({ limit: 0, sold: 0 })
+  const [editValues, setEditValues] = useState({ limit: '', sold: '' })
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, limit, sold }: { id: string; limit: number; sold: number }) => {
+    mutationFn: async ({ id, limit, sold }: { id: string; limit: string; sold: string }) => {
       const product = products?.find(p => p.id === id)
       if (!product) throw new Error('Product not found')
+
+      const parsedLimit = Number(limit)
+      const parsedSold = Number(sold)
+      if (!Number.isFinite(parsedLimit) || parsedLimit < 0 || !Number.isFinite(parsedSold) || parsedSold < 0) {
+        throw new Error('Stock values must be valid non-negative numbers.')
+      }
       
       return upsertProduct({
         ...product,
         inventory: {
           ...product.inventory,
-          launchEditionLimit: limit,
-          soldCount: sold,
+          launchEditionLimit: parsedLimit,
+          soldCount: parsedSold,
         }
       } as any)
     },
@@ -117,7 +123,7 @@ export default function AdminInventoryPage() {
                         type="number"
                         className="w-20 border border-gold/30 bg-gold/5 px-2 py-1 font-sans text-sm"
                         value={editValues.limit}
-                        onChange={e => setEditValues(v => ({ ...v, limit: Number(e.target.value) }))}
+                        onChange={e => setEditValues(v => ({ ...v, limit: e.target.value }))}
                       />
                     ) : (
                       <span className="font-sans text-sm text-afinju-black/60">{limit}</span>
@@ -129,7 +135,7 @@ export default function AdminInventoryPage() {
                         type="number"
                         className="w-20 border border-gold/30 bg-gold/5 px-2 py-1 font-sans text-sm"
                         value={editValues.sold}
-                        onChange={e => setEditValues(v => ({ ...v, sold: Number(e.target.value) }))}
+                        onChange={e => setEditValues(v => ({ ...v, sold: e.target.value }))}
                       />
                     ) : (
                       <span className="font-sans text-sm text-afinju-black/60">{sold}</span>
@@ -166,7 +172,7 @@ export default function AdminInventoryPage() {
                       <button
                         onClick={() => {
                           setEditingId(product.id)
-                          setEditValues({ limit, sold })
+                          setEditValues({ limit: String(limit), sold: String(sold) })
                         }}
                         className="inline-flex items-center gap-2 font-display text-[10px] tracking-widest uppercase text-gold hover:text-gold-dark transition-colors"
                       >

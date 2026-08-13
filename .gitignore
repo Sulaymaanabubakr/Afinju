@@ -38,3 +38,4 @@ service-account*.json
 
 # Supabase CLI temp files
 supabase/.temp/
+.vercel

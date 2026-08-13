@@ -1,5 +1,4 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import * as crypto from 'https://deno.land/std@0.168.0/crypto/mod.ts'
 import { corsHeaders } from '../_shared/cors.ts'
 import { requireStaffUser } from '../_shared/auth.ts'
 
@@ -26,7 +25,7 @@ serve(async (req) => {
     const timestamp = Math.floor(Date.now() / 1000)
     const folder = 'afinju/products'
     const signatureBase = `folder=${folder}&timestamp=${timestamp}${apiSecret}`
-    const signatureBuffer = await crypto.subtle.digest(
+    const signatureBuffer = await globalThis.crypto.subtle.digest(
       'SHA-1',
       new TextEncoder().encode(signatureBase)
     )
@@ -51,4 +50,3 @@ serve(async (req) => {
     })
   }
 })
-

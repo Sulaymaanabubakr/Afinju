@@ -9,8 +9,8 @@ import ScarcityCounter from '@/components/shared/ScarcityCounter'
 import { formatPrice, cloudinaryOptimize } from '@/lib/utils'
 import { getProducts } from '@/lib/db'
 
-const HERO_IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1605812860427-4024433a70fd?w=1200&q=90'
-const FEATURE_IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800&q=90'
+const HERO_IMAGE_FALLBACK = '/products/afinju-new-01.jpeg'
+const FEATURE_IMAGE_FALLBACK = '/products/afinju-new-02.jpeg'
 
 const PACKAGE_ITEMS = [
   { name: 'Pure Skin Leather/Suede Half Shoe', desc: '(Black, Brown, Red and Blue)' },
@@ -431,7 +431,7 @@ export default function HomePage() {
             </p>
 
             <div className="mt-14">
-              <p className="text-xs font-body tracking-[0.4em] uppercase text-gold-400 mb-4">Launch Price</p>
+              <p className="text-xs font-body tracking-[0.4em] uppercase text-gold-400 mb-4">Inaugural Launch Price</p>
               <div className="flex items-baseline gap-4 justify-center">
                 <span className="font-display text-4xl md:text-7xl font-bold text-ivory">
                   {formatPrice(product?.price ?? 299000)}
@@ -440,6 +440,7 @@ export default function HomePage() {
                   {formatPrice(product?.compareAtPrice ?? 349000)}
                 </span>
               </div>
+              <p className="text-xs font-body uppercase tracking-[0.25em] text-ivory/40 mt-3">Regular Price</p>
               <p className="text-sm font-body text-gold-400/80 mt-2">
                 You save {formatPrice((product?.compareAtPrice ?? 349000) - (product?.price ?? 299000))}
               </p>

@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Auth error:', err)
         if (mounted) {
           clearAdminAccess()
-          setUser(fallbackProfile)
+          setUser(null)
         }
       } finally {
         if (mounted) setLoading(false)

@@ -434,14 +434,14 @@ export default function HomePage() {
               <p className="text-xs font-body tracking-[0.4em] uppercase text-gold-400 mb-4">Launch Price</p>
               <div className="flex items-baseline gap-4 justify-center">
                 <span className="font-display text-4xl md:text-7xl font-bold text-ivory">
-                  {formatPrice(product?.price ?? 200000)}
+                  {formatPrice(product?.price ?? 299000)}
                 </span>
                 <span className="text-xl md:text-2xl font-body text-ivory/30 line-through">
-                  {formatPrice(product?.compareAtPrice ?? 250000)}
+                  {formatPrice(product?.compareAtPrice ?? 349000)}
                 </span>
               </div>
               <p className="text-sm font-body text-gold-400/80 mt-2">
-                You save {formatPrice((product?.compareAtPrice ?? 250000) - (product?.price ?? 200000))}
+                You save {formatPrice((product?.compareAtPrice ?? 349000) - (product?.price ?? 299000))}
               </p>
             </div>
 

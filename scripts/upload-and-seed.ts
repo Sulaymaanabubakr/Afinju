@@ -97,8 +97,8 @@ async function main() {
         'Matching Polish Kit',
         'Luxury Black Packaging Box',
       ],
-      price: 200000,
-      compareAtPrice: 250000,
+      price: 299000,
+      compareAtPrice: 349000,
       currency: 'NGN',
       colors: ['Blue', 'Red', 'Black', 'Brown'],
       images: [
@@ -339,7 +339,7 @@ async function main() {
     data: {
       announcementBar: {
         enabled: true,
-        text: 'Only Ten Men Will Own This Launch Edition · Once It Is Closed, It Is Closed · AFINJU — Authority Set · Launch Price ₦200,000',
+        text: 'Only Ten Men Will Own This Launch Edition · Once It Is Closed, It Is Closed · AFINJU — Authority Set · Launch Price ₦299,000',
       },
       hero: {
         headline: 'AFINJU is not for you if you cannot handle attention.',

@@ -32,7 +32,7 @@ async function seed() {
       'The complete authority set for the man who has decided that his standard is non-negotiable. ' +
       'Six coordinated pieces, crafted from premium Nigerian leather, engineered to communicate one clear message: ' +
       'this man is decided. Only ten men will own this launch edition. Once it is closed, it is closed.',
-    price: 200000,
+    price: 299000,
     inventory: {
       launchEditionLimit: 10,
       soldCount: 0,
@@ -63,7 +63,7 @@ async function seed() {
     data: {
       announcementBar: {
         enabled: true,
-        text: 'Only Ten Men Will Own This Launch Edition · Once It Is Closed, It Is Closed · AFINJU — Authority Set · Launch Price ₦200,000',
+        text: 'Only Ten Men Will Own This Launch Edition · Once It Is Closed, It Is Closed · AFINJU — Authority Set · Launch Price ₦299,000',
       },
       hero: {
         headline: 'AFINJU is not for you if you cannot handle attention.',

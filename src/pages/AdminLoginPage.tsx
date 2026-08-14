@@ -102,7 +102,9 @@ export default function AdminLoginPage() {
     } catch (err: any) {
       console.error('Admin authentication failed', { step: currentStep, error: err })
       if (currentStep === 'mfa') {
-        setMfaError(err.message || 'TOTP setup failed. Please try again.')
+        const message = err.message || 'TOTP setup failed. Please try again.'
+        setMfaError(message)
+        toast.error(message)
       } else {
         const msg = err.message === 'Invalid login credentials'
           ? 'Invalid admin credentials.'

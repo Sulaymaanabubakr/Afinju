@@ -84,10 +84,17 @@ export default function AdminLoginPage() {
         if (removeError) throw new Error(`Previous TOTP setup is incomplete: ${removeError.message}`)
       }
 
-      const { data: enrollment, error: enrollmentError } = await supabase.auth.mfa.enroll({
+      let enrollmentResult = await supabase.auth.mfa.enroll({
         factorType: 'totp',
         friendlyName: 'Afínjú Admin Authenticator',
       })
+      if (enrollmentResult.error?.message.toLowerCase().includes('already exists')) {
+        enrollmentResult = await supabase.auth.mfa.enroll({
+          factorType: 'totp',
+          friendlyName: `Afínjú Admin Authenticator ${Date.now()}`,
+        })
+      }
+      const { data: enrollment, error: enrollmentError } = enrollmentResult
       if (enrollmentError || !enrollment) throw enrollmentError || new Error('Unable to start TOTP setup')
 
       const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: enrollment.id })

@@ -6,9 +6,8 @@ import { Check, ChevronRight, HelpCircle, Minus, Plus, ShieldCheck, Truck } from
 import { getProductBySlug } from '@/lib/db'
 import { useCartStore } from '@/lib/store'
 import { formatPrice } from '@/lib/utils'
-import { cloudinaryUrl } from '@/lib/cloudinary'
 import ScarcityCounter from '@/components/shared/ScarcityCounter'
-import { SHOE_SIZES, HEAD_SIZES, PRODUCT_COLORS, type ProductColor } from '@/types'
+import { SHOE_SIZES, HEAD_SIZES, type ProductColor } from '@/types'
 import { helpWhatsappLink } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
@@ -53,7 +52,6 @@ export default function ProductPage() {
   const [selectedImage, setSelectedImage] = useState(0)
   const [shoeSize, setShoeSize] = useState('')
   const [headSize, setHeadSize] = useState('')
-  const [preferredColor, setPreferredColor] = useState<ProductColor | ''>('')
   const [qty, setQty] = useState(1)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const hasUncertainSizing = shoeSize === 'Not sure' || headSize === 'Not sure'
@@ -61,13 +59,12 @@ export default function ProductPage() {
   const remaining = product
     ? product.inventory.launchEditionLimit - product.inventory.soldCount
     : 0
-  const availableColors = product?.colors?.length ? product.colors : PRODUCT_COLORS
+  const selectedColor: ProductColor = product?.colors?.[0] || 'Blue'
   const isLimitedEdition = product?.isLimitedEdition ?? false
   const validate = () => {
     const e: Record<string, string> = {}
     if (!shoeSize) e.shoeSize = 'Please select your shoe size'
     if (!headSize) e.headSize = 'Please select your head size'
-    if (!preferredColor) e.preferredColor = 'Please select a colour'
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -75,7 +72,7 @@ export default function ProductPage() {
   const handleAddToCart = () => {
     if (!product) return false
     if (!validate()) {
-      toast.error('Please choose colour, shoe size, and head size before adding to cart.')
+      toast.error('Please choose your shoe size and head size before adding to cart.')
       return false
     }
 
@@ -85,7 +82,7 @@ export default function ProductPage() {
     }
 
     const addResult = addItem({
-      lineId: [product.id, preferredColor, shoeSize, headSize].join(':'),
+      lineId: [product.id, selectedColor, shoeSize, headSize].join(':'),
       productId: product.id,
       productName: product.name,
       productSlug: product.slug,
@@ -96,7 +93,7 @@ export default function ProductPage() {
       preferences: {
         shoeSize,
         headSize,
-        preferredColor: preferredColor as ProductColor,
+        preferredColor: selectedColor,
       },
     })
     if (addResult.addedQuantity <= 0) {
@@ -153,7 +150,7 @@ export default function ProductPage() {
             <AnimatePresence mode="wait">
               <motion.img
                 key={selectedImage}
-                src={cloudinaryUrl(product.images[selectedImage]?.url || '', { width: 1000, height: 1250, quality: 'auto' })}
+                src={product.images[selectedImage]?.url || ''}
                 alt={product.images[selectedImage]?.alt || product.name}
                 className="w-full h-full object-cover"
                 initial={{ opacity: 0 }}
@@ -177,7 +174,7 @@ export default function ProductPage() {
                     }`}
                 >
                   <img
-                    src={cloudinaryUrl(img.url, { width: 128, height: 160, quality: 'auto' })}
+                    src={img.url}
                     alt={img.alt}
                     className="w-full h-full object-cover"
                   />
@@ -253,46 +250,10 @@ export default function ProductPage() {
               CUSTOMISE YOUR SET - ALL FIELDS REQUIRED
             </p>
 
-            {/* Color */}
+            {/* Fixed product colour */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="font-sans text-xs tracking-[0.15em] uppercase">
-                  Preferred Colour
-                  {errors.preferredColor && (
-                    <span className="ml-2 text-destructive text-[10px]">{errors.preferredColor}</span>
-                  )}
-                </label>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                {availableColors.map((color) => {
-                  const colorMap: Record<string, string> = {
-                    Blue: '#1E3A8A',
-                    Red: '#991B1B',
-                    Black: '#0A0A0A',
-                    Brown: '#78350F',
-                  }
-                  return (
-                    <button
-                      type="button"
-                      key={color}
-                      onClick={() => { setPreferredColor(color); setErrors(e => ({ ...e, preferredColor: '' })) }}
-                      className={`group relative flex flex-col items-center gap-2 transition-all duration-150`}
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${preferredColor === color
-                            ? 'border-gold scale-110'
-                            : 'border-transparent hover:border-black/30'
-                          }`}
-                        style={{ backgroundColor: colorMap[color] }}
-                      />
-                      <span className={`font-sans text-[10px] tracking-wider uppercase transition-colors ${preferredColor === color ? 'text-afinju-black' : 'text-afinju-black/40'
-                        }`}>
-                        {color}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
+              <p className="font-sans text-xs tracking-[0.15em] uppercase text-afinju-black/50">Colour</p>
+              <p className="font-sans text-sm mt-2">{selectedColor}</p>
             </div>
 
             {/* Shoe Size */}

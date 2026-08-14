@@ -6,7 +6,7 @@ import { ArrowRight, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import ScarcityCounter from '@/components/shared/ScarcityCounter'
-import { formatPrice, cloudinaryOptimize } from '@/lib/utils'
+import { formatPrice } from '@/lib/utils'
 import { getProducts } from '@/lib/db'
 
 const HERO_IMAGE_FALLBACK = '/products/afinju-new-01.jpeg'
@@ -87,15 +87,12 @@ export default function HomePage() {
   const catalogImages = (products ?? [])
     .flatMap((p) => (p.images ?? []).map((img) => img?.url).filter(Boolean))
   const heroImages = useMemo(() => {
-    const optimized = catalogImages.map((img) => cloudinaryOptimize(img, 1600))
-    const unique = Array.from(new Set(optimized)).slice(0, 6)
+    const unique = Array.from(new Set(catalogImages)).slice(0, 6)
     return unique.length > 0 ? unique : [HERO_IMAGE_FALLBACK]
   }, [catalogImages])
   const [heroIndex, setHeroIndex] = useState(0)
   const heroImage = heroImages[heroIndex] || HERO_IMAGE_FALLBACK
-  const featureImage = catalogImages[1]
-    ? cloudinaryOptimize(catalogImages[1], 1000)
-    : (catalogImages[0] ? cloudinaryOptimize(catalogImages[0], 1000) : FEATURE_IMAGE_FALLBACK)
+  const featureImage = catalogImages[1] || catalogImages[0] || FEATURE_IMAGE_FALLBACK
 
   useEffect(() => {
     setHeroIndex(0)

@@ -73,7 +73,7 @@ export function friendlyErrorMessage(error: unknown, fallback = 'Something went 
   const normalized = raw.toLowerCase()
   if (!raw) return fallback
   if (normalized.includes('is_limited_edition') || normalized.includes('schema cache')) return 'Product service is updating. Please refresh and try again.'
-  if (normalized.includes('cloudinary') || normalized.includes('upload')) return 'Image upload failed. Please try again.'
+  if (normalized.includes('upload')) return 'Image upload failed. Please try again.'
   if (normalized.includes('session') || normalized.includes('authorization') || normalized.includes('unauthorized')) return 'Your session expired. Please sign in again.'
   if (normalized.includes('network') || normalized.includes('edge function') || normalized.includes('fetch')) return 'Service temporarily unavailable. Please refresh and try again.'
   return fallback
@@ -81,14 +81,6 @@ export function friendlyErrorMessage(error: unknown, fallback = 'Something went 
 
 // Alias for formatNGN — used across pages
 export const formatPrice = formatNGN
-
-export function cloudinaryOptimize(url: string, width = 800): string {
-  if (!url) return ''
-  if (url.includes('cloudinary.com')) {
-    return url.replace('/upload/', `/upload/w_${width},q_auto,f_auto/`)
-  }
-  return url
-}
 
 // Alias for whatsappLink — some files use getWhatsAppUrl
 export const getWhatsAppUrl = whatsappLink

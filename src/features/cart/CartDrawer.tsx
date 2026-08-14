@@ -3,7 +3,6 @@ import { X, Trash2, ShoppingBag } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useCartStore } from '@/lib/store'
 import { formatPrice } from '@/lib/utils'
-import { cloudinaryUrl } from '@/lib/cloudinary'
 
 export function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, total } = useCartStore()
@@ -72,7 +71,7 @@ export function CartDrawer() {
                       {/* Image */}
                       <div className="w-20 h-24 flex-shrink-0 bg-afinju-cream overflow-hidden">
                         <img
-                          src={cloudinaryUrl(item.productImage, { width: 160, height: 192, quality: 'auto' })}
+                          src={item.productImage}
                           alt={item.productName}
                           className="w-full h-full object-cover"
                           loading="lazy"

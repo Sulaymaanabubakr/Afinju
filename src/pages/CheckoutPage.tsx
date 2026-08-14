@@ -10,7 +10,6 @@ import { useAuthStore } from '@/store/auth'
 import { createOrder, getRemainingUnits, getStoreSettings } from '@/lib/db'
 import { openFlutterwaveModal, generateReference } from '@/lib/flutterwave'
 import { formatPrice, BRAND_WHATSAPP } from '@/lib/utils'
-import { cloudinaryUrl } from '@/lib/cloudinary'
 import { supabase } from '@/lib/supabase'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
@@ -313,7 +312,7 @@ export default function CheckoutPage() {
                     <div key={getLineId(item)} className="flex gap-4">
                       <div className="w-16 h-20 bg-white overflow-hidden flex-shrink-0">
                         <img
-                          src={cloudinaryUrl(item.productImage, { width: 128, height: 160 })}
+                          src={item.productImage}
                           alt={item.productName}
                           className="w-full h-full object-cover"
                         />

@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 import { ChevronDown, Download, Plus, Edit, Eye, Trash2 } from 'lucide-react'
 import { deleteProduct, getAdminProducts } from '@/lib/db'
 import { formatPrice } from '@/lib/utils'
-import { cloudinaryUrl } from '@/lib/cloudinary'
 import toast from 'react-hot-toast'
 import { useMemo, useRef, useState } from 'react'
 import { exportDatasetAs, type ExportFormat } from '@/lib/adminExport'
@@ -101,7 +100,7 @@ export default function AdminProductsPage() {
               <div key={product.id} className="bg-white border border-black/8 p-6 flex items-center gap-6">
                 <div className="w-16 h-20 flex-shrink-0 bg-afinju-cream overflow-hidden">
                   <img
-                    src={cloudinaryUrl(product.images[0]?.url || '', { width: 128, height: 160, quality: 'auto' })}
+                    src={product.images[0]?.url || ''}
                     alt={product.name}
                     className="w-full h-full object-cover"
                   />

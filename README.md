@@ -1,6 +1,6 @@
 # AFINJU — Luxury E-Commerce Platform
 
-A luxury e-commerce website for the AFINJU brand (Nigeria, NGN pricing). Built with React + TypeScript + Vite + Tailwind CSS, Supabase, Cloudinary, Brevo, and Flutterwave.
+A luxury e-commerce website for the AFINJU brand (Nigeria, NGN pricing). Built with React + TypeScript + Vite + Tailwind CSS, Supabase Storage, Brevo, and Flutterwave.
 
 ---
 
@@ -15,7 +15,7 @@ A luxury e-commerce website for the AFINJU brand (Nigeria, NGN pricing). Built w
 | Animation | Framer Motion |
 | Backend | Supabase Auth, Postgres, Edge Functions |
 | Payments | Flutterwave (inline + webhook verification) |
-| Media | Cloudinary (signed admin uploads, optimised delivery) |
+| Media | Supabase Storage (admin uploads, public product delivery) |
 | Deployment | Vercel (frontend) + Supabase |
 
 ---
@@ -37,7 +37,7 @@ afinju/
 │   │   ├── firebase.ts           # Firebase app init
 │   │   ├── db.ts                 # Firestore CRUD layer
 │   │   ├── paystack.ts           # Paystack helpers
-│   │   ├── cloudinary.ts         # Image URL transforms
+│   │   ├── storage.ts            # Supabase Storage uploads
 │   │   └── utils.ts              # Shared utilities
 │   ├── pages/
 │   │   ├── admin/                # Full admin dashboard
@@ -65,7 +65,6 @@ afinju/
 - Firebase CLI: `npm install -g firebase-tools`
 - A Firebase project (Blaze plan required for Cloud Functions)
 - A Paystack account
-- A Cloudinary account
 
 ---
 
@@ -112,22 +111,11 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=...
 VITE_FIREBASE_APP_ID=...
 
 VITE_PAYSTACK_PUBLIC_KEY=pk_test_...
-VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
-VITE_CLOUDINARY_UPLOAD_PRESET=afinju_unsigned
 ```
 
 ---
 
-### 4. Cloudinary Setup
-
-1. Create a free account at [cloudinary.com](https://cloudinary.com).
-2. In Settings → Upload Presets, create a preset named `afinju_unsigned` with **Unsigned** mode.
-3. Set the folder to `afinju` and restrict to images only.
-4. Copy your **Cloud Name** into `VITE_CLOUDINARY_CLOUD_NAME`.
-
----
-
-### 5. Paystack Setup
+### 4. Paystack Setup
 
 1. Create an account at [paystack.com](https://paystack.com).
 2. Go to Settings → API Keys & Webhooks.
@@ -138,7 +126,7 @@ VITE_CLOUDINARY_UPLOAD_PRESET=afinju_unsigned
 
 ---
 
-### 6. Firebase Functions Config
+### 5. Firebase Functions Config
 
 Set server-side secrets (never put these in `.env.local`):
 
@@ -236,7 +224,7 @@ The admin dashboard at `/admin` is protected by role-based access control. It pr
 - **Overview:** Revenue KPIs, order counts, launch edition progress bar
 - **Orders:** Full order list with status/payment filters, CSV export, per-order detail
 - **Order Detail:** Customer info, one-click call/WhatsApp/email outreach, status updates with customer-facing and internal notes
-- **Products:** Create/edit products, Cloudinary image uploads, inventory management
+- **Products:** Create/edit products, Supabase Storage image uploads, inventory management
 - **Customers:** Full customer list with outreach links
 - **Content:** Homepage hero text, announcement bar, scarcity banner toggles
 - **Settings:** Store settings, Paystack public key, shipping fees, social links

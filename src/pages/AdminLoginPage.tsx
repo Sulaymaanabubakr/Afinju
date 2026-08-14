@@ -44,6 +44,7 @@ export default function AdminLoginPage() {
   }
 
   const onPasswordSubmit = async (data: FormData) => {
+    let currentStep: 'password' | 'mfa' = 'password'
     setLoading(true)
     try {
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -61,6 +62,7 @@ export default function AdminLoginPage() {
         return
       }
 
+      currentStep = 'mfa'
       const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors()
       if (factorsError) throw factorsError
 
@@ -72,6 +74,14 @@ export default function AdminLoginPage() {
         setMfaChallengeId(challenge.id)
         setMfaStage('challenge')
         return
+      }
+
+      // An interrupted first-time setup leaves an unverified factor behind.
+      // Remove it before creating a fresh enrollment so the admin is not
+      // trapped in a generic sign-in error on the next attempt.
+      for (const factor of factors.totp.filter((item) => (item.status as string) === 'unverified')) {
+        const { error: removeError } = await supabase.auth.mfa.unenroll({ factorId: factor.id })
+        if (removeError) throw new Error(`Previous TOTP setup is incomplete: ${removeError.message}`)
       }
 
       const { data: enrollment, error: enrollmentError } = await supabase.auth.mfa.enroll({
@@ -90,10 +100,15 @@ export default function AdminLoginPage() {
       setSecretCopied(false)
       setMfaStage('enroll')
     } catch (err: any) {
-      const msg = err.message === 'Invalid login credentials'
-        ? 'Invalid admin credentials.'
-        : 'Admin sign in failed. Please try again.'
-      toast.error(msg)
+      console.error('Admin authentication failed', { step: currentStep, error: err })
+      if (currentStep === 'mfa') {
+        setMfaError(err.message || 'TOTP setup failed. Please try again.')
+      } else {
+        const msg = err.message === 'Invalid login credentials'
+          ? 'Invalid admin credentials.'
+          : 'Admin sign in failed. Please try again.'
+        toast.error(msg)
+      }
     } finally {
       setLoading(false)
     }

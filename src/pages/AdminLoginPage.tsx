@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
 
       if (role !== 'admin' && role !== 'staff') {
         await supabase.auth.signOut()
-        toast.error('Unauthorized. Use buyer login for customer accounts.')
+        toast.error('Unauthorized admin access.')
         return
       }
 

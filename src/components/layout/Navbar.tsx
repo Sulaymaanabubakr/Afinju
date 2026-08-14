@@ -2,10 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
-import { ShoppingBag, Menu, X, User, LogOut } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { ShoppingBag, Menu, X } from 'lucide-react'
 import { useCartStore } from '@/lib/store'
-import { useAuthStore } from '@/store/auth'
 import { cn } from '@/lib/utils'
 import { useDismissiblePanel } from '@/hooks/useDismissiblePanel'
 import { getStoreSettings } from '@/lib/db'
@@ -15,7 +13,6 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuShellRef = useRef<HTMLDivElement | null>(null)
   const { itemCount, openCart } = useCartStore()
-  const { user } = useAuthStore()
   const location = useLocation()
   const count = itemCount()
   const { data: settings } = useQuery({ queryKey: ['store-settings'], queryFn: getStoreSettings })
@@ -93,25 +90,6 @@ export function Navbar() {
           </nav>
 
           <div className="hidden lg:flex items-center gap-5">
-            {user ? (
-              <div className="flex items-center gap-4">
-                <Link
-                  to="/account"
-                  className="text-afinju-black/70 hover:text-afinju-black transition-colors"
-                  aria-label="My account"
-                >
-                  <User size={18} strokeWidth={1.5} />
-                </Link>
-                <button onClick={() => supabase.auth.signOut()} className="text-afinju-black/40 hover:text-afinju-black/70 transition-colors">
-                  <LogOut size={16} strokeWidth={1.5} />
-                </button>
-              </div>
-            ) : (
-              <Link to="/login" className="hidden lg:block font-sans text-xs tracking-[0.18em] uppercase text-afinju-black/70 hover:text-afinju-black transition-colors">
-                Sign In
-              </Link>
-            )}
-
             <button onClick={openCart} className="relative text-afinju-black hover:text-gold transition-colors">
               <ShoppingBag size={20} strokeWidth={1.5} />
               {count > 0 && (
@@ -123,24 +101,6 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-3 lg:hidden">
-            {user ? (
-              <Link
-                to="/account"
-                className="inline-flex h-10 w-10 items-center justify-center text-afinju-black hover:text-gold transition-colors"
-                aria-label="My account"
-              >
-                <User size={20} strokeWidth={1.5} />
-              </Link>
-            ) : (
-              <Link
-                to="/login"
-                className="inline-flex h-10 w-10 items-center justify-center text-afinju-black hover:text-gold transition-colors"
-                aria-label="Sign in"
-              >
-                <User size={20} strokeWidth={1.5} />
-              </Link>
-            )}
-
             <button onClick={openCart} className="relative text-afinju-black hover:text-gold transition-colors">
               <ShoppingBag size={20} strokeWidth={1.5} />
               {count > 0 && (
@@ -173,14 +133,6 @@ export function Navbar() {
                     {label}
                   </NavLink>
                 ))}
-                {user ? (
-                  <>
-                    <Link to="/account" className="font-sans text-sm tracking-[0.2em] uppercase text-afinju-black/70">My Account</Link>
-                    <button onClick={() => supabase.auth.signOut()} className="font-sans text-sm tracking-[0.2em] uppercase text-left text-afinju-black/40">Sign Out</button>
-                  </>
-                ) : (
-                  <Link to="/login" className="font-sans text-sm tracking-[0.2em] uppercase text-afinju-black">Sign In / Register</Link>
-                )}
               </nav>
             </motion.div>
           )}

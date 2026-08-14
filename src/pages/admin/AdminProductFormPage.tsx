@@ -346,7 +346,9 @@ export default function AdminProductFormPage() {
               className={`${inputClass} flex-1`}
             />
             <button
-              onClick={() => setForm(f => ({ ...f, colors: f.colors.filter((_, j) => j !== i) }))}
+                type="button"
+                aria-label={`Remove colour ${i + 1}`}
+                onClick={() => setForm(f => ({ ...f, colors: f.colors.filter((_, j) => j !== i) }))}
               className="p-2 text-afinju-black/30 hover:text-destructive transition-colors"
             >
               <Trash2 size={14} strokeWidth={1.5} />
@@ -369,6 +371,8 @@ export default function AdminProductFormPage() {
             <div key={i} className="relative aspect-[3/4] bg-afinju-cream overflow-hidden group">
               <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
               <button
+                type="button"
+                aria-label={`Remove product image ${i + 1}`}
                 onClick={() => setImages(prev => prev.filter((_, j) => j !== i))}
                 className="absolute top-1 right-1 w-6 h-6 bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >

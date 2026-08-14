@@ -61,7 +61,7 @@ export function Navbar() {
         )}>
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 lg:hidden">
-            <button onClick={() => setMenuOpen(v => !v)} className="text-afinju-black">
+            <button aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} onClick={() => setMenuOpen(v => !v)} className="text-afinju-black">
               {menuOpen ? <X size={22} strokeWidth={1.5} /> : <Menu size={22} strokeWidth={1.5} />}
             </button>
           </div>
@@ -90,7 +90,7 @@ export function Navbar() {
           </nav>
 
           <div className="hidden lg:flex items-center gap-5">
-            <button onClick={openCart} className="relative text-afinju-black hover:text-gold transition-colors">
+            <button aria-label={`Open shopping bag${count ? `, ${count} item${count === 1 ? '' : 's'}` : ''}`} onClick={openCart} className="relative text-afinju-black hover:text-gold transition-colors">
               <ShoppingBag size={20} strokeWidth={1.5} />
               {count > 0 && (
                 <span className="absolute -top-2 -right-2 w-4 h-4 bg-gold text-white rounded-full text-[10px] font-sans font-medium flex items-center justify-center">
@@ -101,7 +101,7 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-3 lg:hidden">
-            <button onClick={openCart} className="relative text-afinju-black hover:text-gold transition-colors">
+            <button aria-label={`Open shopping bag${count ? `, ${count} item${count === 1 ? '' : 's'}` : ''}`} onClick={openCart} className="relative text-afinju-black hover:text-gold transition-colors">
               <ShoppingBag size={20} strokeWidth={1.5} />
               {count > 0 && (
                 <span className="absolute -top-2 -right-2 w-4 h-4 bg-gold text-white rounded-full text-[10px] font-sans font-medium flex items-center justify-center">

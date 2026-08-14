@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { BRAND_WHATSAPP } from '@/lib/utils'
+import { BRAND_WHATSAPP, getBrandWhatsAppNumber } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { getStoreSettings } from '@/lib/db'
 
@@ -10,8 +10,10 @@ export function Footer() {
     queryFn: getStoreSettings,
   })
 
-  const cleanWhatsAppNumber = (settings?.whatsappNumber || BRAND_WHATSAPP).replace(/[^\d]/g, '')
-  const whatsappUrl = settings?.whatsappUrl || `https://wa.me/${cleanWhatsAppNumber}`
+  const cleanWhatsAppNumber = getBrandWhatsAppNumber(settings?.whatsappNumber || BRAND_WHATSAPP)
+  const whatsappUrl = settings?.whatsappUrl?.includes('2347071861932')
+    ? `https://wa.me/${cleanWhatsAppNumber}`
+    : (settings?.whatsappUrl || `https://wa.me/${cleanWhatsAppNumber}`)
   const supportEmail = settings?.supportEmail || ''
   const footerTagline = 'The authority set for the man who has decided that his standard is non-negotiable.'
   const socialLinks = [

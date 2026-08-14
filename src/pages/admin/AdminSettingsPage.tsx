@@ -22,7 +22,7 @@ export default function AdminSettingsPage() {
   })
 
   const [form, setForm] = useState({
-    whatsappNumber: '2347071861932',
+    whatsappNumber: '2348103586424',
     supportEmail: '',
     shippingFee: '5000',
     announcementEnabled: true,
@@ -35,7 +35,13 @@ export default function AdminSettingsPage() {
   })
 
   useEffect(() => {
-    if (settings) setForm(prev => ({ ...prev, ...settings, shippingFee: String(settings.shippingFee ?? 5000) }))
+    if (settings) setForm(prev => ({
+      ...prev,
+      ...settings,
+      whatsappNumber: settings.whatsappNumber === '2347071861932' ? '2348103586424' : settings.whatsappNumber,
+      whatsappUrl: settings.whatsappUrl?.includes('2347071861932') ? 'https://wa.me/2348103586424' : (settings.whatsappUrl || ''),
+      shippingFee: String(settings.shippingFee ?? 5000),
+    }))
   }, [settings])
 
   const saveMutation = useMutation({
@@ -101,7 +107,7 @@ export default function AdminSettingsPage() {
       <div className="bg-white border border-black/8 p-8 space-y-6">
         <h2 className="font-display text-xs tracking-[0.2em]">SOCIAL LINKS</h2>
         <SettingsField label="WhatsApp Link">
-          <input value={form.whatsappUrl} onChange={e => setForm(f => ({ ...f, whatsappUrl: e.target.value }))} placeholder="https://wa.me/2347071861932" className={inputClass} />
+          <input value={form.whatsappUrl} onChange={e => setForm(f => ({ ...f, whatsappUrl: e.target.value }))} placeholder="https://wa.me/2348103586424" className={inputClass} />
         </SettingsField>
         <SettingsField label="Instagram URL">
           <input value={form.instagramUrl} onChange={e => setForm(f => ({ ...f, instagramUrl: e.target.value }))} placeholder="https://instagram.com/afinju" className={inputClass} />

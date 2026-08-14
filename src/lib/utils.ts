@@ -33,7 +33,12 @@ export function whatsappLink(phone: string, message: string): string {
 }
 
 export const BRAND_NAME = 'AFÍNJÚ'
-export const BRAND_WHATSAPP = '2347071861932'
+export const BRAND_WHATSAPP = '2348103586424'
+
+export function getBrandWhatsAppNumber(value?: string | null): string {
+  const clean = (value || '').replace(/[^0-9]/g, '')
+  return !clean || clean === '2347071861932' ? BRAND_WHATSAPP : clean
+}
 
 export function normalizeBrandName(value?: string | null): string {
   if (!value) return BRAND_NAME

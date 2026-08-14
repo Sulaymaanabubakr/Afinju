@@ -1,20 +1,22 @@
 import { useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { CheckCircle2, Package, Truck, Clock, MessageCircle } from 'lucide-react'
-import { getOrderById } from '@/lib/db'
+import { getGuestOrderByAccessToken } from '@/lib/db'
 import { formatPrice, orderWhatsappLink } from '@/lib/utils'
 import { ORDER_STATUS_LABELS } from '@/types'
 import { format } from 'date-fns'
 
 export default function OrderConfirmationPage() {
   const { id } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
+  const token = searchParams.get('token') || ''
 
   const { data: order, isLoading } = useQuery({
-    queryKey: ['order', id],
-    queryFn: () => getOrderById(id!),
-    enabled: !!id,
+    queryKey: ['guest-order', id, token],
+    queryFn: () => getGuestOrderByAccessToken(id!, token),
+    enabled: !!id && !!token,
     refetchOnWindowFocus: true,
   })
 
@@ -31,7 +33,7 @@ export default function OrderConfirmationPage() {
       <div className="min-h-screen flex items-center justify-center text-center">
         <div>
           <p className="font-heading text-xl mb-4">Order not found</p>
-          <Link to="/account/orders" className="btn-luxury">View My Orders</Link>
+          <Link to="/shop" className="btn-luxury">Continue Shopping</Link>
         </div>
       </div>
     )

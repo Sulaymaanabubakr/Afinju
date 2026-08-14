@@ -8,20 +8,25 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
-    )
-    
     // Create admin client for inventory and actual insert
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { data: { user } } = await supabaseClient.auth.getUser()
-    if (!user) throw new Error('Unauthenticated')
+    // A customer may check out as a guest. Preserve the user link when an
+    // existing signed-in customer happens to place an order.
+    let userId: string | null = null
+    const authHeader = req.headers.get('Authorization')
+    if (authHeader) {
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        { global: { headers: { Authorization: authHeader } } }
+      )
+      const { data: { user } } = await supabaseClient.auth.getUser()
+      userId = user?.id || null
+    }
 
     const requestData = await req.json()
     const { items, customerName, customerPhone, customerAltPhone, customerEmail, deliveryAddress, notes } = requestData
@@ -67,10 +72,12 @@ serve(async (req) => {
     const timestamp = Date.now().toString(36).toUpperCase()
     const random = Math.random().toString(36).substring(2, 5).toUpperCase()
     const orderNumber = `AFJ-${timestamp}-${random}`
+    const guestAccessToken = crypto.randomUUID().replaceAll('-', '') + crypto.randomUUID().replaceAll('-', '')
 
     const newOrder = {
       order_number: orderNumber,
-      user_id: user.id,
+      user_id: userId,
+      guest_access_token: guestAccessToken,
       customer_name: customerName,
       customer_phone: customerPhone,
       customer_alt_phone: customerAltPhone || '',
@@ -98,7 +105,7 @@ serve(async (req) => {
     if (insertError) throw insertError
 
     return new Response(
-      JSON.stringify({ success: true, orderId: order.id, orderNumber, total }),
+      JSON.stringify({ success: true, orderId: order.id, orderNumber, total, guestAccessToken }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
   } catch (error: any) {

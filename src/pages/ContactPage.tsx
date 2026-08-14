@@ -50,7 +50,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="font-sans text-sm font-medium">WhatsApp (Preferred)</p>
-                  <p className="font-sans text-xs text-afinju-black/50">+234 707 186 1932</p>
+                <p className="font-sans text-xs text-afinju-black/50">0810 358 6424</p>
                 </div>
               </a>
 
@@ -63,7 +63,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="font-sans text-sm font-medium">Phone</p>
-                  <p className="font-sans text-xs text-afinju-black/50">+234 707 186 1932</p>
+                <p className="font-sans text-xs text-afinju-black/50">0810 358 6424</p>
                 </div>
               </a>
             </div>

@@ -1,9 +1,9 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/features/auth/AuthProvider'
-import { RequireAdmin, RequireCustomer, RequireStaff, RedirectIfAdminAuth, RedirectIfAuth } from '@/features/auth/Guards'
+import { RequireAdmin, RequireCustomer, RequireStaff, RedirectIfAdminAuth } from '@/features/auth/Guards'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { CartDrawer } from '@/features/cart/CartDrawer'
@@ -107,11 +107,11 @@ export default function App() {
               <Route path="/shipping-returns" element={<PublicLayout><ShippingReturnsPage /></PublicLayout>} />
 
               {/* Auth */}
-              <Route path="/login" element={<RedirectIfAuth><HeaderOnlyLayout><LoginPage /></HeaderOnlyLayout></RedirectIfAuth>} />
+              <Route path="/login" element={<Navigate to="/" replace />} />
               <Route path="/admin/login" element={<RedirectIfAdminAuth><AdminLoginPage /></RedirectIfAdminAuth>} />
               <Route path="/admin/forgot-password" element={<RedirectIfAdminAuth><AdminForgotPasswordPage /></RedirectIfAdminAuth>} />
-              <Route path="/signup" element={<RedirectIfAuth><HeaderOnlyLayout><SignupPage /></HeaderOnlyLayout></RedirectIfAuth>} />
-              <Route path="/forgot-password" element={<HeaderOnlyLayout><ForgotPasswordPage /></HeaderOnlyLayout>} />
+              <Route path="/signup" element={<Navigate to="/" replace />} />
+              <Route path="/forgot-password" element={<Navigate to="/" replace />} />
 
               {/* Account */}
               <Route path="/account" element={<RequireCustomer><PublicLayout><AccountPage /></PublicLayout></RequireCustomer>} />
@@ -119,8 +119,8 @@ export default function App() {
               <Route path="/account/orders/:id" element={<RequireCustomer><PublicLayout><OrderDetailPage /></PublicLayout></RequireCustomer>} />
 
               {/* Checkout */}
-              <Route path="/checkout" element={<RequireCustomer><PublicLayout><CheckoutPage /></PublicLayout></RequireCustomer>} />
-              <Route path="/order-confirmation/:id" element={<RequireCustomer><PublicLayout><OrderConfirmationPage /></PublicLayout></RequireCustomer>} />
+              <Route path="/checkout" element={<PublicLayout><CheckoutPage /></PublicLayout>} />
+              <Route path="/order-confirmation/:id" element={<PublicLayout><OrderConfirmationPage /></PublicLayout>} />
 
               {/* Admin */}
               <Route path="/admin" element={<RequireStaff><AdminLayout /></RequireStaff>}>

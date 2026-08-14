@@ -98,7 +98,7 @@ export interface OrderItem {
 export interface Order {
   id: string
   orderNumber: string
-  userId: string
+  userId: string | null
   customerName: string
   customerPhone: string
   customerAltPhone?: string

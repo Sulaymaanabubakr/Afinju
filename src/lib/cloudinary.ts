@@ -11,6 +11,16 @@ export interface CloudinaryTransform {
 }
 
 /**
+ * Cloudinary accepts HEIC uploads, but many browsers cannot render the
+ * resulting URL directly. Request a JPEG delivery variant for existing HEIC
+ * records while preserving the original Cloudinary asset.
+ */
+export function browserSafeImageUrl(url: string): string {
+  if (!url || !url.includes('res.cloudinary.com') || !/\.heic(?:$|\?)/i.test(url)) return url
+  return url.replace('/image/upload/', '/image/upload/f_jpg,q_auto/')
+}
+
+/**
  * Build a Cloudinary URL with transformations for optimal delivery.
  */
 export function cloudinaryUrl(
@@ -19,9 +29,10 @@ export function cloudinaryUrl(
 ): string {
   if (!publicIdOrUrl) return ''
 
-  // Support local images and external full URLs directly
+  // Support local images and external full URLs directly. Existing HEIC
+  // records are converted at delivery time for browser compatibility.
   if (publicIdOrUrl.startsWith('/') || publicIdOrUrl.startsWith('http')) {
-    return publicIdOrUrl
+    return browserSafeImageUrl(publicIdOrUrl)
   }
 
   const {
@@ -50,7 +61,7 @@ export function cloudinaryUrl(
   return `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${transformStr}/${publicIdOrUrl}`
 }
 
-import { getCloudinaryUploadSignature } from './db'
+import { supabase } from './supabase'
 
 /** Responsive srcset for Cloudinary images */
 export function cloudinarySrcSet(publicIdOrUrl: string, widths = [400, 800, 1200, 1600]) {
@@ -62,45 +73,30 @@ export function cloudinarySrcSet(publicIdOrUrl: string, widths = [400, 800, 1200
 /**
  * Upload an image to Cloudinary securely using a signed request from the backend.
  */
-export async function uploadToCloudinary(
+export async function uploadProductImage(
   file: File,
   folder: string
 ): Promise<{ publicId: string; url: string }> {
-  if (!file.type.startsWith('image/')) throw new Error('Please select an image file.')
+  const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+  if (!allowedTypes.has(file.type.toLowerCase())) {
+    throw new Error('Please upload a JPEG, PNG, WebP, or GIF image. HEIC files are not supported.')
+  }
   if (file.size > 10 * 1024 * 1024) throw new Error('Image must be smaller than 10 MB.')
-  if (!CLOUD_NAME) throw new Error('Cloudinary is not configured for this deployment.')
+  const extension = file.type.split('/')[1] === 'jpeg' ? 'jpg' : file.type.split('/')[1]
+  const path = `${folder}/${crypto.randomUUID()}.${extension}`
 
   try {
-    // 1. Get secure signature from Cloud Function
-    const sig = await getCloudinaryUploadSignature()
-    const { timestamp, signature, apiKey, cloudName } = sig || {}
+    const { error } = await supabase.storage.from('product-images').upload(path, file, {
+      cacheControl: '31536000',
+      contentType: file.type,
+      upsert: false,
+    })
+    if (error) throw error
 
-    if (!timestamp || !signature || !apiKey) {
-      throw new Error('Incomplete signature returned from server')
-    }
-
-    // 2. Upload directly to Cloudinary using the signature
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('api_key', apiKey)
-    formData.append('timestamp', timestamp.toString())
-    formData.append('signature', signature)
-    formData.append('folder', `afinju/${folder}`)
-
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${cloudName || CLOUD_NAME}/image/upload`,
-      { method: 'POST', body: formData }
-    )
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => null)
-      throw new Error(errData?.error?.message || `Cloudinary upload failed (${response.status})`)
-    }
-
-    const data = await response.json()
-    return { publicId: data.public_id, url: data.secure_url }
+    const { data } = supabase.storage.from('product-images').getPublicUrl(path)
+    return { publicId: path, url: data.publicUrl }
   } catch (err: any) {
-    console.error('Cloudinary upload failed:', err)
+    console.error('Product image upload failed:', err)
     throw err instanceof Error ? err : new Error('Image upload failed.')
   }
 }

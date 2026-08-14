@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getProducts } from '@/lib/db'
 import { formatPrice, cloudinaryOptimize } from '@/lib/utils'
 import ScarcityCounter from '@/components/shared/ScarcityCounter'
+import { browserSafeImageUrl } from '@/lib/cloudinary'
 
 function ProductCardSkeleton() {
   return (
@@ -69,7 +70,7 @@ export default function ShopPage() {
                     {/* Image */}
                     <div className="product-img-wrap aspect-[3/4] bg-afinju-cream mb-4 md:mb-6 relative overflow-hidden">
                       <img
-                        src={product.images[0]?.url || '/placeholder-product.jpg'}
+                        src={browserSafeImageUrl(product.images[0]?.url || '/placeholder-product.jpg')}
                         alt={product.images[0]?.alt || product.name}
                         className="w-full h-full object-cover"
                         loading="lazy"

@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Trash2, Upload, Loader2 } from 'lucide-react'
 import { getProductById, upsertProduct } from '@/lib/db'
-import { uploadToCloudinary } from '@/lib/cloudinary'
+import { uploadProductImage } from '@/lib/cloudinary'
 import { PRODUCT_COLORS } from '@/types'
 import { friendlyErrorMessage, slugify } from '@/lib/utils'
 import toast from 'react-hot-toast'
@@ -131,7 +131,7 @@ export default function AdminProductFormPage() {
 
       for (const file of files) {
         try {
-          const { url, publicId } = await uploadToCloudinary(file, 'products')
+          const { url, publicId } = await uploadProductImage(file, 'products')
           uploaded.push({ url, publicId, alt: form.name || 'Product Image' })
         } catch {
           failed.push(file.name)

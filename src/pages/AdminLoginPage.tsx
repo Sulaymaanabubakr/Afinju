@@ -146,9 +146,6 @@ export default function AdminLoginPage() {
           <p className="font-sans text-xs text-white/40 text-center mt-8">
             Admin access is provisioned internally. No self-registration.
           </p>
-          <p className="font-sans text-xs text-white/35 text-center mt-2">
-            Customer account? <Link to="/login" className="text-white/70 hover:text-gold transition-colors">Use buyer login</Link>
-          </p>
         </div>
       </div>
     </div>

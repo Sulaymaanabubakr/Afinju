@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useQuery } from '@tanstack/react-query'
 import { getStoreSettings } from '@/lib/db'
-import { getWhatsAppUrl, BRAND_WHATSAPP } from '@/lib/utils'
+import { getWhatsAppUrl, BRAND_WHATSAPP, getBrandWhatsAppNumber } from '@/lib/utils'
 
 export function WhatsAppFAB() {
   const { data: settings } = useQuery({
@@ -9,9 +9,9 @@ export function WhatsAppFAB() {
     queryFn: getStoreSettings,
   })
 
-  const cleanWhatsAppNumber = (settings?.whatsappNumber || BRAND_WHATSAPP).replace(/[^\d]/g, '')
+  const cleanWhatsAppNumber = getBrandWhatsAppNumber(settings?.whatsappNumber || BRAND_WHATSAPP)
   const whatsappHref =
-    settings?.whatsappUrl ||
+    (settings?.whatsappUrl && !settings.whatsappUrl.includes('2347071861932') ? settings.whatsappUrl : null) ||
     getWhatsAppUrl(cleanWhatsAppNumber, 'Hello Afínjú, I\'m interested in the Launch Edition. Can you help me?')
 
   return (

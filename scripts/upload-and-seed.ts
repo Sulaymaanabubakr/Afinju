@@ -377,7 +377,7 @@ async function main() {
     id: 'settings',
     data: {
       storeName: 'AFINJU',
-      whatsappNumber: '2347071861932',
+      whatsappNumber: '2348103586424',
       supportEmail: 'hello@afinju.com',
       shippingFee: 5000,
       paystackPublicKey: process.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_placeholder',

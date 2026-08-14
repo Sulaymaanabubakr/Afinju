@@ -85,14 +85,7 @@ export default function CheckoutPage() {
   }
 
   const onSubmit = async (data: FormData) => {
-    if (!user) { toast.error('Please sign in to continue'); return }
     if (processing) return
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) {
-      toast.error('Your session expired. Please sign in again.')
-      navigate('/login?return=%2Fcheckout')
-      return
-    }
 
     // Validate inventory before payment
     for (const item of items) {
@@ -109,6 +102,7 @@ export default function CheckoutPage() {
     // Create pending order securely
     let orderId: string
     let serverTotal: number
+    let guestAccessToken: string
     try {
       // JWT is automatically attached by Supabase client in invoke requests
 
@@ -133,18 +127,12 @@ export default function CheckoutPage() {
       
       orderId = result.orderId
       serverTotal = result.total
+      guestAccessToken = result.guestAccessToken
     } catch (err: any) {
       const code = err?.code || err?.details?.code || ''
       const message = err?.message || err?.details || ''
 
       if (
-        code === 'functions/unauthenticated' ||
-        code === 'unauthenticated' ||
-        code === 'auth/user-token-expired'
-      ) {
-        toast.error('Session expired. Please sign in again.')
-        navigate('/login?return=%2Fcheckout')
-      } else if (
         code === 'functions/not-found'
       ) {
         toast.error('Order service is unavailable. Please refresh and try again.')
@@ -173,7 +161,6 @@ export default function CheckoutPage() {
       customerPhone: data.phone,
       metadata: {
         orderId,
-        userId: user.uid,
       },
       onSuccess: async (transactionId, txRef) => {
         try {
@@ -181,10 +168,10 @@ export default function CheckoutPage() {
           await supabase.functions.invoke('verify-payment', { body: { transactionId, txRef, orderId } })
           clearCart()
           toast.success('Payment confirmed! Your order is placed.')
-          navigate(`/order-confirmation/${orderId}`)
+          navigate(`/order-confirmation/${orderId}?token=${guestAccessToken}`)
         } catch (err) {
           toast.error('Payment verification failed. Contact support with your reference: ' + txRef)
-          navigate(`/order-confirmation/${orderId}`)
+          navigate(`/order-confirmation/${orderId}?token=${guestAccessToken}`)
         }
       },
       onCancel: () => {

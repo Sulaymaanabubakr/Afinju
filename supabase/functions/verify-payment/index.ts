@@ -10,19 +10,10 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
-    )
-    
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
-
-    const { data: { user } } = await supabaseClient.auth.getUser()
-    if (!user) throw new Error('Unauthenticated')
 
     const requestData = await req.json()
     const { transactionId, txRef, orderId } = requestData
@@ -36,7 +27,6 @@ serve(async (req) => {
       .single()
 
     if (orderError || !order) throw new Error('Order not found')
-    if (order.user_id !== user.id) throw new Error('Access denied')
     if (order.payment_status === 'paid') return new Response(JSON.stringify({ success: true, alreadyPaid: true }), { headers: corsHeaders })
 
     // Verify with Flutterwave
@@ -57,7 +47,6 @@ serve(async (req) => {
     const verified = verifyData.data
     if (verified.tx_ref !== txRef) throw new Error('Payment reference mismatch')
     if (verified.meta?.orderId && verified.meta.orderId !== orderId) throw new Error('Payment order mismatch')
-    if (verified.meta?.userId && verified.meta.userId !== user.id) throw new Error('Payment user mismatch')
 
     const paidAmount = Number(verified.amount)
     if (!Number.isFinite(paidAmount) || Math.abs(paidAmount - Number(order.total)) > 0.01) {

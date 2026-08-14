@@ -186,13 +186,24 @@ export async function createOrder(data: {
   customerEmail?: string
   deliveryAddress: any
   notes?: string
-}): Promise<{ orderId: string; orderNumber: string; total: number }> {
+}): Promise<{ orderId: string; orderNumber: string; total: number; guestAccessToken: string }> {
   const { data: response, error } = await supabase.functions.invoke('create-order', {
     body: data,
   })
   
   if (error) throw new Error(error.message)
   return response
+}
+
+export async function getGuestOrderByAccessToken(orderId: string, accessToken: string): Promise<Order | null> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId)) return null
+  if (!/^[0-9a-f]{64}$/i.test(accessToken)) return null
+  const { data, error } = await supabase.rpc('get_guest_order', {
+    p_order_id: orderId,
+    p_access_token: accessToken,
+  })
+  if (error || !data?.[0]) return null
+  return rowToOrder(data[0])
 }
 
 export async function getOrderById(id: string): Promise<Order | null> {

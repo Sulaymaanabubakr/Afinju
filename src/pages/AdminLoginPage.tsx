@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -24,12 +24,25 @@ export default function AdminLoginPage() {
     : '/admin'
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [mfaStage, setMfaStage] = useState<'password' | 'enroll' | 'challenge'>('password')
+  const [mfaCode, setMfaCode] = useState('')
+  const [mfaFactorId, setMfaFactorId] = useState('')
+  const [mfaChallengeId, setMfaChallengeId] = useState('')
+  const [enrollmentQr, setEnrollmentQr] = useState('')
+  const [enrollmentSecret, setEnrollmentSecret] = useState('')
+  const [mfaError, setMfaError] = useState('')
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   })
 
-  const onSubmit = async (data: FormData) => {
+  const finishAdminLogin = (uid: string) => {
+    grantAdminAccess(uid)
+    toast.success('Admin access granted.')
+    navigate(returnTo)
+  }
+
+  const onPasswordSubmit = async (data: FormData) => {
     setLoading(true)
     try {
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -47,9 +60,33 @@ export default function AdminLoginPage() {
         return
       }
 
-      grantAdminAccess(authData.user.id)
-      toast.success('Admin access granted.')
-      navigate(returnTo)
+      const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors()
+      if (factorsError) throw factorsError
+
+      const verifiedFactor = factors.totp.find((factor) => factor.status === 'verified')
+      if (verifiedFactor) {
+        const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: verifiedFactor.id })
+        if (challengeError) throw challengeError
+        setMfaFactorId(verifiedFactor.id)
+        setMfaChallengeId(challenge.id)
+        setMfaStage('challenge')
+        return
+      }
+
+      const { data: enrollment, error: enrollmentError } = await supabase.auth.mfa.enroll({
+        factorType: 'totp',
+        friendlyName: 'Afínjú Admin Authenticator',
+      })
+      if (enrollmentError || !enrollment) throw enrollmentError || new Error('Unable to start TOTP setup')
+
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: enrollment.id })
+      if (challengeError) throw challengeError
+
+      setMfaFactorId(enrollment.id)
+      setMfaChallengeId(challenge.id)
+      setEnrollmentQr(enrollment.totp.qr_code)
+      setEnrollmentSecret(enrollment.totp.secret)
+      setMfaStage('enroll')
     } catch (err: any) {
       const msg = err.message === 'Invalid login credentials'
         ? 'Invalid admin credentials.'
@@ -58,6 +95,45 @@ export default function AdminLoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const verifyMfa = async () => {
+    if (!/^\d{6}$/.test(mfaCode)) {
+      setMfaError('Enter the 6-digit code from your authenticator app.')
+      return
+    }
+
+    setLoading(true)
+    setMfaError('')
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const uid = sessionData.session?.user.id
+      if (!uid) throw new Error('Your admin session expired. Please sign in again.')
+
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: mfaFactorId,
+        challengeId: mfaChallengeId,
+        code: mfaCode,
+      })
+      if (error) throw error
+
+      const { data: assurance } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (assurance?.currentLevel !== 'aal2') throw new Error('TOTP verification did not complete.')
+      finishAdminLogin(uid)
+    } catch (err: any) {
+      setMfaError(err.message || 'TOTP verification failed. Try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const onFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+    if (mfaStage === 'password') {
+      void handleSubmit(onPasswordSubmit)(event)
+      return
+    }
+    event.preventDefault()
+    void verifyMfa()
   }
 
   return (
@@ -93,7 +169,52 @@ export default function AdminLoginPage() {
             </h1>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={onFormSubmit} className="space-y-8">
+            {mfaStage !== 'password' ? (
+              <>
+                <div className="space-y-3">
+                  <p className="font-heading text-2xl text-white">
+                    {mfaStage === 'enroll' ? 'Set up your authenticator' : 'Enter your authenticator code'}
+                  </p>
+                  <p className="font-body text-sm text-white/55">
+                    {mfaStage === 'enroll'
+                      ? 'Scan the QR code with Google Authenticator, 1Password, Authy, or Apple Passwords, then enter the 6-digit code.'
+                      : 'Enter the current 6-digit code from your admin authenticator app.'}
+                  </p>
+                </div>
+
+                {mfaStage === 'enroll' && (
+                  <div className="space-y-4 text-center">
+                    {enrollmentQr && <img src={enrollmentQr} alt="TOTP enrollment QR code" className="mx-auto h-48 w-48 bg-white p-3" />}
+                    <p className="font-sans text-[11px] tracking-wider text-white/45 break-all">
+                      Manual setup key: <span className="text-white/80">{enrollmentSecret}</span>
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <label className="font-sans text-xs tracking-[0.15em] uppercase text-white/60">Authenticator Code</label>
+                  <input
+                    value={mfaCode}
+                    onChange={(event) => setMfaCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="000000"
+                    className="w-full bg-transparent border-0 border-b border-white/20 py-3 px-0 font-sans text-lg tracking-[0.35em] placeholder:text-white/30 focus:ring-0 focus:border-gold transition-colors"
+                  />
+                  {mfaError && <p className="font-sans text-xs text-red-300">{mfaError}</p>}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-4 mt-2 bg-gold text-black font-sans text-xs tracking-[0.2em] uppercase disabled:opacity-60 transition-opacity"
+                >
+                  {loading ? 'Verifying...' : mfaStage === 'enroll' ? 'Complete TOTP Setup' : 'Verify and Enter'}
+                </button>
+              </>
+            ) : (
+              <>
             <div className="space-y-1">
               <label className="font-sans text-xs tracking-[0.15em] uppercase text-white/60">
                 Work Email
@@ -144,6 +265,8 @@ export default function AdminLoginPage() {
             >
               {loading ? 'Authenticating...' : 'Enter Admin Portal'}
             </button>
+              </>
+            )}
           </form>
 
           <p className="font-sans text-xs text-white/40 text-center mt-8">

@@ -14,6 +14,11 @@ const HERO_IMAGES = [
   '/hero/afinju-hero-vibrant-black.png',
   '/hero/afinju-hero-vibrant-brown.png',
 ]
+const HERO_MOBILE_IMAGES = [
+  '/hero/afinju-hero-vibrant-cobalt-mobile.png',
+  '/hero/afinju-hero-vibrant-black-mobile.png',
+  '/hero/afinju-hero-vibrant-brown-mobile.png',
+]
 const FEATURE_IMAGE_FALLBACK = '/products/afinju-authority-feature-4x5.png'
 
 const PACKAGE_ITEMS = [
@@ -91,6 +96,7 @@ export default function HomePage() {
   const heroImages = HERO_IMAGES
   const [heroIndex, setHeroIndex] = useState(0)
   const heroImage = heroImages[heroIndex] || HERO_IMAGES[0]
+  const heroMobileImage = HERO_MOBILE_IMAGES[heroIndex] || HERO_MOBILE_IMAGES[0]
   const featureImage = FEATURE_IMAGE_FALLBACK
 
   useEffect(() => {
@@ -131,17 +137,19 @@ export default function HomePage() {
         {/* Background image */}
         <motion.div style={{ y }} className="absolute inset-0 z-0">
           <AnimatePresence mode="wait">
-            <motion.img
-              key={heroImage}
-              src={heroImage}
-              alt="Afínjú Authority Set"
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="eager"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.8 }}
-            />
+            <picture key={`${heroImage}-${heroMobileImage}`} className="absolute inset-0 block">
+              <source media="(max-width: 767px)" srcSet={heroMobileImage} />
+              <motion.img
+                src={heroImage}
+                alt="Afínjú Authority Set"
+                className="absolute inset-0 w-full h-full object-cover"
+                loading="eager"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8 }}
+              />
+            </picture>
           </AnimatePresence>
           <div className="absolute inset-0 bg-gradient-to-r from-obsidian via-obsidian/80 to-obsidian/30" />
           <div className="absolute inset-0 bg-gradient-to-t from-obsidian via-transparent to-transparent" />

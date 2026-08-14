@@ -60,6 +60,12 @@ export default function ProductPage() {
     ? product.inventory.launchEditionLimit - product.inventory.soldCount
     : 0
   const selectedColor: ProductColor = product?.colors?.[0] || 'Blue'
+  const selectedColorHex: Record<ProductColor, string> = {
+    Blue: '#1E3A8A',
+    Red: '#991B1B',
+    Black: '#0A0A0A',
+    Brown: '#78350F',
+  }
   const isLimitedEdition = product?.isLimitedEdition ?? false
   const validate = () => {
     const e: Record<string, string> = {}
@@ -253,7 +259,14 @@ export default function ProductPage() {
             {/* Fixed product colour */}
             <div>
               <p className="font-sans text-xs tracking-[0.15em] uppercase text-afinju-black/50">Colour</p>
-              <p className="font-sans text-sm mt-2">{selectedColor}</p>
+              <div className="flex items-center gap-3 mt-2">
+                <span
+                  aria-hidden="true"
+                  className="w-8 h-8 rounded-full border-2 border-gold"
+                  style={{ backgroundColor: selectedColorHex[selectedColor] }}
+                />
+                <span className="font-sans text-sm">{selectedColor}</span>
+              </div>
             </div>
 
             {/* Shoe Size */}

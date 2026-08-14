@@ -401,33 +401,6 @@ export async function getRemainingUnits(productId: string): Promise<number> {
   return Math.max(0, product.inventory.launchEditionLimit - product.inventory.soldCount)
 }
 
-// ─── UPLOADS ─────────────────────────────────────────────────────────────────
-export async function getCloudinaryUploadSignature() {
-  const invoke = () => supabase.functions.invoke('cloudinary-sign')
-  let result = await invoke()
-  const status = (result.error as any)?.context?.status
-
-  if (status === 401) {
-    const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession()
-    if (!refreshError && refreshed.session) result = await invoke()
-  }
-
-  if (result.error) {
-    const response = (result.error as any).context
-    let detail = ''
-    if (response?.clone) detail = await response.clone().text().catch(() => '')
-    try {
-      const parsed = detail ? JSON.parse(detail) : null
-      detail = parsed?.error || parsed?.message || detail
-    } catch {
-      // Keep the plain response text when it is not JSON.
-    }
-    const message = detail || result.error.message || 'Unable to obtain the Cloudinary upload signature.'
-    throw new Error(message)
-  }
-  return result.data
-}
-
 // ─── TEST SYSTEM ─────────────────────────────────────────────────────────────
 export async function sendTestEmail() {
   const { data, error } = await supabase.functions.invoke('test-email')

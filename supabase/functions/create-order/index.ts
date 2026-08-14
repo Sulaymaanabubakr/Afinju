@@ -34,6 +34,19 @@ serve(async (req) => {
     if (!items || !Array.isArray(items) || !items.length) {
       throw new Error('Cart is empty')
     }
+    if (items.length > 50) throw new Error('Cart contains too many items')
+    if (typeof customerName !== 'string' || customerName.trim().length < 2 || customerName.trim().length > 120) {
+      throw new Error('A valid customer name is required')
+    }
+    if (typeof customerPhone !== 'string' || customerPhone.trim().length < 7 || customerPhone.trim().length > 30) {
+      throw new Error('A valid customer phone number is required')
+    }
+    if (customerEmail && (typeof customerEmail !== 'string' || customerEmail.length > 254 || !/^\S+@\S+\.\S+$/.test(customerEmail))) {
+      throw new Error('A valid customer email is required')
+    }
+    if (!deliveryAddress || typeof deliveryAddress !== 'object' || Array.isArray(deliveryAddress)) {
+      throw new Error('A delivery address is required')
+    }
 
     let subtotal = 0
     const orderItems: any[] = []
@@ -51,6 +64,10 @@ serve(async (req) => {
       
       if (error || !product) throw new Error(`Product ${item.productId} not found`)
       if (product.status !== 'active') throw new Error(`Product not available`)
+      const inventory = product.inventory || {}
+      const soldCount = Number(inventory.soldCount || 0)
+      const limit = Number(inventory.launchEditionLimit || 0)
+      if (!inventory.allowBackorder && soldCount + quantity > limit) throw new Error(`${product.name} is no longer available in the requested quantity`)
 
       subtotal += product.price * quantity
 

@@ -18,7 +18,10 @@ type FormData = z.infer<typeof schema>
 export default function AdminLoginPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const returnTo = searchParams.get('return') || '/admin'
+  const requestedReturn = searchParams.get('return')
+  const returnTo = requestedReturn && (requestedReturn === '/admin' || requestedReturn.startsWith('/admin/'))
+    ? requestedReturn
+    : '/admin'
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 

@@ -41,7 +41,7 @@ export function PrivacyPage() {
         Afínjú does not store payment card details. All payment transactions are processed securely by Flutterwave, which is PCI-DSS compliant. Please refer to Flutterwave's privacy policy for details on how they handle payment data.
       </Section>
       <Section title="Data Security">
-        Your data is stored on Firebase (Google Cloud), which maintains enterprise-grade security infrastructure. Access to customer data is restricted to authorised Afínjú staff only.
+        Your data is stored securely in Supabase, with access protected by database row-level security and restricted to authorised Afínjú staff. We retain information only for as long as needed to fulfil orders, provide support, and meet legal obligations.
       </Section>
       <Section title="Your Rights">
         You may request access to, correction of, or deletion of your personal data at any time by contacting us via WhatsApp or email. We will respond within 5 business days.

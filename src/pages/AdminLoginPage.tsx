@@ -30,6 +30,7 @@ export default function AdminLoginPage() {
   const [mfaChallengeId, setMfaChallengeId] = useState('')
   const [enrollmentQr, setEnrollmentQr] = useState('')
   const [enrollmentSecret, setEnrollmentSecret] = useState('')
+  const [secretCopied, setSecretCopied] = useState(false)
   const [mfaError, setMfaError] = useState('')
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
@@ -86,6 +87,7 @@ export default function AdminLoginPage() {
       setMfaChallengeId(challenge.id)
       setEnrollmentQr(enrollment.totp.qr_code)
       setEnrollmentSecret(enrollment.totp.secret)
+      setSecretCopied(false)
       setMfaStage('enroll')
     } catch (err: any) {
       const msg = err.message === 'Invalid login credentials'
@@ -186,9 +188,24 @@ export default function AdminLoginPage() {
                 {mfaStage === 'enroll' && (
                   <div className="space-y-4 text-center">
                     {enrollmentQr && <img src={enrollmentQr} alt="TOTP enrollment QR code" className="mx-auto h-48 w-48 bg-white p-3" />}
-                    <p className="font-sans text-[11px] tracking-wider text-white/45 break-all">
-                      Manual setup key: <span className="text-white/80">{enrollmentSecret}</span>
-                    </p>
+                    <div className="space-y-2">
+                      <p className="font-sans text-[11px] tracking-wider text-white/45">
+                        Can’t scan? Enter this setup key manually in your authenticator app:
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <code className="min-w-0 flex-1 break-all text-[11px] text-white/85">{enrollmentSecret}</code>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void navigator.clipboard?.writeText(enrollmentSecret)
+                            setSecretCopied(true)
+                          }}
+                          className="shrink-0 border border-white/20 px-3 py-2 font-sans text-[10px] uppercase tracking-wider text-white/65 hover:border-gold hover:text-gold"
+                        >
+                          {secretCopied ? 'Copied' : 'Copy key'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
 

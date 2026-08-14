@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Plus, Trash2, Upload, Loader2 } from 'lucide-react'
 import { getProductById, upsertProduct } from '@/lib/db'
 import { uploadProductImage } from '@/lib/cloudinary'
-import { PRODUCT_COLORS, type ProductColor } from '@/types'
+import { PRODUCT_COLORS } from '@/types'
 import { friendlyErrorMessage, slugify } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/form-elements'
@@ -54,8 +54,7 @@ export default function AdminProductFormPage() {
     launchEditionLimit: '10',
     soldCount: '0',
   })
-  const [images, setImages] = useState<Array<{ url: string; alt: string; publicId?: string; color?: ProductColor }>>([])
-  const [imageColor, setImageColor] = useState<ProductColor>(PRODUCT_COLORS[0])
+  const [images, setImages] = useState<Array<{ url: string; alt: string }>>([])
   const [uploadingImg, setUploadingImg] = useState(false)
   const initializedProductId = useRef<string | null>(null)
 
@@ -79,7 +78,6 @@ export default function AdminProductFormPage() {
         soldCount: String(product.inventory.soldCount ?? ''),
       })
       setImages(product.images)
-      setImageColor(product.colors?.[0] || PRODUCT_COLORS[0])
     }
   }, [product])
 
@@ -128,13 +126,13 @@ export default function AdminProductFormPage() {
     if (!files.length) return
     setUploadingImg(true)
     try {
-      const uploaded: Array<{ url: string; publicId: string; alt: string; color?: ProductColor }> = []
+      const uploaded: Array<{ url: string; publicId: string; alt: string }> = []
       const failed: string[] = []
 
       for (const file of files) {
         try {
           const { url, publicId } = await uploadProductImage(file, 'products')
-          uploaded.push({ url, publicId, alt: `${form.name || 'Product Image'} — ${imageColor}`, color: imageColor })
+          uploaded.push({ url, publicId, alt: form.name || 'Product Image' })
         } catch {
           failed.push(file.name)
         }
@@ -368,18 +366,10 @@ export default function AdminProductFormPage() {
       {/* Images */}
       <div className="bg-white border border-black/8 p-8 space-y-4">
         <h2 className="font-display text-xs tracking-[0.2em]">PRODUCT IMAGES</h2>
-        <div className="flex flex-wrap items-center gap-3">
-          <label htmlFor="image-colour" className="font-sans text-xs tracking-[0.12em] uppercase text-afinju-black/50">Upload colour</label>
-          <select id="image-colour" value={imageColor} onChange={e => setImageColor(e.target.value as ProductColor)} className="border border-black/15 bg-white px-3 py-2 font-sans text-sm">
-            {form.colors.filter(Boolean).map(color => <option key={color} value={color}>{color}</option>)}
-          </select>
-          <p className="font-sans text-xs text-afinju-black/45">Each new image is tagged to the selected colour.</p>
-        </div>
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
           {images.map((img, i) => (
             <div key={i} className="relative aspect-[3/4] bg-afinju-cream overflow-hidden group">
               <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
-              {img.color && <span className="absolute bottom-1 left-1 bg-black/70 px-1.5 py-1 font-sans text-[9px] uppercase tracking-wider text-white">{img.color}</span>}
               <button
                 type="button"
                 aria-label={`Remove product image ${i + 1}`}

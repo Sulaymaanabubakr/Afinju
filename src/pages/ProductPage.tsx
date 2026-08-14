@@ -63,19 +63,6 @@ export default function ProductPage() {
     : 0
   const availableColors = product?.colors?.length ? product.colors : PRODUCT_COLORS
   const isLimitedEdition = product?.isLimitedEdition ?? false
-  const hasColourTaggedImages = !!product?.images.some(image => image.color)
-  const displayImages = product
-    ? (hasColourTaggedImages && preferredColor
-      ? product.images.filter(image => !image.color || image.color === preferredColor)
-      : product.images)
-    : []
-
-  const selectPreferredColor = (color: ProductColor) => {
-    setPreferredColor(color)
-    setSelectedImage(0)
-    setErrors(e => ({ ...e, preferredColor: '' }))
-  }
-
   const validate = () => {
     const e: Record<string, string> = {}
     if (!shoeSize) e.shoeSize = 'Please select your shoe size'
@@ -166,8 +153,8 @@ export default function ProductPage() {
             <AnimatePresence mode="wait">
               <motion.img
                 key={selectedImage}
-                src={cloudinaryUrl(displayImages[selectedImage]?.url || '', { width: 1000, height: 1250, quality: 'auto' })}
-                alt={displayImages[selectedImage]?.alt || product.name}
+                src={cloudinaryUrl(product.images[selectedImage]?.url || '', { width: 1000, height: 1250, quality: 'auto' })}
+                alt={product.images[selectedImage]?.alt || product.name}
                 className="w-full h-full object-cover"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -178,9 +165,9 @@ export default function ProductPage() {
           </div>
 
           {/* Thumbnails */}
-          {displayImages.length > 1 && (
+          {product.images.length > 1 && (
             <div className="flex gap-2 p-4 overflow-x-auto">
-              {displayImages.map((img, i) => (
+              {product.images.map((img, i) => (
                 <button
                   key={i}
                   onClick={() => setSelectedImage(i)}
@@ -288,7 +275,7 @@ export default function ProductPage() {
                     <button
                       type="button"
                       key={color}
-                      onClick={() => selectPreferredColor(color)}
+                      onClick={() => { setPreferredColor(color); setErrors(e => ({ ...e, preferredColor: '' })) }}
                       className={`group relative flex flex-col items-center gap-2 transition-all duration-150`}
                     >
                       <div

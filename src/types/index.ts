@@ -6,7 +6,6 @@ export interface ProductImage {
   url: string
   alt: string
   publicId?: string
-  color?: ProductColor
 }
 
 export interface ProductInventory {

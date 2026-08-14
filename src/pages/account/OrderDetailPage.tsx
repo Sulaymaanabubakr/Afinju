@@ -112,9 +112,6 @@ export default function OrderDetailPage() {
             <div className="flex justify-between font-sans text-sm text-afinju-black/50">
               <span>Subtotal</span><span>{formatPrice(order.subtotal)}</span>
             </div>
-            <div className="flex justify-between font-sans text-sm text-afinju-black/50">
-              <span>Shipping</span><span>{formatPrice(order.shippingFee)}</span>
-            </div>
             <div className="flex justify-between font-heading text-xl pt-2 border-t border-black/5">
               <span>Total</span><span>{formatPrice(order.total)}</span>
             </div>

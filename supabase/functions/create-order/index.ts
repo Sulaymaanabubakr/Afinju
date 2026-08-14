@@ -82,9 +82,10 @@ serve(async (req) => {
       })
     }
 
-    const { data: settings } = await supabaseAdmin.from('config').select('data').eq('id', 'settings').single()
-    const shippingFee = settings?.data?.shippingFee || 0
-    const total = subtotal + shippingFee
+    // Delivery is included in the product price. Keep the database column for
+    // historical orders, but never add a delivery charge to new orders.
+    const shippingFee = 0
+    const total = subtotal
 
     const timestamp = Date.now().toString(36).toUpperCase()
     const random = Math.random().toString(36).substring(2, 5).toUpperCase()

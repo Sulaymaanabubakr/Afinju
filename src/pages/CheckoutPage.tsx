@@ -7,11 +7,10 @@ import { motion } from 'framer-motion'
 import { Lock } from 'lucide-react'
 import { useCartStore } from '@/lib/store'
 import { useAuthStore } from '@/store/auth'
-import { createOrder, getRemainingUnits, getStoreSettings } from '@/lib/db'
+import { createOrder, getRemainingUnits } from '@/lib/db'
 import { openFlutterwaveModal, generateReference } from '@/lib/flutterwave'
 import { formatPrice, BRAND_WHATSAPP } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
-import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { PRODUCT_COLORS, SHOE_SIZES, HEAD_SIZES, type ProductColor } from '@/types'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/form-elements'
@@ -43,15 +42,9 @@ export default function CheckoutPage() {
   const { items, total, clearCart } = useCartStore()
   const { user } = useAuthStore()
   
-  const { data: settings } = useQuery({
-    queryKey: ['store-settings'],
-    queryFn: getStoreSettings,
-  })
-
   const [processing, setProcessing] = useState(false)
   const subtotal = total()
-  const shippingFee = settings?.shippingFee ?? 5000
-  const orderTotal = subtotal + shippingFee
+  const orderTotal = subtotal
   const hasUncertainSizing = items.some(
     (item) => item.preferences?.shoeSize === 'Not sure' || item.preferences?.headSize === 'Not sure'
   )
@@ -344,10 +337,6 @@ export default function CheckoutPage() {
                   <div className="flex justify-between font-sans text-sm">
                     <span className="text-afinju-black/60">Subtotal</span>
                     <span>{formatPrice(subtotal)}</span>
-                  </div>
-                  <div className="flex justify-between font-sans text-sm">
-                    <span className="text-afinju-black/60">Shipping</span>
-                    <span>{formatPrice(shippingFee)}</span>
                   </div>
                   <div className="flex justify-between font-heading text-xl border-t border-black/10 pt-3">
                     <span>Total</span>

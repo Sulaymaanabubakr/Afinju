@@ -24,7 +24,6 @@ export default function AdminSettingsPage() {
   const [form, setForm] = useState({
     whatsappNumber: '2348103586424',
     supportEmail: '',
-    shippingFee: '5000',
     announcementEnabled: true,
     announcementText: 'Only Ten Men Will Own This Launch Edition · Once It Is Closed, It Is Closed · Afínjú - Authority Set',
     instagramUrl: '',
@@ -40,12 +39,11 @@ export default function AdminSettingsPage() {
       ...settings,
       whatsappNumber: settings.whatsappNumber === '2347071861932' ? '2348103586424' : settings.whatsappNumber,
       whatsappUrl: settings.whatsappUrl?.includes('2347071861932') ? 'https://wa.me/2348103586424' : (settings.whatsappUrl || ''),
-      shippingFee: String(settings.shippingFee ?? 5000),
     }))
   }, [settings])
 
   const saveMutation = useMutation({
-    mutationFn: () => updateStoreSettings({ ...form, shippingFee: Number(form.shippingFee) }),
+    mutationFn: () => updateStoreSettings({ ...form, shippingFee: 0 }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['store-settings'] })
       toast.success('Settings saved.')
@@ -79,9 +77,6 @@ export default function AdminSettingsPage() {
         </SettingsField>
         <SettingsField label="WhatsApp Number">
           <input value={form.whatsappNumber} onChange={e => setForm(f => ({ ...f, whatsappNumber: e.target.value }))} className={inputClass} />
-        </SettingsField>
-        <SettingsField label="Flat Shipping Fee (₦)">
-          <input type="number" value={form.shippingFee} onChange={e => setForm(f => ({ ...f, shippingFee: e.target.value }))} className={inputClass} />
         </SettingsField>
         <SettingsField label="Scrolling Banner">
           <label className="flex items-center gap-3 font-sans text-sm text-afinju-black/70">

@@ -24,7 +24,7 @@ const FAQS = [
     category: 'Delivery',
     items: [
       { q: 'Where do you deliver?', a: 'We deliver nationwide across all 36 states and the FCT. Delivery timelines vary by location. Lagos and Abuja typically receive orders within 3–5 business days. Other states may take 5–8 business days.' },
-      { q: 'What is the shipping fee?', a: 'Flat-rate shipping of ₦5,000 applies to all orders nationwide. This covers insurance and careful handling of your luxury packaging.' },
+      { q: 'Is delivery included?', a: 'Yes. Delivery is included in the price of every Afínjú Authority Set order.' },
       { q: 'How will I know my order has been shipped?', a: 'You will receive a status update on your account dashboard when your order is dispatched. We will also include a tracking reference in your status update note where applicable. You can also reach us via WhatsApp for a real-time update.' },
     ],
   },

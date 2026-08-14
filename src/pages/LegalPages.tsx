@@ -63,8 +63,8 @@ export function ShippingReturnsPage() {
       <Section title="Delivery Timeline">
         Lagos and Abuja: 3–5 business days. South-West states: 4–6 business days. Other states: 5–8 business days. These are estimates. Actual delivery may vary based on logistics availability in your area.
       </Section>
-      <Section title="Shipping Fee">
-        A flat-rate shipping fee of ₦5,000 applies to all orders nationwide. This fee covers careful packaging, insurance, and handling of your luxury box.
+      <Section title="Delivery">
+        Delivery is included in the price of every Afínjú Authority Set order. All deliveries are handled through trusted Nigerian logistics partners.
       </Section>
       <Section title="Returns Policy">
         As every Afínjú set is made to your specifications (colour, shoe size, head size), we do not accept returns based on change of preference or mind. However, if your item arrives damaged, defective, or does not match your confirmed order specifications, we will replace it at no cost. Contact us within 48 hours of delivery with photographic evidence.

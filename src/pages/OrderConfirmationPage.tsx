@@ -112,10 +112,6 @@ export default function OrderConfirmationPage() {
               <span className="text-afinju-black/50">Subtotal</span>
               <span>{formatPrice(order.subtotal)}</span>
             </div>
-            <div className="flex justify-between font-sans text-sm">
-              <span className="text-afinju-black/50">Shipping</span>
-              <span>{formatPrice(order.shippingFee)}</span>
-            </div>
             <div className="flex justify-between font-heading text-xl border-t border-black/5 pt-3 mt-3">
               <span>Total</span>
               <span>{formatPrice(order.total)}</span>

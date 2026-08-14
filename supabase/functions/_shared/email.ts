@@ -130,10 +130,6 @@ export function buildOrderDetailsHtml(order: any) {
         <td style="padding: 0 0 8px 0; font-size: 13px; color: #555; text-align: right;">${formatCurrency(order?.subtotal)}</td>
       </tr>
       <tr>
-        <td style="padding: 0 0 8px 0; font-size: 13px; color: #555;">Shipping</td>
-        <td style="padding: 0 0 8px 0; font-size: 13px; color: #555; text-align: right;">${formatCurrency(order?.shipping_fee)}</td>
-      </tr>
-      <tr>
         <td style="padding: 8px 0 0 0; border-top: 1px solid #d9d2c2; font-size: 14px; color: #1a1a1a; font-weight: 700;">Total Paid</td>
         <td style="padding: 8px 0 0 0; border-top: 1px solid #d9d2c2; font-size: 14px; color: #1a1a1a; font-weight: 700; text-align: right;">${formatCurrency(order?.total)}</td>
       </tr>

@@ -106,7 +106,8 @@
     }
 
     .public-site .home-hero {
-      padding-top: 7rem !important;
+      padding-top: 5rem !important;
+      padding-bottom: 5rem !important;
     }
   }
 

@@ -77,7 +77,7 @@ async function seed() {
       storeName: 'AFINJU',
       whatsappNumber: '2348103586424',
       supportEmail: 'hello@afinju.com',
-      shippingFee: 5000,
+      shippingFee: 0,
     }
   })
   if (settingsError) throw settingsError

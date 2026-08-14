@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { AnimatePresence, motion, useScroll, useTransform } from 'framer-motion'
@@ -9,8 +9,12 @@ import ScarcityCounter from '@/components/shared/ScarcityCounter'
 import { formatPrice } from '@/lib/utils'
 import { getProducts } from '@/lib/db'
 
-const HERO_IMAGE_FALLBACK = '/products/afinju-new-01.jpeg'
-const FEATURE_IMAGE_FALLBACK = '/products/afinju-new-02.jpeg'
+const HERO_IMAGES = [
+  '/hero/afinju-hero-vibrant-cobalt.png',
+  '/hero/afinju-hero-vibrant-black.png',
+  '/hero/afinju-hero-vibrant-brown.png',
+]
+const FEATURE_IMAGE_FALLBACK = '/products/afinju-authority-feature-4x5.png'
 
 const PACKAGE_ITEMS = [
   { name: 'Pure Skin Leather/Suede Half Shoe', desc: '(Black, Brown, Red and Blue)' },
@@ -84,19 +88,10 @@ export default function HomePage() {
     products?.find((p) => p.slug === 'afinju-authority-set-launch-edition') ||
     products?.[0]
   const productLink = product ? `/product/${product.slug}` : '/shop'
-  const catalogImages = (products ?? [])
-    .flatMap((p) => (p.images ?? []).map((img) => img?.url).filter(Boolean))
-  const heroImages = useMemo(() => {
-    const unique = Array.from(new Set(catalogImages)).slice(0, 6)
-    return unique.length > 0 ? unique : [HERO_IMAGE_FALLBACK]
-  }, [catalogImages])
+  const heroImages = HERO_IMAGES
   const [heroIndex, setHeroIndex] = useState(0)
-  const heroImage = heroImages[heroIndex] || HERO_IMAGE_FALLBACK
-  const featureImage = catalogImages[1] || catalogImages[0] || FEATURE_IMAGE_FALLBACK
-
-  useEffect(() => {
-    setHeroIndex(0)
-  }, [heroImages.length])
+  const heroImage = heroImages[heroIndex] || HERO_IMAGES[0]
+  const featureImage = FEATURE_IMAGE_FALLBACK
 
   useEffect(() => {
     if (heroImages.length <= 1) return
@@ -108,11 +103,31 @@ export default function HomePage() {
 
   const soldCount = product?.inventory?.soldCount ?? 0
   const totalLimit = product?.inventory?.launchEditionLimit ?? 10
+  const renderPackageCard = (item: (typeof PACKAGE_ITEMS)[number], i: number, className = '') => (
+    <motion.div
+      key={item.name}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: i * 0.08, duration: 0.5 }}
+      className={`flex min-h-[112px] flex-col items-center justify-center border border-white/8 bg-white/[0.03] px-3 py-4 text-center transition-colors hover:border-gold-500/25 hover:bg-white/[0.05] md:min-h-[136px] md:px-4 md:py-5 ${className}`}
+    >
+      <div className="flex h-6 w-6 items-center justify-center rounded-full border border-gold-500/25 bg-gold-500/10 md:h-8 md:w-8">
+        <Check className="h-3 w-3 text-gold-500 md:h-3.5 md:w-3.5" />
+      </div>
+      <p className="mt-2 text-[12px] font-body font-semibold leading-snug text-ivory md:mt-3 md:text-sm">
+        {item.name}
+      </p>
+      <p className="mt-1 text-[10px] md:mt-1.5 md:text-xs font-body text-ivory/40 leading-relaxed">
+        {item.desc}
+      </p>
+    </motion.div>
+  )
 
   return (
     <div className="bg-obsidian">
       {/* ── Hero ────────────────────────────────────────────── */}
-      <section className="home-hero relative min-h-screen flex items-start md:items-center pt-10 md:pt-0 pb-16 md:pb-24 overflow-hidden">
+      <section className="home-hero relative min-h-[100svh] flex items-center pt-20 md:pt-0 pb-20 md:pb-24 overflow-hidden">
         {/* Background image */}
         <motion.div style={{ y }} className="absolute inset-0 z-0">
           <AnimatePresence mode="wait">
@@ -136,16 +151,16 @@ export default function HomePage() {
           style={{ opacity }}
           className="relative z-10 w-full max-w-screen-xl mx-auto px-6 lg:px-12"
         >
-          <div className="max-w-3xl mx-auto text-center">
+          <div className="max-w-3xl mx-auto px-1 text-center">
             {/* Eyebrow */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="flex items-center gap-3 mb-5 justify-center"
+              className="flex items-center gap-3 mb-7 justify-center"
             >
               <div className="h-px w-12 bg-gold-500" />
-              <span className="text-xs font-body font-semibold tracking-[0.3em] uppercase text-gold-400">
+              <span className="text-[11px] md:text-xs font-body font-semibold tracking-[0.3em] uppercase text-gold-400">
                 Launch Edition - 10 Men Only
               </span>
             </motion.div>
@@ -154,7 +169,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-ivory leading-[0.95] tracking-tight"
+              className="font-display text-5xl md:text-6xl lg:text-7xl font-bold text-ivory leading-[0.95] tracking-tight"
             >
               Afínjú{' '}
               <span className="text-gold-400 italic">is not for everybody!</span>
@@ -164,7 +179,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="mt-5 text-base md:text-xl font-body text-ivory/60 leading-relaxed max-w-xl mx-auto"
+              className="mt-7 text-lg md:text-xl font-body text-ivory/60 leading-relaxed max-w-[25rem] md:max-w-xl mx-auto"
             >
               The complete Nigerian authority set. Five precision-crafted pieces. One undeniable statement.
             </motion.p>
@@ -174,7 +189,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="mt-6 flex justify-center"
+              className="mt-8 flex justify-center"
             >
               <ScarcityCounter sold={soldCount} total={totalLimit} compact onDark />
             </motion.div>
@@ -184,10 +199,10 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.7 }}
-              className="mt-6 flex flex-wrap items-center gap-6 justify-center"
+              className="mt-8 flex flex-wrap items-center gap-6 justify-center"
             >
               <Link to={productLink}>
-                <Button variant="gold" size="lg" className="group" asChild>
+                <Button variant="gold" size="lg" className="group w-full max-w-[22rem] sm:w-auto sm:max-w-none" asChild>
                   <span>
                     Discover the Authority Set
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -270,26 +285,7 @@ export default function HomePage() {
             </motion.div>
 
             <div className="grid grid-cols-2 gap-3 md:gap-5">
-              {PACKAGE_ITEMS.map((item, i) => (
-                <motion.div
-                  key={item.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08, duration: 0.5 }}
-                  className="flex min-h-[112px] flex-col items-center justify-center border border-white/8 bg-white/[0.03] px-3 py-4 text-center transition-colors hover:border-gold-500/25 hover:bg-white/[0.05] md:min-h-[136px] md:px-4 md:py-5"
-                >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full border border-gold-500/25 bg-gold-500/10 md:h-8 md:w-8">
-                    <Check className="h-3 w-3 text-gold-500 md:h-3.5 md:w-3.5" />
-                  </div>
-                  <p className="mt-2 text-[12px] font-body font-semibold leading-snug text-ivory md:mt-3 md:text-sm">
-                    {item.name}
-                  </p>
-                  <p className="mt-1 text-[10px] md:mt-1.5 md:text-xs font-body text-ivory/40 leading-relaxed">
-                    {item.desc}
-                  </p>
-                </motion.div>
-              ))}
+              {PACKAGE_ITEMS.map((item, i) => renderPackageCard(item, i, i === 4 ? 'col-span-2' : ''))}
             </div>
           </div>
         </div>

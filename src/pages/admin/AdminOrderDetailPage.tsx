@@ -189,9 +189,6 @@ export default function AdminOrderDetailPage() {
               <div className="flex justify-between font-sans text-xs text-afinju-black/50">
                 <span>Subtotal</span><span>{formatPrice(order.subtotal)}</span>
               </div>
-              <div className="flex justify-between font-sans text-xs text-afinju-black/50">
-                <span>Shipping</span><span>{formatPrice(order.shippingFee)}</span>
-              </div>
               <div className="flex justify-between font-heading text-lg">
                 <span>Total</span><span>{formatPrice(order.total)}</span>
               </div>
